@@ -1,5 +1,5 @@
 """Updates without reinstalling.
-  * Server PC:  Superadmin → «Yangilanish» — `git pull` in EksportMonitor and AppWin (whichever is a git repo) + restart.
+  * Server PC:  Superadmin → «Yangilanish» — `git pull` in AppWin + restart.
   * Staff PCs (client mode): on every start the app compares its AppWin files with the server's manifest and
     downloads the changed ones over the LAN — before any library is loaded, so files are free to replace."""
 from __future__ import annotations
@@ -7,7 +7,7 @@ import hashlib, json, os, subprocess, sys, urllib.request, urllib.parse, datetim
 from pathlib import Path
 
 APP_DIR = Path(__file__).resolve().parent.parent
-EXCLUDE_DIRS = {"webview-data", "build", "__pycache__", ".git", "_update"}
+EXCLUDE_DIRS = {"webview-data", "build", "__pycache__", ".git", "_update", "python", "data"}   # python never changes; data is not code
 EXCLUDE_FILES = {"config.json", "appwin.log", "EksportMonitor.exe", "EksportMonitor2.exe"}
 EXCLUDE_SUFFIX = {".pyc", ".pyo", ".log", ".tmp"}
 

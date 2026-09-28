@@ -1,6 +1,6 @@
-/* EksportMonitor.exe — tiny native launcher.
-   Finds ..\EksportMonitor\python\pythonw.exe next to this AppWin folder, sets PYTHONPATH and starts
-   `pythonw.exe -m appwin.desktop` with the working directory = AppWin. No console window.
+/* EksportMonitor.exe — tiny native launcher (standalone AppWin).
+   Uses AppWin\python\pythonw.exe, PYTHONPATH = AppWin\vendor;AppWin and starts `pythonw.exe -m appwin.desktop`
+   with the working directory = AppWin. No console window. Fallback (old layout): ..\EksportMonitor\python.
    Build (MinGW): x86_64-w64-mingw32-windres app.rc -O coff -o app.res
                   x86_64-w64-mingw32-gcc -O2 -mwindows -municode launcher.c app.res -o EksportMonitor.exe -lshlwapi -static */
 #include <windows.h>
@@ -21,19 +21,24 @@ int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE hPrev, PWSTR cmdLine, int nShow) 
     GetModuleFileNameW(NULL, app, BUF - 1);
     PathRemoveFileSpecW(app);                                    /* ...\AppWin */
 
-    /* legacy = <parent of AppWin>\EksportMonitor, or AppWin\EksportMonitor if bundled */
-    wcscpy(legacy, app); PathRemoveFileSpecW(legacy); cat(legacy, L"\\EksportMonitor");
-    if (!PathFileExistsW(legacy)) { wcscpy(legacy, app); cat(legacy, L"\\EksportMonitor"); }
-
     int console = (cmdLine != NULL && wcsstr(cmdLine, L"--console") != NULL);
-    wcscpy(py, legacy); cat(py, console ? L"\\python\\python.exe" : L"\\python\\pythonw.exe");
-    if (!PathFileExistsW(py)) {
-        wcscpy(msg, L"Python topilmadi:\n"); cat(msg, py); cat(msg, L"\n\nAppWin papkasi EksportMonitor papkasi yonida turishi kerak.");
-        die(msg); return 1;
-    }
+    const wchar_t *exe = console ? L"\\python\\python.exe" : L"\\python\\pythonw.exe";
 
-    /* PYTHONPATH = AppWin\vendor;EksportMonitor\vendor;EksportMonitor;AppWin */
-    wcscpy(pypath, app); cat(pypath, L"\\vendor;"); cat(pypath, legacy); cat(pypath, L"\\vendor;"); cat(pypath, legacy); cat(pypath, L";"); cat(pypath, app);
+    /* 1) standalone: AppWin\python */
+    wcscpy(py, app); cat(py, exe);
+    if (PathFileExistsW(py)) {
+        wcscpy(pypath, app); cat(pypath, L"\\vendor;"); cat(pypath, app);
+    } else {
+        /* 2) old layout: <parent of AppWin>\EksportMonitor\python */
+        wcscpy(legacy, app); PathRemoveFileSpecW(legacy); cat(legacy, L"\\EksportMonitor");
+        wcscpy(py, legacy); cat(py, exe);
+        if (!PathFileExistsW(py)) {
+            wcscpy(msg, L"Python topilmadi:\n"); cat(msg, app); cat(msg, L"\\python\\pythonw.exe");
+            cat(msg, L"\n\nAppWin\\Mustaqil_qilish.bat ni bir marta ishga tushiring (python va sayt kodini AppWin ichiga ko'chiradi).");
+            die(msg); return 1;
+        }
+        wcscpy(pypath, app); cat(pypath, L"\\vendor;"); cat(pypath, legacy); cat(pypath, L"\\vendor;"); cat(pypath, legacy); cat(pypath, L";"); cat(pypath, app);
+    }
     SetEnvironmentVariableW(L"PYTHONPATH", pypath);
     SetEnvironmentVariableW(L"PYTHONUTF8", L"1");
     SetEnvironmentVariableW(L"PYTHONIOENCODING", L"utf-8");

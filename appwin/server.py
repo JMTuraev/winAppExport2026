@@ -1,10 +1,10 @@
-"""AppWin server: the EksportMonitor handler + login, roles, audit, LAN binding and the new shell.
-EksportMonitor code is imported unchanged (PYTHONPATH points at ..\\EksportMonitor)."""
+"""AppWin server: the site handler (AppWin\\app — the former EksportMonitor code, now part of AppWin) + login, roles,
+audit, LAN binding, backup and update APIs. Standalone: PYTHONPATH = AppWin\\vendor;AppWin."""
 from __future__ import annotations
 import json, os, sys, socket, threading, time, datetime as dt, urllib.parse, shutil, webbrowser, http.cookies
 from pathlib import Path
-from app import server as legacy, db          # EksportMonitor
-from . import auth, backup, __version__
+from app import server as legacy, db          # AppWin\app (site)
+from . import auth, backup, update, __version__
 
 ROOT = Path(__file__).resolve().parent
 STATIC = ROOT / "static"
@@ -16,6 +16,12 @@ PUBLIC_GET_PREFIXES = ("/appwin/", "/static/fonts/", "/static/chart.umd.js", "/s
 SUPERADMIN_POSTS = ("/api/backups/restore", "/api/reset", "/api/init/", "/api/customs/clear", "/api/settings/reset")
 EXPORT_LOCK = threading.Lock()
 _BK_CACHE: dict = {"t": 0, "v": None}
+_MF_CACHE: dict = {"t": 0, "v": None}
+
+def update_manifest_cached(max_age: float = 30) -> dict:
+    if time.time() - _MF_CACHE["t"] > max_age:
+        _MF_CACHE["v"] = update.manifest(APP_DIR); _MF_CACHE["t"] = time.time()
+    return _MF_CACHE["v"]
 _first_admin: dict | None = None
 
 def backup_status_cached(max_age: float = 60) -> dict | None:
@@ -27,14 +33,17 @@ def backup_status_cached(max_age: float = 60) -> dict | None:
     return _BK_CACHE["v"]
 
 def load_config() -> dict:
-    cfg = legacy.load_config()                 # data_dir, port from EksportMonitor\config.json
+    """AppWin\config.json. data_dir default: ..\data (the shared D:\2026 export\data layout) if it exists, else AppWin\data."""
+    cfg = legacy.load_config()                 # same file (app.server.APP_DIR == AppWin); gives port/open_browser defaults
     cfg.setdefault("host", "0.0.0.0")
-    if CONFIG.exists():
-        own = json.loads(CONFIG.read_text(encoding="utf-8"))
-        cfg.update(own)
-        if "data_dir" in own:
-            d = Path(own["data_dir"])
-            cfg["data_path"] = (d if d.is_absolute() else APP_DIR / d).resolve()
+    own = json.loads(CONFIG.read_text(encoding="utf-8")) if CONFIG.exists() else {}
+    cfg.update(own)
+    if "data_dir" in own:
+        d = Path(own["data_dir"])
+        cfg["data_path"] = (d if d.is_absolute() else APP_DIR / d).resolve()
+    else:
+        shared = APP_DIR.parent / "data"
+        cfg["data_path"] = (shared if (shared / "export.db").exists() else APP_DIR / "data").resolve()
     return cfg
 
 def lan_ip() -> str:
@@ -139,6 +148,12 @@ class Handler(legacy.Handler):
                 f = (STATIC / p[len("/appwin/"):]).resolve()
                 if STATIC in f.parents and f.is_file(): return self.send_file(f)
                 return self.send_json({"error": "topilmadi"}, 404)
+            if p == "/appwin-update/manifest":
+                return self.send_json(update_manifest_cached())
+            if p == "/appwin-update/file":
+                f = update.safe_rel(q.get("p", ""), APP_DIR)
+                if f is None or not f.is_file(): return self.send_json({"error": "topilmadi"}, 404)
+                return self.send_file(f)
             if p == "/login":
                 if self.load_user(): return self.redirect("/")
                 return self.send_file(STATIC / "login.html")
@@ -195,6 +210,9 @@ class Handler(legacy.Handler):
                         st["snapshots"] = backup.list_snapshots(backup.backup_root(cfg))[::-1][:40] if st.get("connected") else []
                         _BK_CACHE.update({"t": time.time(), "v": {k: v for k, v in st.items() if k != "snapshots"}})
                         return self.send_json(st)
+                    if p == "/api/admin/update":
+                        return self.send_json({"repos": [update.repo_status(APP_DIR, fetch=q.get("fetch") != "0")],
+                                               "stamp": update_manifest_cached()["stamp"], "exe": sys.executable})
                     if p == "/api/admin/server":
                         info = server_info()
                         info["sessions_open"] = con.execute("SELECT count(*) FROM user_sessions WHERE closed=0 AND expires_at>?", (auth.now(),)).fetchone()[0]
@@ -283,6 +301,19 @@ class Handler(legacy.Handler):
                         return self.send_json({"ok": True, **r})
                     if p == "/api/admin/backup/verify":
                         return self.send_json(backup.verify(load_config(), body.get("name")))
+                    if p == "/api/admin/update/pull":
+                        res = update.repo_pull(APP_DIR)
+                        _MF_CACHE["t"] = 0
+                        auth.audit(con, self.user["id"], self.user["login"], self.client_ip(), "yangilanish", p,
+                                   ("✓ " if res["ok"] else "✕ ") + (res.get("out") or res.get("error") or "")[:200], ok=res["ok"]); con.commit()
+                        return self.send_json({"ok": True, "appwin": res})
+                    if p == "/api/admin/restart":
+                        auth.audit(con, self.user["id"], self.user["login"], self.client_ip(), "qayta ishga tushirish", p, ""); con.commit()
+                        self.send_json({"ok": True})
+                        def _go():
+                            time.sleep(0.6); update.restart_self(APP_DIR, log=lambda *a: sys.stderr.write(" ".join(map(str, a)) + "\n"))
+                            time.sleep(1.5); legacy.release_lock(); os._exit(0)
+                        threading.Thread(target=_go, daemon=True).start(); return
                     if p == "/api/admin/user/kick":
                         n = auth.close_user_sessions(con, int(body["id"]))
                         auth.audit(con, self.user["id"], self.user["login"], self.client_ip(), "sessiya yopildi", p, f"user {body['id']} · {n} sessiya"); con.commit()

@@ -1,0 +1,1976 @@
+{
+"cat1": {
+"Технологик асбоб ва ускуналар": {
+"en": "Machinery & Equipment",
+"ru": "Оборудование и техника",
+"uz": "Texnologik asbob-uskunalar",
+"icon": "machine"
+},
+"Тукимачилик махсулотлари": {
+"en": "Textiles & Apparel",
+"ru": "Текстиль и одежда",
+"uz": "Toʻqimachilik mahsulotlari",
+"icon": "textile"
+},
+"Электротехника ва унинг кисмлари": {
+"en": "Electrical Equipment",
+"ru": "Электротехника",
+"uz": "Elektrotexnika",
+"icon": "electric"
+},
+"Металлар ва улардан тайерланган буюмлар": {
+"en": "Metals & Metal Products",
+"ru": "Металлы и изделия из них",
+"uz": "Metallar va metall buyumlar",
+"icon": "metal"
+},
+"Транспорт ва унинг эхтиёт кисмлари": {
+"en": "Vehicles & Spare Parts",
+"ru": "Транспорт и запчасти",
+"uz": "Transport va ehtiyot qismlar",
+"icon": "transport"
+},
+"Кимё саноати махсулотлари": {
+"en": "Chemicals",
+"ru": "Химическая продукция",
+"uz": "Kimyo sanoati mahsulotlari",
+"icon": "chem"
+},
+"Маиший буюмлар": {
+"en": "Household Goods",
+"ru": "Товары для дома",
+"uz": "Maishiy buyumlar",
+"icon": "home"
+},
+"Озик-овкат махсулотлари": {
+"en": "Food Products",
+"ru": "Продукты питания",
+"uz": "Oziq-ovqat mahsulotlari",
+"icon": "food"
+},
+"Мева-сабзавот махсулотлари": {
+"en": "Fruits & Vegetables",
+"ru": "Фрукты и овощи",
+"uz": "Meva-sabzavot mahsulotlari",
+"icon": "fruit"
+},
+"Пластмасса ва ундан тайёрланган буюмлар, пленка": {
+"en": "Plastics & Films",
+"ru": "Пластмассы и плёнка",
+"uz": "Plastmassa buyumlari va plyonka",
+"icon": "plastic"
+},
+"Насос": {
+"en": "Pumps",
+"ru": "Насосы",
+"uz": "Nasoslar",
+"icon": "machine"
+},
+"Когоз, картон ва улардан ясалган буюмлар": {
+"en": "Paper & Cardboard",
+"ru": "Бумага и картон",
+"uz": "Qogʻoz va karton mahsulotlari",
+"icon": "paper"
+},
+"Шиша ва ундан ясалган буюмлар": {
+"en": "Glass & Glassware",
+"ru": "Стекло и изделия из стекла",
+"uz": "Shisha va shisha buyumlar",
+"icon": "glass"
+},
+"Мебеллар ва уларнинг кисмлари": {
+"en": "Furniture",
+"ru": "Мебель",
+"uz": "Mebel",
+"icon": "furniture"
+},
+"Ёгоч ва тахта, ундан яссалган махсулотлар": {
+"en": "Wood & Timber Products",
+"ru": "Древесина и изделия из дерева",
+"uz": "Yogʻoch va yogʻoch mahsulotlari",
+"icon": "wood"
+},
+"Фармацевтика махсулотлари": {
+"en": "Pharmaceuticals",
+"ru": "Фармацевтика",
+"uz": "Farmatsevtika mahsulotlari",
+"icon": "pharma"
+},
+"Нефть ва нефть махсулотлари": {
+"en": "Oil & Petroleum Products",
+"ru": "Нефть и нефтепродукты",
+"uz": "Neft va neft mahsulotlari",
+"icon": "oil"
+},
+"Табиий казилмалар": {
+"en": "Minerals & Raw Materials",
+"ru": "Минеральное сырьё",
+"uz": "Tabiiy qazilmalar",
+"icon": "mineral"
+},
+"Резина ва ундан тайёрланган буюмлар": {
+"en": "Rubber Products",
+"ru": "Резина и резиновые изделия",
+"uz": "Rezina buyumlari",
+"icon": "rubber"
+},
+"Жун, муйна, тери ва улардан ясалган буюмлар": {
+"en": "Leather, Wool & Fur",
+"ru": "Кожа, шерсть и мех",
+"uz": "Jun, moʻyna, teri va ulardan buyumlar",
+"icon": "leather"
+},
+"Тош, гипс ва цементдан ясалган буюмлар": {
+"en": "Stone, Gypsum & Cement Products",
+"ru": "Изделия из камня, гипса и цемента",
+"uz": "Tosh, gips va sement buyumlari",
+"icon": "stone"
+},
+"Калава ип": {
+"en": "Yarn",
+"ru": "Пряжа",
+"uz": "Kalava ip",
+"icon": "yarn"
+},
+"Спиртли ичимликлар ва тамаки махсулотлари": {
+"en": "Beverages & Tobacco",
+"ru": "Алкогольные напитки и табак",
+"uz": "Spirtli ichimliklar va tamaki",
+"icon": "drink"
+},
+"Гигиена воситалари": {
+"en": "Personal Care & Hygiene",
+"ru": "Средства гигиены и косметика",
+"uz": "Gigiyena vositalari",
+"icon": "hygiene"
+},
+"Тирик хайвонлар ва уларнинг кисмлари": {
+"en": "Live Animals & Animal Products",
+"ru": "Живые животные и продукция животноводства",
+"uz": "Tirik hayvonlar va hayvon mahsulotlari",
+"icon": "animal"
+},
+"Уйинчоклар": {
+"en": "Toys",
+"ru": "Игрушки",
+"uz": "Oʻyinchoqlar",
+"icon": "toy"
+},
+"Керамика буюмлари": {
+"en": "Ceramics",
+"ru": "Керамика",
+"uz": "Keramika buyumlari",
+"icon": "stone"
+},
+"Дарахтлар, усимликлар": {
+"en": "Plants & Seedlings",
+"ru": "Растения и саженцы",
+"uz": "Daraxtlar va oʻsimliklar",
+"icon": "plant"
+},
+"Оёк кийимлар ва унинг кисмлар": {
+"en": "Footwear",
+"ru": "Обувь",
+"uz": "Poyabzal",
+"icon": "shoe"
+},
+"Кишлок хужалиги махсулотлари": {
+"en": "Agricultural Products",
+"ru": "Сельскохозяйственная продукция",
+"uz": "Qishloq xoʻjaligi mahsulotlari",
+"icon": "agro"
+},
+"Минерал угитлар": {
+"en": "Fertilizers",
+"ru": "Минеральные удобрения",
+"uz": "Mineral oʻgʻitlar",
+"icon": "agro"
+},
+"Хайвонлар учун озукалар": {
+"en": "Animal Feed",
+"ru": "Корма для животных",
+"uz": "Hayvonlar uchun ozuqa",
+"icon": "agro"
+},
+"Курол ярог ва харбий техникалар": {
+"en": "Arms & Ammunition",
+"ru": "Оружие и боеприпасы",
+"uz": "Qurol-yarogʻ",
+"icon": "metal"
+},
+"Пахта толаси": {
+"en": "Cotton Fiber",
+"ru": "Хлопковое волокно",
+"uz": "Paxta tolasi",
+"icon": "cotton"
+},
+"Мусикий анжомлар": {
+"en": "Musical Instruments",
+"ru": "Музыкальные инструменты",
+"uz": "Musiqa asboblari",
+"icon": "home"
+}
+},
+"cat2": {
+"Ёгоч": {
+"en": "Timber",
+"ru": "Лесоматериалы",
+"uz": "Yogʻoch"
+},
+"Ёгоч махсулотлари (эшиклар, деразалар ва х.к.)": {
+"en": "Wooden doors, windows & joinery",
+"ru": "Столярные изделия (двери, окна)",
+"uz": "Yogʻoch mahsulotlari (eshik, deraza)"
+},
+"Ёгоч плиталари": {
+"en": "Wood panels",
+"ru": "Древесные плиты",
+"uz": "Yogʻoch plitalari"
+},
+"Ёгоч плиталари (ДСП)": {
+"en": "Particle board (chipboard)",
+"ru": "ДСП",
+"uz": "Yogʻoch plitalari (DSP)"
+},
+"Бошкалар (ёгоч кўмир, кипик ва х.к.)": {
+"en": "Charcoal, wood chips & other",
+"ru": "Древесный уголь, стружка и пр.",
+"uz": "Boshqalar (yogʻoch koʻmir, qipiq)"
+},
+"МДФ плиталар": {
+"en": "MDF boards",
+"ru": "Плиты МДФ",
+"uz": "MDF plitalar"
+},
+"Фанер": {
+"en": "Plywood",
+"ru": "Фанера",
+"uz": "Fanera"
+},
+"Шпаллар": {
+"en": "Railway sleepers",
+"ru": "Шпалы",
+"uz": "Shpallar"
+},
+"Атир, дезодорант, спрей, ва х.к.": {
+"en": "Perfumes & deodorants",
+"ru": "Парфюмерия и дезодоранты",
+"uz": "Atir, dezodorant, sprey"
+},
+"Болалар тагликлари, аёллар гигиена воситалари ва х .к": {
+"en": "Diapers & sanitary products",
+"ru": "Подгузники и средства гигиены",
+"uz": "Bolalar tagliklari va gigiyena vositalari"
+},
+"Кир ювиш кукунлари": {
+"en": "Laundry detergents",
+"ru": "Стиральные порошки",
+"uz": "Kir yuvish kukunlari"
+},
+"Косметика (крем, пудра)": {
+"en": "Cosmetics",
+"ru": "Косметика",
+"uz": "Kosmetika (krem, pudra)"
+},
+"Саёхат анжомлари (мочалка, тарок ва х.к.)": {
+"en": "Personal care accessories",
+"ru": "Принадлежности для ухода",
+"uz": "Shaxsiy gigiyena anjomlari"
+},
+"Совун": {
+"en": "Soap",
+"ru": "Мыло",
+"uz": "Sovun"
+},
+"Тиш пастаси": {
+"en": "Toothpaste",
+"ru": "Зубная паста",
+"uz": "Tish pastasi"
+},
+"Шампунлар, соч лаклари": {
+"en": "Shampoos & hair care",
+"ru": "Шампуни и средства для волос",
+"uz": "Shampun va soch vositalari"
+},
+"Ўсимликлар ўзаги": {
+"en": "Plant roots & bulbs",
+"ru": "Корни и луковицы растений",
+"uz": "Oʻsimlik ildizlari"
+},
+"Бошкалар": {
+"en": "Other",
+"ru": "Прочее",
+"uz": "Boshqalar"
+},
+"Гул": {
+"en": "Flowers",
+"ru": "Цветы",
+"uz": "Gullar"
+},
+"Кўчат": {
+"en": "Seedlings",
+"ru": "Саженцы",
+"uz": "Koʻchatlar"
+},
+"Бошкалар (замша, сунъий жун ва х.к.)": {
+"en": "Suede, faux fur & other",
+"ru": "Замша, искусственный мех и пр.",
+"uz": "Boshqalar (zamsh, sunʼiy jun)"
+},
+"Жун ва жунли махсулотлар (матолар)": {
+"en": "Wool & woollen fabrics",
+"ru": "Шерсть и шерстяные ткани",
+"uz": "Jun va jun matolar"
+},
+"Муйна ва мўйнали кийимлар": {
+"en": "Fur & fur garments",
+"ru": "Мех и меховые изделия",
+"uz": "Moʻyna va moʻynali kiyimlar"
+},
+"Тери": {
+"en": "Hides & leather",
+"ru": "Кожа и шкуры",
+"uz": "Teri"
+},
+"Тери махсулотлари (сумкалар, кийимлар ва х.к.)": {
+"en": "Bags & leather goods",
+"ru": "Сумки и кожгалантерея",
+"uz": "Sumkalar va teri buyumlari"
+},
+"Пахта ип калаваси": {
+"en": "Cotton yarn",
+"ru": "Хлопчатобумажная пряжа",
+"uz": "Paxta ip kalavasi"
+},
+"Гиштлар": {
+"en": "Bricks",
+"ru": "Кирпич",
+"uz": "Gʻishtlar"
+},
+"Керамик идишлар": {
+"en": "Ceramic tableware",
+"ru": "Керамическая посуда",
+"uz": "Keramik idishlar"
+},
+"Керамик плиталар": {
+"en": "Ceramic tiles",
+"ru": "Керамическая плитка",
+"uz": "Keramik plitkalar"
+},
+"Ёгли кислоталар": {
+"en": "Fatty acids",
+"ru": "Жирные кислоты",
+"uz": "Yogʻ kislotalari"
+},
+"Ўсимликларни химоя килиш махсулотлари": {
+"en": "Crop protection products",
+"ru": "Средства защиты растений",
+"uz": "Oʻsimliklarni himoya qilish vositalari"
+},
+"Активланган кўмир, графит": {
+"en": "Activated carbon & graphite",
+"ru": "Активированный уголь, графит",
+"uz": "Faollashtirilgan koʻmir, grafit"
+},
+"Бошкалар (эфирлар, галогенидлар ва х.к.)": {
+"en": "Other chemicals",
+"ru": "Прочая химия",
+"uz": "Boshqa kimyoviy moddalar"
+},
+"Бўёклар, лаклар": {
+"en": "Paints & varnishes",
+"ru": "Краски и лаки",
+"uz": "Boʻyoqlar, laklar"
+},
+"Водород перекиси": {
+"en": "Hydrogen peroxide",
+"ru": "Перекись водорода",
+"uz": "Vodorod peroksidi"
+},
+"Елим": {
+"en": "Adhesives",
+"ru": "Клеи",
+"uz": "Yelim"
+},
+"Замазкалар, шпатлевкалар": {
+"en": "Putties & fillers",
+"ru": "Шпатлёвки и замазки",
+"uz": "Shpatlyovkalar"
+},
+"Кальций карбиди": {
+"en": "Calcium carbide",
+"ru": "Карбид кальция",
+"uz": "Kalsiy karbidi"
+},
+"Канифоль": {
+"en": "Rosin",
+"ru": "Канифоль",
+"uz": "Kanifol"
+},
+"Каустик сода, рух, алюмин ва темир оксидлари": {
+"en": "Caustic soda & metal oxides",
+"ru": "Каустическая сода и оксиды металлов",
+"uz": "Kaustik soda va metall oksidlari"
+},
+"Кимёвий тузлар": {
+"en": "Chemical salts",
+"ru": "Химические соли",
+"uz": "Kimyoviy tuzlar"
+},
+"Кимёвий унсурлар (фтор, хром, углерод, водород)": {
+"en": "Chemical elements",
+"ru": "Химические элементы",
+"uz": "Kimyoviy elementlar"
+},
+"Крахмал": {
+"en": "Starch",
+"ru": "Крахмал",
+"uz": "Kraxmal"
+},
+"Ноорганик кислоталар (азотли, фосфорли, борли)": {
+"en": "Inorganic acids",
+"ru": "Неорганические кислоты",
+"uz": "Noorganik kislotalar"
+},
+"Органик бирикмалар (азотли)": {
+"en": "Organic nitrogen compounds",
+"ru": "Органические азотистые соединения",
+"uz": "Organik birikmalar (azotli)"
+},
+"Органик бирикмалар (углеводлар, феноллар )": {
+"en": "Hydrocarbons & phenols",
+"ru": "Углеводороды и фенолы",
+"uz": "Organik birikmalar (uglevodorodlar, fenollar)"
+},
+"Органик бирикмалар (эфирлар, алдегидлар, кислоталар)": {
+"en": "Esters, aldehydes & organic acids",
+"ru": "Эфиры, альдегиды и органические кислоты",
+"uz": "Organik birikmalar (efirlar, aldegidlar)"
+},
+"Органик-ноорганик бирикмалар (олтингугурт ва х.к.)": {
+"en": "Organo-inorganic compounds",
+"ru": "Органо-неорганические соединения",
+"uz": "Organik-noorganik birikmalar"
+},
+"Пигментлар": {
+"en": "Pigments",
+"ru": "Пигменты",
+"uz": "Pigmentlar"
+},
+"Полианионли целлюлоза": {
+"en": "Polyanionic cellulose",
+"ru": "Полианионная целлюлоза",
+"uz": "Polianion sellyuloza"
+},
+"Провитаминлар, гормонлар, антибиотиклар": {
+"en": "Provitamins, hormones & antibiotics",
+"ru": "Провитамины, гормоны, антибиотики",
+"uz": "Provitaminlar, gormonlar, antibiotiklar"
+},
+"Реагентлар": {
+"en": "Reagents",
+"ru": "Реагенты",
+"uz": "Reagentlar"
+},
+"Силикон": {
+"en": "Silicones",
+"ru": "Силиконы",
+"uz": "Silikon"
+},
+"Стабилизатор, катализатор, концентрат, ароматизатор": {
+"en": "Stabilizers, catalysts & flavourings",
+"ru": "Стабилизаторы, катализаторы, ароматизаторы",
+"uz": "Stabilizator, katalizator, aromatizator"
+},
+"Титан диоксиди": {
+"en": "Titanium dioxide",
+"ru": "Диоксид титана",
+"uz": "Titan dioksidi"
+},
+"Тўкимачиликда ишлатиладиган химикатлар": {
+"en": "Textile chemicals",
+"ru": "Текстильная химия",
+"uz": "Toʻqimachilik kimyoviy vositalari"
+},
+"Ферментлар (дорилар учун)": {
+"en": "Enzymes",
+"ru": "Ферменты",
+"uz": "Fermentlar"
+},
+"Арпа": {
+"en": "Barley",
+"ru": "Ячмень",
+"uz": "Arpa"
+},
+"Бошкалар (жавдар, сули, гречка ва х.к.)": {
+"en": "Other grains",
+"ru": "Прочие зерновые",
+"uz": "Boshqa donli ekinlar"
+},
+"Бугдой": {
+"en": "Wheat",
+"ru": "Пшеница",
+"uz": "Bugʻdoy"
+},
+"Гуруч": {
+"en": "Rice",
+"ru": "Рис",
+"uz": "Guruch"
+},
+"Уруглик (зира, зигир, кунгабокар, пахта ва х.к.)": {
+"en": "Seeds (cumin, flax, sunflower, cotton)",
+"ru": "Семена (зира, лён, подсолнечник, хлопок)",
+"uz": "Urugʻlik (zira, zigʻir, kungaboqar, paxta)"
+},
+"Хмель илдизи, барги": {
+"en": "Hops",
+"ru": "Хмель",
+"uz": "Xmel"
+},
+"Бошкалар (табрикнома, календарь, расмлар ва х.к.)": {
+"en": "Printed matter (cards, calendars)",
+"ru": "Печатная продукция (открытки, календари)",
+"uz": "Bosma mahsulotlar (tabriknoma, kalendar)"
+},
+"Газета ва китоблар": {
+"en": "Books & newspapers",
+"ru": "Книги и газеты",
+"uz": "Kitob va gazetalar"
+},
+"Когоз": {
+"en": "Paper",
+"ru": "Бумага",
+"uz": "Qogʻoz"
+},
+"Когоз чикиндилари": {
+"en": "Waste paper",
+"ru": "Макулатура",
+"uz": "Qogʻoz chiqindilari"
+},
+"Маркалар": {
+"en": "Stamps",
+"ru": "Марки",
+"uz": "Markalar"
+},
+"Суръатлар": {
+"en": "Pictures & prints",
+"ru": "Изображения и фото",
+"uz": "Suratlar"
+},
+"Ўк дорилар": {
+"en": "Ammunition",
+"ru": "Боеприпасы",
+"uz": "Oʻq-dorilar"
+},
+"Ўк отар куроллар (пневматик, ов милтиги)": {
+"en": "Firearms & air guns",
+"ru": "Огнестрельное и пневматическое оружие",
+"uz": "Oʻqotar qurollar"
+},
+"Каруселлар": {
+"en": "Amusement rides",
+"ru": "Карусели и аттракционы",
+"uz": "Karusellar"
+},
+"Кўзойнак, рамкалар": {
+"en": "Eyewear & frames",
+"ru": "Очки и оправы",
+"uz": "Koʻzoynak va gardishlar"
+},
+"Ошхона идишлари": {
+"en": "Kitchenware",
+"ru": "Кухонная посуда",
+"uz": "Oshxona idishlari"
+},
+"Сантехника": {
+"en": "Sanitary ware",
+"ru": "Сантехника",
+"uz": "Santexnika"
+},
+"Соатлар ва уларнинг кисмлари": {
+"en": "Watches & clocks",
+"ru": "Часы",
+"uz": "Soatlar"
+},
+"Спорт анжомлари": {
+"en": "Sports equipment",
+"ru": "Спортивный инвентарь",
+"uz": "Sport anjomlari"
+},
+"Супурги ва чўткалар": {
+"en": "Brooms & brushes",
+"ru": "Мётлы и щётки",
+"uz": "Supurgi va choʻtkalar"
+},
+"Хушбўй шамлар": {
+"en": "Candles",
+"ru": "Свечи",
+"uz": "Xushboʻy shamlar"
+},
+"Хўжалик анжомлари (пичок, арра ва х.к.)": {
+"en": "Hand tools & cutlery",
+"ru": "Инструменты и ножевые изделия",
+"uz": "Xoʻjalik anjomlari (pichoq, arra)"
+},
+"Шарикли ручкалар, каламлар": {
+"en": "Pens & pencils",
+"ru": "Ручки и карандаши",
+"uz": "Ruchka va qalamlar"
+},
+"Элаклар ва сеткалар": {
+"en": "Sieves & meshes",
+"ru": "Сита и сетки",
+"uz": "Elak va setkalar"
+},
+"Ёгочдан ясалган мебеллар": {
+"en": "Wooden furniture",
+"ru": "Деревянная мебель",
+"uz": "Yogʻoch mebel"
+},
+"Ўтириш мебеллари (кресло, диван, стул ва х.з.)": {
+"en": "Seating (chairs, armchairs, sofas)",
+"ru": "Мебель для сидения (стулья, кресла, диваны)",
+"uz": "Oʻtirish mebeli (stul, kreslo, divan)"
+},
+"Бошкалар (фурнитура, стол, каравот ва х.к.)": {
+"en": "Tables, beds & fittings",
+"ru": "Столы, кровати и фурнитура",
+"uz": "Stol, karavot va furnitura"
+},
+"Жавонлар (шкафлар)": {
+"en": "Cabinets & wardrobes",
+"ru": "Шкафы",
+"uz": "Javonlar (shkaflar)"
+},
+"Матрац": {
+"en": "Mattresses",
+"ru": "Матрасы",
+"uz": "Matraslar"
+},
+"Тиббиёт мебеллари": {
+"en": "Medical furniture",
+"ru": "Медицинская мебель",
+"uz": "Tibbiyot mebeli"
+},
+"Ёнгоклар": {
+"en": "Nuts",
+"ru": "Орехи",
+"uz": "Yongʻoqlar"
+},
+"Ўрик": {
+"en": "Apricots",
+"ru": "Абрикосы",
+"uz": "Oʻrik"
+},
+"Бехи": {
+"en": "Quinces",
+"ru": "Айва",
+"uz": "Behi"
+},
+"Бодринг": {
+"en": "Cucumbers",
+"ru": "Огурцы",
+"uz": "Bodring"
+},
+"Гилос": {
+"en": "Cherries",
+"ru": "Черешня",
+"uz": "Gilos"
+},
+"Калампир": {
+"en": "Peppers",
+"ru": "Перец",
+"uz": "Qalampir"
+},
+"Карам": {
+"en": "Cabbage",
+"ru": "Капуста",
+"uz": "Karam"
+},
+"Картошка": {
+"en": "Potatoes",
+"ru": "Картофель",
+"uz": "Kartoshka"
+},
+"Ковун": {
+"en": "Melons",
+"ru": "Дыни",
+"uz": "Qovun"
+},
+"Консерваланган сабзавотлар": {
+"en": "Canned vegetables",
+"ru": "Овощные консервы",
+"uz": "Konservalangan sabzavotlar"
+},
+"Куритилган мева-сабзавотлар": {
+"en": "Dried fruits & vegetables",
+"ru": "Сухофрукты и сушёные овощи",
+"uz": "Quritilgan meva-sabzavotlar"
+},
+"Кўзикоринлар": {
+"en": "Mushrooms",
+"ru": "Грибы",
+"uz": "Qoʻziqorinlar"
+},
+"Лавлаги": {
+"en": "Beetroot",
+"ru": "Свёкла",
+"uz": "Lavlagi"
+},
+"Ловия": {
+"en": "Beans",
+"ru": "Фасоль",
+"uz": "Loviya"
+},
+"Мош": {
+"en": "Mung beans",
+"ru": "Маш",
+"uz": "Mosh"
+},
+"Ноклар": {
+"en": "Pears",
+"ru": "Груши",
+"uz": "Noklar"
+},
+"Олма": {
+"en": "Apples",
+"ru": "Яблоки",
+"uz": "Olma"
+},
+"Олхўри": {
+"en": "Plums",
+"ru": "Сливы",
+"uz": "Olxoʻri"
+},
+"Пиёз": {
+"en": "Onions",
+"ru": "Лук",
+"uz": "Piyoz"
+},
+"Помидор": {
+"en": "Tomatoes",
+"ru": "Томаты",
+"uz": "Pomidor"
+},
+"Сабзи": {
+"en": "Carrots",
+"ru": "Морковь",
+"uz": "Sabzi"
+},
+"Салат": {
+"en": "Lettuce & greens",
+"ru": "Салат и зелень",
+"uz": "Salat"
+},
+"Саримсок": {
+"en": "Garlic",
+"ru": "Чеснок",
+"uz": "Sarimsoq"
+},
+"Тарвуз": {
+"en": "Watermelons",
+"ru": "Арбузы",
+"uz": "Tarvuz"
+},
+"Тарик": {
+"en": "Millet",
+"ru": "Просо",
+"uz": "Tariq"
+},
+"Узум": {
+"en": "Grapes",
+"ru": "Виноград",
+"uz": "Uzum"
+},
+"Цитрус мевалар": {
+"en": "Citrus fruits",
+"ru": "Цитрусовые",
+"uz": "Sitrus mevalar"
+},
+"Шафтоли": {
+"en": "Peaches",
+"ru": "Персики",
+"uz": "Shaftoli"
+},
+"Алюминий ва ундан ясалган буюмлар": {
+"en": "Aluminium products",
+"ru": "Алюминий и изделия из него",
+"uz": "Alyuminiy buyumlari"
+},
+"Бошкалар (ферросплав, чўян, никель, арматура ва х.к.)": {
+"en": "Ferroalloys, cast iron & other",
+"ru": "Ферросплавы, чугун и пр.",
+"uz": "Ferroqotishma, choʻyan va boshqalar"
+},
+"Кимматбахо металлар (олтин, платина, кумуш ва х.к.)": {
+"en": "Precious metals",
+"ru": "Драгоценные металлы",
+"uz": "Qimmatbaho metallar"
+},
+"Кора металлар (кувур, арматура, михлар ва х.к.)": {
+"en": "Ferrous metal products (pipes, rebar, nails)",
+"ru": "Чёрные металлы (трубы, арматура, гвозди)",
+"uz": "Qora metallar (quvur, armatura, mix)"
+},
+"Кўргошин ва ундан тайёрланган буюмлар": {
+"en": "Lead products",
+"ru": "Свинец и изделия из него",
+"uz": "Qoʻrgʻoshin buyumlari"
+},
+"Метал чикиндилар": {
+"en": "Metal scrap",
+"ru": "Металлолом",
+"uz": "Metall chiqindilari"
+},
+"Мис ва ундан ясалган буюмлар": {
+"en": "Copper products",
+"ru": "Медь и изделия из неё",
+"uz": "Mis buyumlari"
+},
+"Пўлат буюмлар": {
+"en": "Steel products",
+"ru": "Стальные изделия",
+"uz": "Poʻlat buyumlar"
+},
+"Рух ва ундан ясалган буюмлар": {
+"en": "Zinc products",
+"ru": "Цинк и изделия из него",
+"uz": "Rux buyumlari"
+},
+"Сим": {
+"en": "Wire",
+"ru": "Проволока",
+"uz": "Sim"
+},
+"Ясси темир прокатлар": {
+"en": "Flat-rolled steel",
+"ru": "Плоский прокат",
+"uz": "Yassi prokat"
+},
+"Азотли ўгитлар": {
+"en": "Nitrogen fertilizers",
+"ru": "Азотные удобрения",
+"uz": "Azotli oʻgʻitlar"
+},
+"Аралаш ўгитлар": {
+"en": "Compound fertilizers",
+"ru": "Комплексные удобрения",
+"uz": "Aralash oʻgʻitlar"
+},
+"Калийли ўгитлар": {
+"en": "Potash fertilizers",
+"ru": "Калийные удобрения",
+"uz": "Kaliyli oʻgʻitlar"
+},
+"Бошкалар (гидравлик, поршенли ва х.к.)": {
+"en": "Hydraulic & piston pumps",
+"ru": "Гидравлические и поршневые насосы",
+"uz": "Gidravlik va porshenli nasoslar"
+},
+"Насос суюклиги": {
+"en": "Pump fluids",
+"ru": "Жидкости для насосов",
+"uz": "Nasos suyuqligi"
+},
+"Насослар": {
+"en": "Pumps",
+"ru": "Насосы",
+"uz": "Nasoslar"
+},
+"Совутиш жихозлари насослар": {
+"en": "Cooling pumps",
+"ru": "Насосы для систем охлаждения",
+"uz": "Sovutish nasoslari"
+},
+"Турбокомпрессор (ишлаб чикараиш заводлари учун)": {
+"en": "Industrial turbocompressors",
+"ru": "Промышленные турбокомпрессоры",
+"uz": "Sanoat turbokompressorlari"
+},
+"Ёкилги (керосин, дизель)": {
+"en": "Fuels (kerosene, diesel)",
+"ru": "Топливо (керосин, дизель)",
+"uz": "Yoqilgʻi (kerosin, dizel)"
+},
+"Бензин": {
+"en": "Gasoline",
+"ru": "Бензин",
+"uz": "Benzin"
+},
+"Битум": {
+"en": "Bitumen",
+"ru": "Битум",
+"uz": "Bitum"
+},
+"Бошкалар (ювиш мойлари, сланцлар ва х.к.)": {
+"en": "Other petroleum products",
+"ru": "Прочие нефтепродукты",
+"uz": "Boshqa neft mahsulotlari"
+},
+"Мотор мойи": {
+"en": "Motor oils",
+"ru": "Моторные масла",
+"uz": "Motor moyi"
+},
+"Нефть": {
+"en": "Crude oil",
+"ru": "Нефть",
+"uz": "Neft"
+},
+"Ёг": {
+"en": "Fats & oils",
+"ru": "Жиры и масла",
+"uz": "Yogʻ"
+},
+"Ёрмалар (гречка, гуруч ва х.к.)": {
+"en": "Groats & cereals",
+"ru": "Крупы",
+"uz": "Yormalar"
+},
+"Асал": {
+"en": "Honey",
+"ru": "Мёд",
+"uz": "Asal"
+},
+"Балик": {
+"en": "Fish",
+"ru": "Рыба",
+"uz": "Baliq"
+},
+"Био кўшимчалар": {
+"en": "Dietary supplements",
+"ru": "БАДы",
+"uz": "Bio qoʻshimchalar"
+},
+"Болалар овкатлари": {
+"en": "Baby food",
+"ru": "Детское питание",
+"uz": "Bolalar ovqati"
+},
+"Бошкалар (колбаса, музкаймок, творог ва х.к.)": {
+"en": "Other foods (sausages, ice cream, curd)",
+"ru": "Прочие продукты (колбасы, мороженое, творог)",
+"uz": "Boshqa oziq-ovqat (kolbasa, muzqaymoq, tvorog)"
+},
+"Глюкоза, лактоза": {
+"en": "Glucose & lactose",
+"ru": "Глюкоза, лактоза",
+"uz": "Glyukoza, laktoza"
+},
+"Гўшт": {
+"en": "Meat",
+"ru": "Мясо",
+"uz": "Goʻsht"
+},
+"Ичимликлар": {
+"en": "Beverages",
+"ru": "Напитки",
+"uz": "Ichimliklar"
+},
+"Какао": {
+"en": "Cocoa",
+"ru": "Какао",
+"uz": "Kakao"
+},
+"Кахва": {
+"en": "Coffee",
+"ru": "Кофе",
+"uz": "Qahva"
+},
+"Консерваланган денгиз махсулотлари": {
+"en": "Canned seafood",
+"ru": "Рыбные консервы",
+"uz": "Konservalangan dengiz mahsulotlari"
+},
+"Кунгабокар ёги": {
+"en": "Sunflower oil",
+"ru": "Подсолнечное масло",
+"uz": "Kungaboqar yogʻi"
+},
+"Курук овкат": {
+"en": "Dry food mixes",
+"ru": "Сухие смеси",
+"uz": "Quruq ovqat"
+},
+"Макаронлар": {
+"en": "Pasta",
+"ru": "Макаронные изделия",
+"uz": "Makaron"
+},
+"Маргарин": {
+"en": "Margarine",
+"ru": "Маргарин",
+"uz": "Margarin"
+},
+"Ош тузи": {
+"en": "Salt",
+"ru": "Поваренная соль",
+"uz": "Osh tuzi"
+},
+"Пахта ёги": {
+"en": "Cottonseed oil",
+"ru": "Хлопковое масло",
+"uz": "Paxta yogʻi"
+},
+"Пишлок": {
+"en": "Cheese",
+"ru": "Сыр",
+"uz": "Pishloq"
+},
+"Сакич": {
+"en": "Chewing gum",
+"ru": "Жевательная резинка",
+"uz": "Saqich"
+},
+"Сирка": {
+"en": "Vinegar",
+"ru": "Уксус",
+"uz": "Sirka"
+},
+"Соус (кетчуп, майонез)": {
+"en": "Sauces (ketchup, mayonnaise)",
+"ru": "Соусы (кетчуп, майонез)",
+"uz": "Souslar (ketchup, mayonez)"
+},
+"Сут махсулотлари": {
+"en": "Dairy products",
+"ru": "Молочная продукция",
+"uz": "Sut mahsulotlari"
+},
+"Тайёр таомлар (нонушта, ош)": {
+"en": "Ready meals",
+"ru": "Готовые блюда",
+"uz": "Tayyor taomlar"
+},
+"Тухумлар": {
+"en": "Eggs",
+"ru": "Яйца",
+"uz": "Tuxum"
+},
+"Ун": {
+"en": "Flour",
+"ru": "Мука",
+"uz": "Un"
+},
+"Ун махсулотлари (вафли, печенье ва х.з.)": {
+"en": "Bakery & confectionery",
+"ru": "Мучные кондитерские изделия",
+"uz": "Un mahsulotlari (vafli, pechenye)"
+},
+"Хамиртуриш": {
+"en": "Yeast",
+"ru": "Дрожжи",
+"uz": "Xamirturush"
+},
+"Чой": {
+"en": "Tea",
+"ru": "Чай",
+"uz": "Choy"
+},
+"Шакар ва шакар хомашёси": {
+"en": "Sugar",
+"ru": "Сахар",
+"uz": "Shakar"
+},
+"Шоколад": {
+"en": "Chocolate",
+"ru": "Шоколад",
+"uz": "Shokolad"
+},
+"Оёк кийим ва кисмлари": {
+"en": "Footwear & parts",
+"ru": "Обувь и её детали",
+"uz": "Poyabzal va qismlari"
+},
+"Пахта толаси": {
+"en": "Cotton fiber",
+"ru": "Хлопковое волокно",
+"uz": "Paxta tolasi"
+},
+"Акрил": {
+"en": "Acrylics",
+"ru": "Акрил",
+"uz": "Akril"
+},
+"Пластмасса махсулотлар": {
+"en": "Plastic products",
+"ru": "Пластиковые изделия",
+"uz": "Plastmassa mahsulotlari"
+},
+"Плёнка": {
+"en": "Plastic film",
+"ru": "Плёнка",
+"uz": "Plyonka"
+},
+"Поливинилхлорид": {
+"en": "PVC",
+"ru": "Поливинилхлорид (ПВХ)",
+"uz": "Polivinilxlorid (PVX)"
+},
+"Полипропилен": {
+"en": "Polypropylene",
+"ru": "Полипропилен",
+"uz": "Polipropilen"
+},
+"Полистирол": {
+"en": "Polystyrene",
+"ru": "Полистирол",
+"uz": "Polistirol"
+},
+"Полителентерефталат": {
+"en": "PET",
+"ru": "Полиэтилентерефталат (ПЭТ)",
+"uz": "Polietilentereftalat (PET)"
+},
+"Полиэтилен": {
+"en": "Polyethylene",
+"ru": "Полиэтилен",
+"uz": "Polietilen"
+},
+"Рентген пленкаси": {
+"en": "X-ray film",
+"ru": "Рентгеновская плёнка",
+"uz": "Rentgen plyonkasi"
+},
+"Труба, трубка, шланг": {
+"en": "Pipes & hoses",
+"ru": "Трубы и шланги",
+"uz": "Quvur va shlanglar"
+},
+"Фотокимёвий моддалар": {
+"en": "Photochemicals",
+"ru": "Фотохимикаты",
+"uz": "Fotokimyoviy moddalar"
+},
+"Каучук": {
+"en": "Natural & synthetic rubber",
+"ru": "Каучук",
+"uz": "Kauchuk"
+},
+"Резина": {
+"en": "Rubber",
+"ru": "Резина",
+"uz": "Rezina"
+},
+"Резина махсулотлари (кувур, шланг ва х.к.)": {
+"en": "Rubber goods (hoses, tubes)",
+"ru": "Резинотехнические изделия",
+"uz": "Rezina mahsulotlari (quvur, shlang)"
+},
+"Арок": {
+"en": "Vodka",
+"ru": "Водка",
+"uz": "Aroq"
+},
+"Бошкалар (ром, джин, ликёр, коньяк ва х.к.)": {
+"en": "Other spirits (brandy, liqueurs)",
+"ru": "Прочие крепкие напитки",
+"uz": "Boshqa spirtli ichimliklar"
+},
+"Вино": {
+"en": "Wine",
+"ru": "Вино",
+"uz": "Vino"
+},
+"Виски": {
+"en": "Whisky",
+"ru": "Виски",
+"uz": "Viski"
+},
+"Пиво": {
+"en": "Beer",
+"ru": "Пиво",
+"uz": "Pivo"
+},
+"Тамаки": {
+"en": "Tobacco",
+"ru": "Табак",
+"uz": "Tamaki"
+},
+"Барий сульфати": {
+"en": "Barium sulphate",
+"ru": "Сульфат бария",
+"uz": "Bariy sulfati"
+},
+"Бошкалар (бўр, кул, охак, олтингугурт ва х.к.)": {
+"en": "Chalk, lime, sulphur & other",
+"ru": "Мел, известь, сера и пр.",
+"uz": "Boʻr, ohak, oltingugurt va boshqalar"
+},
+"Гипс": {
+"en": "Gypsum",
+"ru": "Гипс",
+"uz": "Gips"
+},
+"Гранит": {
+"en": "Granite",
+"ru": "Гранит",
+"uz": "Granit"
+},
+"Кальций фосфати": {
+"en": "Calcium phosphate",
+"ru": "Фосфат кальция",
+"uz": "Kalsiy fosfati"
+},
+"Кокс": {
+"en": "Coke",
+"ru": "Кокс",
+"uz": "Koks"
+},
+"Кум": {
+"en": "Sand",
+"ru": "Песок",
+"uz": "Qum"
+},
+"Кўмир": {
+"en": "Coal",
+"ru": "Уголь",
+"uz": "Koʻmir"
+},
+"Лой": {
+"en": "Clay",
+"ru": "Глина",
+"uz": "Loy"
+},
+"Магний карбамиди": {
+"en": "Magnesium compounds",
+"ru": "Соединения магния",
+"uz": "Magniy birikmalari"
+},
+"Мармар": {
+"en": "Marble",
+"ru": "Мрамор",
+"uz": "Marmar"
+},
+"Пропан, бутан": {
+"en": "Propane & butane",
+"ru": "Пропан, бутан",
+"uz": "Propan, butan"
+},
+"Рудалар": {
+"en": "Ores",
+"ru": "Руды",
+"uz": "Rudalar"
+},
+"Хлорланган магний": {
+"en": "Magnesium chloride",
+"ru": "Хлорид магния",
+"uz": "Magniy xlorid"
+},
+"Цемент": {
+"en": "Cement",
+"ru": "Цемент",
+"uz": "Sement"
+},
+"Ёгочларни кайта ишловчи асбоб ускуналар": {
+"en": "Woodworking machinery",
+"ru": "Деревообрабатывающее оборудование",
+"uz": "Yogʻochga ishlov berish uskunalari"
+},
+"Алока асбоб ускуналари": {
+"en": "Telecom equipment",
+"ru": "Оборудование связи",
+"uz": "Aloqa uskunalari"
+},
+"Йигилувчи курилиш конструкциялари": {
+"en": "Prefabricated buildings",
+"ru": "Сборные конструкции",
+"uz": "Yigʻma qurilish konstruksiyalari"
+},
+"Кимёвий тахлил лабораториялари": {
+"en": "Laboratory equipment",
+"ru": "Лабораторное оборудование",
+"uz": "Laboratoriya uskunalari"
+},
+"Кишлок хўжалиги асбоб ускуналари": {
+"en": "Agricultural machinery",
+"ru": "Сельхозоборудование",
+"uz": "Qishloq xoʻjaligi uskunalari"
+},
+"Когозларни кайта ишловчи ва нашр этувчи ускуналар": {
+"en": "Paper & printing machinery",
+"ru": "Полиграфическое и бумагоделательное оборудование",
+"uz": "Qogʻoz va poligrafiya uskunalari"
+},
+"Кўтарувчи асбоб ускуналар (домкрат, кран, лифт)": {
+"en": "Lifting equipment",
+"ru": "Подъёмное оборудование",
+"uz": "Koʻtarish uskunalari (domkrat, kran, lift)"
+},
+"Металлургия асбоб ускуналари": {
+"en": "Metallurgical equipment",
+"ru": "Металлургическое оборудование",
+"uz": "Metallurgiya uskunalari"
+},
+"Озик-овкат махсулотларини ишлаб чикарувчи ускуналар": {
+"en": "Food processing machinery",
+"ru": "Пищевое оборудование",
+"uz": "Oziq-ovqat ishlab chiqarish uskunalari"
+},
+"Пайвандлаш асбоб ускуналари": {
+"en": "Welding equipment",
+"ru": "Сварочное оборудование",
+"uz": "Payvandlash uskunalari"
+},
+"Печлар": {
+"en": "Furnaces & ovens",
+"ru": "Печи",
+"uz": "Pechlar"
+},
+"Радиатор ва иситиш козонлари": {
+"en": "Radiators & boilers",
+"ru": "Радиаторы и котлы",
+"uz": "Radiator va isitish qozonlari"
+},
+"Резина ва пластмассани кайта ишловчи ускуналар": {
+"en": "Rubber & plastics machinery",
+"ru": "Оборудование для переработки пластмасс и резины",
+"uz": "Rezina va plastmassa uskunalari"
+},
+"Рентген, топография асбоб ускуналари": {
+"en": "X-ray & surveying instruments",
+"ru": "Рентгеновское и геодезическое оборудование",
+"uz": "Rentgen va topografiya uskunalari"
+},
+"Системаларни бошкариш асбоб ускуналари": {
+"en": "Control systems",
+"ru": "Системы управления",
+"uz": "Boshqaruv tizimlari uskunalari"
+},
+"Терини кайта ишлаш асбоб ускуналари": {
+"en": "Leather processing machinery",
+"ru": "Кожевенное оборудование",
+"uz": "Teriga ishlov berish uskunalari"
+},
+"Тошларни кайта ишловчи асбоб ускуналар": {
+"en": "Stone processing machinery",
+"ru": "Камнеобрабатывающее оборудование",
+"uz": "Toshga ishlov berish uskunalari"
+},
+"Турбо двигателлар": {
+"en": "Turbines & engines",
+"ru": "Турбины и двигатели",
+"uz": "Turbodvigatellar"
+},
+"Тўкимачилик асбоб ускуналари": {
+"en": "Textile machinery",
+"ru": "Текстильное оборудование",
+"uz": "Toʻqimachilik uskunalari"
+},
+"Хавони совутиш ускуналари": {
+"en": "Air conditioning equipment",
+"ru": "Климатическое оборудование",
+"uz": "Havoni sovutish uskunalari"
+},
+"Эхтиёт кисмлар": {
+"en": "Spare parts",
+"ru": "Запасные части",
+"uz": "Ehtiyot qismlar"
+},
+"Ювиш ва куритиш асбоб ускуналари": {
+"en": "Washing & drying equipment",
+"ru": "Моечное и сушильное оборудование",
+"uz": "Yuvish va quritish uskunalari"
+},
+"Бошкалар (чўчка, куён, тери, ичаклар ва х.к.)": {
+"en": "Other animals & by-products",
+"ru": "Прочие животные и субпродукты",
+"uz": "Boshqa hayvonlar va mahsulotlar"
+},
+"Ипак куртаклари": {
+"en": "Silkworm cocoons",
+"ru": "Коконы шелкопряда",
+"uz": "Ipak qurti"
+},
+"Кўй, эчки": {
+"en": "Sheep & goats",
+"ru": "Овцы и козы",
+"uz": "Qoʻy, echki"
+},
+"Отлар": {
+"en": "Horses",
+"ru": "Лошади",
+"uz": "Otlar"
+},
+"Сигирлар": {
+"en": "Cattle",
+"ru": "Крупный рогатый скот",
+"uz": "Sigirlar"
+},
+"Хонаки кушлари": {
+"en": "Poultry",
+"ru": "Домашняя птица",
+"uz": "Parranda"
+},
+"Гипс махсулотлари": {
+"en": "Gypsum products",
+"ru": "Гипсовые изделия",
+"uz": "Gips mahsulotlari"
+},
+"Тош ва мармар махсулотлари": {
+"en": "Stone & marble products",
+"ru": "Изделия из камня и мрамора",
+"uz": "Tosh va marmar mahsulotlari"
+},
+"Цемент махсулотлари": {
+"en": "Concrete products",
+"ru": "Изделия из бетона",
+"uz": "Sement mahsulotlari"
+},
+"Ёнгинни ўчириш машиналари": {
+"en": "Fire trucks",
+"ru": "Пожарные машины",
+"uz": "Yongʻin oʻchirish mashinalari"
+},
+"Автобетононасос": {
+"en": "Concrete pump trucks",
+"ru": "Автобетононасосы",
+"uz": "Avtobetonnasos"
+},
+"Автобуслар": {
+"en": "Buses",
+"ru": "Автобусы",
+"uz": "Avtobuslar"
+},
+"Автогрейдерлар, автокатклар (афальт учун)": {
+"en": "Graders & road rollers",
+"ru": "Грейдеры и катки",
+"uz": "Avtogreyder va katoklar"
+},
+"Автокранлар": {
+"en": "Truck cranes",
+"ru": "Автокраны",
+"uz": "Avtokranlar"
+},
+"Бетон кориш машинаси (автобетономешалка)": {
+"en": "Concrete mixer trucks",
+"ru": "Автобетоносмесители",
+"uz": "Avtobetonaralashtirgich"
+},
+"Бургулаш ускуналари": {
+"en": "Drilling rigs",
+"ru": "Буровые установки",
+"uz": "Burgʻulash uskunalari"
+},
+"Двигателлар (авия, сув кемалари учун)": {
+"en": "Aircraft & marine engines",
+"ru": "Авиационные и судовые двигатели",
+"uz": "Aviatsiya va kema dvigatellari"
+},
+"Енгил автомобиллар": {
+"en": "Passenger cars",
+"ru": "Легковые автомобили",
+"uz": "Yengil avtomobillar"
+},
+"Комбайнлар": {
+"en": "Combine harvesters",
+"ru": "Комбайны",
+"uz": "Kombaynlar"
+},
+"Мотоцикл, велосипед ва электр аравалар": {
+"en": "Motorcycles, bicycles & e-carts",
+"ru": "Мотоциклы, велосипеды, электрокары",
+"uz": "Mototsikl, velosiped, elektr aravalar"
+},
+"Самолётлар": {
+"en": "Aircraft",
+"ru": "Самолёты",
+"uz": "Samolyotlar"
+},
+"Темир йул локомотивлари ва вагонлари": {
+"en": "Locomotives & railcars",
+"ru": "Локомотивы и вагоны",
+"uz": "Lokomotiv va vagonlar"
+},
+"Тиркамалар": {
+"en": "Trailers",
+"ru": "Прицепы",
+"uz": "Tirkamalar"
+},
+"Тормоз суюкликлари, антифризлар": {
+"en": "Brake fluids & antifreeze",
+"ru": "Тормозные жидкости, антифризы",
+"uz": "Tormoz suyuqligi, antifriz"
+},
+"Тракторлар": {
+"en": "Tractors",
+"ru": "Тракторы",
+"uz": "Traktorlar"
+},
+"Транспорт воситалари учун двигателлар": {
+"en": "Vehicle engines",
+"ru": "Двигатели для транспорта",
+"uz": "Transport dvigatellari"
+},
+"Фавкулодда транспорт воситалари": {
+"en": "Special-purpose vehicles",
+"ru": "Спецтехника",
+"uz": "Maxsus transport vositalari"
+},
+"Шиналар": {
+"en": "Tyres",
+"ru": "Шины",
+"uz": "Shinalar"
+},
+"Экскаваторлар": {
+"en": "Excavators",
+"ru": "Экскаваторы",
+"uz": "Ekskavatorlar"
+},
+"Юк машиналари": {
+"en": "Trucks",
+"ru": "Грузовые автомобили",
+"uz": "Yuk mashinalari"
+},
+"Яхталар": {
+"en": "Yachts & boats",
+"ru": "Яхты и катера",
+"uz": "Yaxtalar"
+},
+"Адёл, парда, гилам, ёток чойшаблари": {
+"en": "Home textiles & bed linen",
+"ru": "Домашний текстиль и постельное бельё",
+"uz": "Uy toʻqimachiligi va choyshablar"
+},
+"Бош кийимлар": {
+"en": "Headwear",
+"ru": "Головные уборы",
+"uz": "Bosh kiyimlar"
+},
+"Гилам, паласлар": {
+"en": "Carpets & rugs",
+"ru": "Ковры",
+"uz": "Gilam va palaslar"
+},
+"Ипак, пахта, жутдан тайёрланган матолар": {
+"en": "Woven fabrics (cotton, silk)",
+"ru": "Ткани (хлопок, шёлк, джут)",
+"uz": "Ipak, paxta va jut matolar"
+},
+"Кийим-кечак (пальто, костюм, кўйлак ва х.к.)": {
+"en": "Clothing & apparel",
+"ru": "Одежда",
+"uz": "Kiyim-kechak"
+},
+"Коп ва пакетлар": {
+"en": "Sacks & bags",
+"ru": "Мешки и пакеты",
+"uz": "Qop va paketlar"
+},
+"Синтетик ип калава": {
+"en": "Synthetic yarn",
+"ru": "Синтетическая пряжа",
+"uz": "Sintetik ip kalava"
+},
+"Синтетик, жут толалар": {
+"en": "Synthetic & jute fibres",
+"ru": "Синтетические и джутовые волокна",
+"uz": "Sintetik va jut tolalar"
+},
+"Тикувчилик, ипак ва синтетик иплар": {
+"en": "Sewing threads",
+"ru": "Швейные нитки",
+"uz": "Tikuvchilik iplari"
+},
+"Трикотаж матолар": {
+"en": "Knitted fabrics",
+"ru": "Трикотажные полотна",
+"uz": "Trikotaj matolar"
+},
+"Тугма, ёрликлар": {
+"en": "Buttons & labels",
+"ru": "Пуговицы и этикетки",
+"uz": "Tugma va yorliqlar"
+},
+"Ўйинчоклар": {
+"en": "Toys",
+"ru": "Игрушки",
+"uz": "Oʻyinchoqlar"
+},
+"Бошкалар (ўсимлик дамламалари ва х.к.)": {
+"en": "Herbal preparations & other",
+"ru": "Растительные препараты и пр.",
+"uz": "Oʻsimlik damlamalari va boshqalar"
+},
+"Вакциналар": {
+"en": "Vaccines",
+"ru": "Вакцины",
+"uz": "Vaksinalar"
+},
+"Вата": {
+"en": "Cotton wool",
+"ru": "Вата",
+"uz": "Paxta (vata)"
+},
+"Дори воситалари": {
+"en": "Medicines",
+"ru": "Лекарственные средства",
+"uz": "Dori vositalari"
+},
+"Марля": {
+"en": "Gauze",
+"ru": "Марля",
+"uz": "Doka"
+},
+"Тиббиёт буюмлари (игна, протезлар, реагентлар ва х.к.)": {
+"en": "Medical supplies",
+"ru": "Медицинские изделия",
+"uz": "Tibbiyot buyumlari"
+},
+"Донли чикиндилар": {
+"en": "Grain by-products (bran)",
+"ru": "Отруби",
+"uz": "Don chiqindilari (kepak)"
+},
+"Кунжара": {
+"en": "Oilcake & meal",
+"ru": "Жмых и шрот",
+"uz": "Kunjara"
+},
+"Киринди": {
+"en": "Glass cullet",
+"ru": "Стеклобой",
+"uz": "Shisha siniqlari"
+},
+"Бошкалар (киринди, чикинди, ампулалар ва х.к.)": {
+"en": "Glass cullet, ampoules & other",
+"ru": "Стеклобой, ампулы и пр.",
+"uz": "Shisha siniqlari, ampulalar"
+},
+"Курилиш ойнаси": {
+"en": "Building glass",
+"ru": "Строительное стекло",
+"uz": "Qurilish oynasi"
+},
+"Кўзгу": {
+"en": "Mirrors",
+"ru": "Зеркала",
+"uz": "Koʻzgu"
+},
+"Страз (кимматбахо тош)": {
+"en": "Rhinestones",
+"ru": "Стразы",
+"uz": "Straz"
+},
+"Шиша идишлар": {
+"en": "Glass containers",
+"ru": "Стеклотара",
+"uz": "Shisha idishlar"
+},
+"Шиша тола": {
+"en": "Glass fibre",
+"ru": "Стекловолокно",
+"uz": "Shisha tola"
+},
+"Ёзувчи мосламалар (магнитафон, камера ва х.к.)": {
+"en": "Recording devices & cameras",
+"ru": "Записывающие устройства и камеры",
+"uz": "Yozuvchi qurilmalar"
+},
+"Асосий станциялар": {
+"en": "Base stations",
+"ru": "Базовые станции",
+"uz": "Tayanch stansiyalar"
+},
+"Ахборот ташувчи жисмлар (диск, флешка, схема)": {
+"en": "Storage media",
+"ru": "Носители информации",
+"uz": "Axborot tashuvchilar"
+},
+"Батарея ва аккумуляторлар": {
+"en": "Batteries & accumulators",
+"ru": "Батареи и аккумуляторы",
+"uz": "Batareya va akkumulyatorlar"
+},
+"Бошкалар (переключатель, пульт, реле ва х.к.)": {
+"en": "Switches, relays & controls",
+"ru": "Переключатели, реле, пульты",
+"uz": "Boshqalar (kalit, pult, rele)"
+},
+"Генератор, электр двигатель ва трансформаторлар": {
+"en": "Generators, motors & transformers",
+"ru": "Генераторы, электродвигатели, трансформаторы",
+"uz": "Generator, elektr dvigatel va transformatorlar"
+},
+"Диодлар, транзисторлар, прожекторлар": {
+"en": "Semiconductors & floodlights",
+"ru": "Полупроводники и прожекторы",
+"uz": "Diod, tranzistor, projektorlar"
+},
+"Лампалар": {
+"en": "Lamps",
+"ru": "Лампы",
+"uz": "Lampalar"
+},
+"Маиший техникалар (совутгич, телевизорлар ва х.к.)": {
+"en": "Home appliances",
+"ru": "Бытовая техника",
+"uz": "Maishiy texnika"
+},
+"Пайвандаш электродлари": {
+"en": "Welding electrodes",
+"ru": "Сварочные электроды",
+"uz": "Payvandlash elektrodlari"
+},
+"Радиостанция": {
+"en": "Radio stations",
+"ru": "Радиостанции",
+"uz": "Radiostansiyalar"
+},
+"Саклагич, конденсатор, резистор ва изоляторлар": {
+"en": "Fuses, capacitors & insulators",
+"ru": "Предохранители, конденсаторы, изоляторы",
+"uz": "Saqlagich, kondensator, izolyatorlar"
+},
+"Серверлар, компьютерлар": {
+"en": "Computers & servers",
+"ru": "Компьютеры и серверы",
+"uz": "Kompyuter va serverlar"
+},
+"Сим ва кабеллар": {
+"en": "Cables & wires",
+"ru": "Кабели и провода",
+"uz": "Sim va kabellar"
+},
+"Стационар радиотелефонлар": {
+"en": "Cordless phones",
+"ru": "Радиотелефоны",
+"uz": "Statsionar radiotelefonlar"
+},
+"Терминал, касса аппарати, калькулятор": {
+"en": "POS terminals & calculators",
+"ru": "Терминалы и кассовые аппараты",
+"uz": "Terminal, kassa apparati"
+},
+"Тижорат автоматлари": {
+"en": "Vending machines",
+"ru": "Торговые автоматы",
+"uz": "Savdo avtomatlari"
+},
+"Уяли телефонлари": {
+"en": "Mobile phones",
+"ru": "Мобильные телефоны",
+"uz": "Uyali telefonlar"
+},
+"Хисоблагич (электр, газ, сув)": {
+"en": "Meters (power, gas, water)",
+"ru": "Счётчики (электро, газ, вода)",
+"uz": "Hisoblagichlar (elektr, gaz, suv)"
+},
+"Чоп этиш машинаси (принтер ва х.к.)": {
+"en": "Printers",
+"ru": "Принтеры",
+"uz": "Printerlar"
+}
+},
+"districts": {
+"1706401": {
+"en": "Bukhara city",
+"ru": "г. Бухара",
+"uz": "Buxoro shahri"
+},
+"1706403": {
+"en": "Kagan city",
+"ru": "г. Каган",
+"uz": "Kogon shahri"
+},
+"1706207": {
+"en": "Bukhara district",
+"ru": "Бухарский район",
+"uz": "Buxoro tumani"
+},
+"1706212": {
+"en": "Vabkent district",
+"ru": "Вабкентский район",
+"uz": "Vobkent tumani"
+},
+"1706246": {
+"en": "Jondor district",
+"ru": "Жондорский район",
+"uz": "Jondor tumani"
+},
+"1706219": {
+"en": "Kagan district",
+"ru": "Каганский район",
+"uz": "Kogon tumani"
+},
+"1706230": {
+"en": "Karakul district",
+"ru": "Каракульский район",
+"uz": "Qorakoʻl tumani"
+},
+"1706232": {
+"en": "Karaulbazar district",
+"ru": "Караулбазарский район",
+"uz": "Qorovulbozor tumani"
+},
+"1706204": {
+"en": "Alat district",
+"ru": "Алатский район",
+"uz": "Olot tumani"
+},
+"1706240": {
+"en": "Peshku district",
+"ru": "Пешкунский район",
+"uz": "Peshku tumani"
+},
+"1706242": {
+"en": "Romitan district",
+"ru": "Ромитанский район",
+"uz": "Romitan tumani"
+},
+"1706258": {
+"en": "Shafirkan district",
+"ru": "Шафирканский район",
+"uz": "Shofirkon tumani"
+},
+"1706215": {
+"en": "Gijduvan district",
+"ru": "Гиждуванский район",
+"uz": "Gʻijduvon tumani"
+}
+},
+"units": {
+"pcs": {
+"en": "pcs",
+"ru": "шт",
+"uz": "dona"
+},
+"kg": {
+"en": "kg",
+"ru": "кг",
+"uz": "kg"
+},
+"t": {
+"en": "t",
+"ru": "т",
+"uz": "t"
+},
+"m": {
+"en": "m",
+"ru": "м",
+"uz": "m"
+},
+"rm": {
+"en": "running m",
+"ru": "пог. м",
+"uz": "pogon m"
+},
+"m2": {
+"en": "m²",
+"ru": "м²",
+"uz": "m²"
+},
+"m3": {
+"en": "m³",
+"ru": "м³",
+"uz": "m³"
+},
+"l": {
+"en": "L",
+"ru": "л",
+"uz": "l"
+},
+"set": {
+"en": "set",
+"ru": "компл.",
+"uz": "komplekt"
+},
+"pair": {
+"en": "pair",
+"ru": "пара",
+"uz": "juft"
+},
+"box": {
+"en": "box",
+"ru": "кор.",
+"uz": "quti"
+},
+"pack": {
+"en": "pack",
+"ru": "уп.",
+"uz": "qadoq"
+},
+"container": {
+"en": "container",
+"ru": "контейнер",
+"uz": "konteyner"
+}
+},
+"incoterms": [
+"EXW",
+"FCA",
+"FOB",
+"CPT",
+"CIP",
+"CFR",
+"CIF",
+"DAP",
+"DPU",
+"DDP"
+],
+"payment": {
+"prepay": {
+"en": "100% prepayment",
+"ru": "100% предоплата",
+"uz": "100% oldindan toʻlov"
+},
+"partial": {
+"en": "Partial prepayment",
+"ru": "Частичная предоплата",
+"uz": "Qisman oldindan toʻlov"
+},
+"lc": {
+"en": "Letter of credit (L/C)",
+"ru": "Аккредитив (L/C)",
+"uz": "Akkreditiv (L/C)"
+},
+"deferred": {
+"en": "Deferred payment",
+"ru": "Отсрочка платежа",
+"uz": "Toʻlovni kechiktirish"
+},
+"cad": {
+"en": "Cash against documents",
+"ru": "Оплата против документов",
+"uz": "Hujjatlarga qarshi toʻlov"
+}
+},
+"doc_types": {
+"certificate": {
+"en": "Certificate",
+"ru": "Сертификат",
+"uz": "Sertifikat"
+},
+"sanitary": {
+"en": "Sanitary certificate",
+"ru": "Санитарное заключение",
+"uz": "Sanitariya xulosasi"
+},
+"test": {
+"en": "Test report",
+"ru": "Протокол испытаний",
+"uz": "Sinov bayonnomasi"
+},
+"award": {
+"en": "Award / diploma",
+"ru": "Награда / диплом",
+"uz": "Mukofot / diplom"
+},
+"catalog": {
+"en": "Catalog / brochure",
+"ru": "Каталог / буклет",
+"uz": "Katalog / buklet"
+},
+"price": {
+"en": "Price list / offer",
+"ru": "Прайс / предложение",
+"uz": "Prays / taklif"
+},
+"other": {
+"en": "Document",
+"ru": "Документ",
+"uz": "Hujjat"
+}
+}
+}

@@ -1,0 +1,1090 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Buxoro export</title>
+<link rel="stylesheet" href="/static/fonts/fonts.css">
+<script src="/static/chart.umd.js"></script>
+<link rel="stylesheet" href="/static/vendor/jsvectormap.min.css">
+<link rel="stylesheet" href="/static/catalog.css">
+<script src="/static/vendor/jsvectormap.min.js"></script>
+<script src="/static/vendor/world-map.js"></script>
+<style>
+:root{
+  color-scheme:light;
+  --bg:#F4F6F5; --panel:#FFFFFF; --panel2:#EEF1EF; --line:#DCE1DD; --ink:#182029; --ink2:#5A6470; --ink3:#8A929C;
+  --accent:#0F6E63; --accent-ink:#FFFFFF; --accent-soft:#DDEFEB; --gold:#B7912A; --gold-soft:#F5EBCF;
+  --ok:#2E8B57; --ok-soft:#DFF2E6; --warn:#B7791F; --warn-soft:#FBEFD6; --bad:#B23A3A; --bad-soft:#F8E0E0;
+  --side:#14232B; --side-ink:#C9D3D8; --side-active:#0F6E63;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}   /* .btn kabi class'lar hidden atributini bosib ketmasin */
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans",system-ui,"Segoe UI",Arial,sans-serif;font-size:14px;line-height:1.45}
+.app{display:flex;min-height:100vh}
+.side{width:236px;flex:0 0 236px;background:var(--side);color:var(--side-ink);padding:18px 12px;display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh;transition:width .2s ease;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.22) transparent}
+.side>*{flex-shrink:0}   /* menyu bandlari siqilmasin — joy yetmasa scroll bo'ladi */
+.side::-webkit-scrollbar{width:6px}.side::-webkit-scrollbar-thumb{background:rgba(255,255,255,.22);border-radius:3px}.side::-webkit-scrollbar-track{background:transparent}
+.brand{display:flex;align-items:center;gap:8px;padding:8px 10px 12px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:10px}
+.brand .bt{flex:1;min-width:0}
+.brand b{display:block;color:#fff;font-size:16px;letter-spacing:.2px}
+.brand span{font-size:11.5px;opacity:.75}
+.tg{background:none;border:0;color:var(--side-ink);cursor:pointer;padding:6px;border-radius:6px;display:flex}
+.tg:hover{background:rgba(255,255,255,.08);color:#fff}
+.tg svg,.nav svg{stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tg svg{width:18px;height:18px}
+.nav{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:6px;cursor:pointer;color:var(--side-ink);border:0;background:none;text-align:left;width:100%;font:inherit;font-weight:500;position:relative}
+.nav:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav.active{background:var(--side-active);color:#fff}
+.nav:focus-visible{outline:2px solid #fff;outline-offset:1px}
+.nav svg{width:16px;height:16px;flex:0 0 16px}
+.nav .n{margin-left:auto;font-family:"IBM Plex Mono",monospace;font-size:11px;background:rgba(255,255,255,.12);padding:1px 6px;border-radius:10px}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;opacity:.5;padding:14px 10px 4px}
+.foot{margin-top:auto;font-size:11px;opacity:.7;padding:10px;line-height:1.55;word-break:break-word}
+.app.collapsed .side{width:64px;flex-basis:64px;padding-inline:8px}
+.app.collapsed .brand .bt,.app.collapsed .nav-sec,.app.collapsed .nav .n,.app.collapsed .foot,.app.collapsed .nav .lbl{display:none}
+.app.collapsed .brand{justify-content:center;padding-inline:0}
+.app.collapsed .nav{justify-content:center;padding:10px 0}
+/* yig'ilgan menyu tooltip'i — sidebar scroll bo'lgani uchun fixed (app.js: #side-tip) */
+.side-tip{position:fixed;transform:translateY(-50%);background:#0E1418;color:#fff;padding:5px 9px;border-radius:5px;font-size:12px;white-space:nowrap;z-index:1000;pointer-events:none;display:none}
+.main{flex:1;min-width:0;padding-block:22px;padding-inline:28px}
+.topbar{display:flex;align-items:center;gap:14px;margin-bottom:18px;flex-wrap:wrap}
+.topbar h1{font-size:20px;margin:0;font-weight:600}
+.sub{color:var(--ink2);font-size:13px}
+.right{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:inherit;font-weight:500;cursor:pointer}
+.btn:hover{border-color:var(--ink3)}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn.danger{color:var(--bad);border-color:#e8c4c4}
+.btn.sm{padding:4px 10px;font-size:12.5px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn:focus-visible,.chip:focus-visible,.sel:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.page{display:none}.page.active{display:block}
+.grid{display:grid;gap:14px}
+.kpis{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+.kpis.row5{grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.kpis.row5 .kpi{padding:10px 12px}.kpis.row5 .kpi .v{font-size:20px;margin-top:2px}.kpis.row5 .kpi .l{font-size:10.5px}.kpis.row5 .kpi .d{font-size:11.5px;margin-top:2px;line-height:1.3}
+@media (max-width:900px){.kpis.row5{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px 16px}
+.kpi .l{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2)}
+.kpi .v{font-family:"IBM Plex Mono",monospace;font-size:25px;font-weight:500;margin-top:4px;font-variant-numeric:tabular-nums}
+.kpi .v small{font-size:13px;color:var(--ink2);font-family:"IBM Plex Sans",sans-serif;margin-left:4px}
+.kpi .d{font-size:12px;color:var(--ink2);margin-top:4px}
+.kpi.accent{border-top:3px solid var(--accent)}
+.kpi.gold{border-top:3px solid var(--gold)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px 18px}
+.panel h2{font-size:14px;margin:0 0 12px;font-weight:600;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.hint{font-weight:400;color:var(--ink2);font-size:12.5px}
+.g3{display:grid;grid-template-columns:1.4fr 1fr;gap:14px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:1050px){.g3,.g2{grid-template-columns:1fr}}
+.g3>*,.g2>*{min-width:0}
+#p-daily .g3.rcol-off{grid-template-columns:1fr}
+#p-daily .g3.rcol-off>.rcol{display:none}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink2);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);font-weight:600;white-space:nowrap;background:var(--panel);position:sticky;top:0}
+td{padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+td.num,th.num{text-align:right;font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;white-space:nowrap}
+tr.total td{font-weight:600;background:var(--panel2)}
+tr.subrow td{color:var(--ink2)}
+tr.subrow td:first-child{padding-left:24px}
+.tw{overflow:auto;max-height:70vh}
+#t-nom thead th{z-index:2}
+#t-nom tr.dist{position:sticky;top:var(--nom-th,32px);z-index:1;background:var(--panel2)}
+#t-nom tr.dist td{background:var(--panel2);box-shadow:0 -1px 0 var(--panel2),0 1px 0 var(--line)}
+.pill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11.5px;font-weight:600;white-space:nowrap}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}.pill.warn{background:var(--warn-soft);color:var(--warn)}.pill.bad{background:var(--bad-soft);color:var(--bad)}.pill.info{background:var(--accent-soft);color:var(--accent)}.pill.gold{background:var(--gold-soft);color:var(--gold)}
+.check{display:flex;gap:12px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--line)}
+.check:last-child{border-bottom:0}
+.ic{width:22px;height:22px;border-radius:50%;flex:0 0 22px;display:grid;place-items:center;font-size:12px;font-weight:700}
+.ic.ok{background:var(--ok-soft);color:var(--ok)}.ic.warn{background:var(--warn-soft);color:var(--warn)}.ic.bad{background:var(--bad-soft);color:var(--bad)}
+.check b{display:block;font-weight:600}
+.check span{color:var(--ink2);font-size:12.5px}
+.drop{display:block;border:1.5px dashed var(--line);border-radius:8px;padding:20px;text-align:center;color:var(--ink2);background:var(--panel2);cursor:pointer}
+.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.drop b{color:var(--ink);display:block;margin-bottom:4px}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-top:12px}
+.step{background:var(--panel2);border-radius:6px;padding:9px 12px;font-size:12.5px;color:var(--ink2)}
+.step b{display:block;color:var(--ink);font-family:"IBM Plex Mono",monospace;font-size:18px;font-weight:500}
+.bar{height:8px;background:var(--panel2);border-radius:4px;overflow:hidden;min-width:80px}
+.bar i{display:block;height:100%;background:var(--accent)}
+.bar i.over{background:var(--gold)}
+#t-dist .bar i{background:var(--gold)}#t-dist .bar i.over{background:var(--ok)}
+.mono{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums}
+.muted{color:var(--ink2)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+#f-dist{flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;padding-bottom:4px;scrollbar-width:thin}
+#f-dist .chip{white-space:nowrap;flex:0 0 auto}
+.fgrp.wide{flex:1 1 100%;min-width:0}
+/* tarmoq va mahsulot daraxti (.ptree — sahifa va pasport) */
+#t-dyn td.k{cursor:pointer;white-space:nowrap;max-width:320px;overflow:hidden;text-overflow:ellipsis}#t-dyn tr.on td{background:var(--accent-soft)}#t-dyn td.sub{color:var(--ink3);font-size:11px}
+/* Ҳисоботлар — cardlar + Тармоқлар таҳлили */
+.rcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px}
+.rcard{display:flex;flex-direction:column;gap:10px;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px 18px 16px;cursor:pointer;font:inherit;color:var(--ink);transition:border-color .12s,box-shadow .12s,transform .12s;min-height:150px}
+.rcard:hover{border-color:var(--accent);box-shadow:0 4px 14px rgba(15,110,99,.10)}
+.rcard:active{transform:translateY(1px)}
+.rcard .ico{width:38px;height:38px;border-radius:9px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center}
+.rcard .ico svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.rcard b{font-size:15px;font-weight:600}
+.rcard span{color:var(--ink2);font-size:12.5px;line-height:1.45}
+.rcard .go{margin-top:auto;color:var(--accent);font-size:12.5px;font-weight:600}
+.rcard.soon{cursor:default;border-style:dashed;background:transparent;min-height:150px;justify-content:center;align-items:center;color:var(--ink3)}
+.rcard.soon:hover{border-color:var(--line);box-shadow:none}
+.mp-pick{border:1px solid var(--line);border-radius:8px;background:var(--panel)}
+.mp-pick-top{display:flex;gap:12px;align-items:center;padding:8px 10px;border-bottom:1px solid var(--line)}
+.mp-pick-top input[type=text]{flex:1;min-width:220px}
+.mp-pick-top label{text-transform:none;letter-spacing:0;display:flex;gap:5px;align-items:center;cursor:pointer}
+.mp-tree{max-height:300px;overflow:auto;padding:4px 10px 8px;font-size:13px}
+.mp-t1{margin-top:6px}.mp-t1>.h{display:flex;gap:8px;align-items:center;font-weight:700;padding:4px 0;cursor:pointer}
+.mp-t2{margin-left:22px}.mp-t2>.h{display:flex;gap:8px;align-items:center;font-weight:600;color:var(--ink2);padding:2px 0;cursor:pointer}
+.mp-it{display:flex;gap:8px;align-items:center;margin-left:22px;padding:2px 0;cursor:pointer;text-transform:none;letter-spacing:0;font-size:13px;color:var(--ink)}
+.mp-it input:disabled+span{color:var(--ink2)}
+.mp-it:hover,.mp-t1>.h:hover,.mp-t2>.h:hover{color:var(--accent)}
+.mp-tree .v{margin-left:auto;font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--ink2);white-space:nowrap}
+.mp-tree .hs{font-size:11px;color:var(--ink3)}
+.mp-tree .car{width:12px;display:inline-block;color:var(--ink3)}
+table.ta td.st.new{color:var(--ok)}table.ta td.st.down,table.ta td.st.stop{color:var(--bad)}
+.back{border:0;background:none;color:var(--ink2);font:inherit;cursor:pointer;padding:4px 8px;border-radius:6px}.back:hover{background:var(--panel2);color:var(--ink)}
+.ta-kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:14px}
+@media(max-width:1200px){.ta-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.ta-kpis .kpi{cursor:pointer}.ta-kpis .kpi .v{font-size:21px}
+.ta-kpis .kpi.g-up{border-top:3px solid var(--ok)}.ta-kpis .kpi.g-new{border-top:3px solid var(--accent)}.ta-kpis .kpi.g-down{border-top:3px solid var(--warn)}.ta-kpis .kpi.g-stop{border-top:3px solid var(--bad)}
+.ta-kpis .kpi.on{background:var(--accent-soft);border-color:var(--accent)}
+.up{color:var(--ok)}.dn{color:var(--bad)}
+table.ta th{text-align:center;white-space:normal;vertical-align:middle}
+table.ta thead tr:nth-child(2) th{top:34px}
+table.ta td.nm{min-width:380px}
+table.ta tr.tot td{background:var(--accent-soft);font-weight:700}
+table.ta tr.grp td{background:#EAF1F8;font-weight:700;cursor:pointer}
+table.ta tr.co td{font-weight:600}
+table.ta tr.co td.nm{cursor:pointer}
+table.ta tr.co td.nm .car{display:inline-block;width:14px;color:var(--ink3);transition:transform .12s}
+table.ta tr.co.open td.nm .car{transform:rotate(90deg)}
+table.ta tr.pr td{color:var(--ink2);font-size:12.5px}
+table.ta tr.pr td.nm{padding-left:38px}
+table.ta tr.co.gk-new td.st{color:var(--ok)}table.ta tr.co.gk-down td.gr,table.ta tr.co.gk-down td.st,table.ta tr.co.gk-stop td.gr,table.ta tr.co.gk-stop td.st{color:var(--bad)}
+table.ta td.st{font-size:12px;white-space:nowrap}
+table.ta .inn{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ink3);font-weight:400;margin-left:6px}
+table.ta .ds{font-size:11px;color:var(--ink3);font-weight:400;margin-left:6px}
+#t-plan input{width:78px;font:inherit;font-size:12.5px;padding:3px 5px;border:1px solid var(--line);border-radius:4px;text-align:right;font-family:"IBM Plex Mono",monospace}#t-plan input.y{width:96px;font-weight:600}#t-plan td.kd{color:var(--ink2);white-space:nowrap}#t-plan tr.meva td.kd{color:var(--gold)}#t-plan tr.sum td{background:var(--panel2);font-weight:600}#t-prev input{width:110px;font:inherit;font-size:12.5px;padding:3px 5px;border:1px solid var(--line);border-radius:4px;text-align:right;font-family:"IBM Plex Mono",monospace}#t-prev tr.sum td{background:var(--panel2);font-weight:600}#t-prev td.tot{font-family:"IBM Plex Mono",monospace;text-align:right}
+.yseg button b{font-weight:400;color:inherit;opacity:.75;margin-left:6px;font-size:11px}
+.ptree tr.tn td:first-child{white-space:normal}
+.ptree .tg{display:inline-flex;align-items:center;gap:8px;cursor:pointer;user-select:none;color:var(--ink)}
+.ptree .tg .ar{display:inline-block;width:14px;color:var(--accent);font-size:11px;transition:transform .12s}
+.ptree tr.open>td .tg .ar{transform:rotate(90deg)}
+.ptree tr.l0>td:first-child{font-weight:600}
+.ptree tr.l1>td:first-child{padding-left:30px}
+.ptree tr.l2>td:first-child{padding-left:52px}
+.ptree tr.l3>td:first-child{padding-left:74px}
+.ptree tr.co>td:first-child{padding-left:96px;color:var(--ink2)}
+.ptree tr.co td{background:var(--panel2);border-bottom-color:var(--panel)}
+.ptree tr.co a{color:var(--ink);font-weight:500}
+.ptree .hs{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--ink2);margin-right:8px}
+.ptree .cnt{color:var(--ink3);font-size:11.5px;margin-left:6px}
+.gr{font-size:12px;font-weight:600}.gr.up{color:var(--ok)}.gr.dn{color:var(--bad)}
+.ptree .ctry{color:var(--ink3);font-size:11.5px;margin-left:8px}
+.chip{padding:5px 11px;border-radius:14px;border:1px solid var(--line);background:var(--panel);font:inherit;font-size:12.5px;cursor:pointer;color:var(--ink2)}
+.chip.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:600}
+.fbar{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin-bottom:14px}
+.fgrp{display:flex;flex-direction:column;gap:6px}
+.fgrp label{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.seg button{border:0;background:var(--panel);padding:6px 12px;font:inherit;font-size:12.5px;cursor:pointer;color:var(--ink2)}
+.seg button.on{background:var(--accent);color:#fff}
+.seg button+button{border-left:1px solid var(--line)}
+.seg.sm button{padding:4px 10px;font-size:12px}
+.sel,input[type=text],input[type=date],input[type=number]{padding:7px 10px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:inherit}
+input[type=text]{min-width:220px}
+.cw{position:relative;width:100%}
+.rank{display:flex;flex-direction:column;gap:7px}
+.topn{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--ink2);font-weight:400}
+.topn input{width:58px;padding:3px 6px;border:1px solid var(--line);border-radius:6px;font:inherit;font-size:12.5px;text-align:center;background:var(--panel);color:var(--ink)}
+.rank .r{display:grid;grid-template-columns:22px 1fr 90px;gap:10px;align-items:center;font-size:12.5px}
+.rank .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rank .b{height:12px;background:var(--panel2);border-radius:3px;overflow:hidden;grid-column:2/4;margin-top:-4px}
+.rank .b i{display:block;height:100%;background:var(--accent);border-radius:0 3px 3px 0}
+.rank .v{text-align:right}
+.note{font-size:12px;color:var(--ink2);margin-top:8px}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.cal .dow{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2);text-align:center;padding:4px 0}
+.day{border:1px solid var(--line);border-radius:6px;min-height:66px;padding:6px 8px;cursor:pointer;background:var(--panel);display:flex;flex-direction:column;gap:2px;text-align:left;font:inherit;color:var(--ink)}
+.day:hover{border-color:var(--ink3)}
+.day .n{font-weight:600;font-size:13px;display:flex;justify-content:space-between;align-items:center}
+.day .s{font-family:"IBM Plex Mono",monospace;font-size:12px}
+.day .st{font-size:10.5px;color:var(--ink2)}
+.day.off{background:var(--panel2)}
+.day.sel{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.day.future{opacity:.5;cursor:default}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px;vertical-align:middle}
+.dot.ok{background:var(--ok)}.dot.warn{background:var(--warn)}.dot.none{background:var(--line)}.dot.open{background:var(--ink3)}
+.calhead{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.calhead b{font-size:15px}
+.dl{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:700px){.dl{grid-template-columns:1fr}}
+.dlcard{border:1px solid var(--line);border-radius:8px;padding:12px 14px;background:var(--panel2);display:flex;flex-direction:column;gap:6px;min-width:0;overflow:hidden}
+.dlcard .t{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2)}
+.dlcard .v{font-family:"IBM Plex Mono",monospace;font-size:clamp(15px,1.5vw,22px);line-height:1.25;overflow-wrap:anywhere;word-break:break-word;min-width:0}
+.dlcard .v small{font-size:12px;font-family:"IBM Plex Sans",sans-serif;color:var(--ink2)}
+.dlcard .btn{white-space:normal;word-break:break-word;text-align:center;line-height:1.3;max-width:100%;min-width:0}
+.banner{background:var(--warn-soft);color:#7a5210;border:1px solid #efd9a8;border-radius:8px;padding:10px 14px;margin-bottom:14px;display:none}
+.banner.show{display:block}
+.toast{position:fixed;right:18px;bottom:18px;background:#182029;color:#fff;padding:10px 16px;border-radius:8px;font-size:13px;box-shadow:0 6px 24px rgba(0,0,0,.2);max-width:420px;z-index:50;display:none}
+.toast.err{background:#8f2d2d}
+.toast.show{display:block}
+.empty{padding:28px;text-align:center;color:var(--ink2)}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--ink2);margin-top:6px;flex-wrap:wrap}
+.initstep{border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin-bottom:12px}
+.initstep h3{margin:0;font-size:14px;font-weight:600}
+.initstep .note{margin:4px 0 6px}
+.cand{display:grid;grid-template-columns:1fr 200px;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.cand:last-child{border-bottom:0}
+.form-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0}
+@media (max-width:760px){.app{flex-direction:column}.side{width:100%;flex:0 0 auto;height:auto;position:static;flex-direction:row;flex-wrap:wrap;overflow:visible}.brand{width:100%}.nav{width:auto}.nav-sec,.foot,.nav .n{display:none}.main{padding-inline:16px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+.prof-h{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-bottom:14px}
+.prof-h h1{font-size:21px;margin:0 0 4px;font-weight:600}
+.prof-h .meta{color:var(--ink2);font-size:13px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.clink{color:var(--ink);text-decoration:none;border-bottom:1px dashed var(--ink3);cursor:pointer}
+.clink:hover{color:var(--accent);border-color:var(--accent)}
+tr.rowlink{cursor:pointer}tr.rowlink:hover td{background:var(--panel2)}
+.kv{display:grid;grid-template-columns:130px 1fr;gap:6px 12px;font-size:13px;align-items:center}
+.kv label{color:var(--ink2);font-size:12px}
+.kv input,.kv select,.kv textarea,.fcol input,.fcol select,.fcol textarea{width:100%;min-width:0;padding:6px 9px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:inherit}
+.fcol{display:flex;flex-direction:column;gap:8px}
+.fcol label{font-size:11.5px;color:var(--ink2);margin-bottom:-4px}
+textarea{resize:vertical;min-height:64px}
+.tl{display:flex;flex-direction:column;gap:0}
+.tl .e{display:grid;grid-template-columns:150px 1fr;gap:10px;padding:6px 0;border-bottom:1px solid var(--line);font-size:12.5px}
+.tl .e:last-child{border-bottom:0}
+.tl .e .a{color:var(--ink2);font-family:"IBM Plex Mono",monospace;font-size:11.5px}
+.bar.w{min-width:100px}
+td.over{color:var(--bad);font-weight:600}
+.t-bad{color:var(--bad)}.t-ok{color:var(--ok)}
+.kpis.k6{grid-template-columns:repeat(auto-fit,minmax(165px,1fr))}
+.rank.wide .r{grid-template-columns:22px 1fr 150px}
+.kv input[type=checkbox]{width:auto}
+.btn{white-space:nowrap}
+#p-reg .fbar{gap:12px}#reg-q{min-width:190px}
+/* ---------- экспорт географияси */
+#map{width:100%;height:clamp(360px,52vh,620px)}
+.jvm-container{background:var(--panel)}
+.jvm-region{cursor:pointer;transition:fill .15s}
+.jvm-tooltip{background:var(--side);color:#fff;border:0;border-radius:6px;padding:7px 10px;font-family:"IBM Plex Sans",sans-serif;font-size:12.5px;box-shadow:0 6px 20px rgba(20,35,43,.25)}
+.jvm-zoom-btn{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:6px;width:22px;height:22px;line-height:19px;box-shadow:none}
+.geo-wrap{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:14px;align-items:start}
+@media (max-width:1120px){.geo-wrap{grid-template-columns:1fr}}
+.clist{max-height:clamp(360px,52vh,620px);overflow:auto;display:flex;flex-direction:column;gap:1px}
+.crow{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:center;padding:7px 9px;border:0;background:none;border-radius:6px;cursor:pointer;text-align:left;font:inherit;color:var(--ink);width:100%}
+.crow:hover{background:var(--panel2)}
+.crow.on{background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
+.crow .i{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ink3)}
+.crow .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lost{margin-top:10px;padding:10px 9px;border-top:1px dashed var(--line);font-size:13px}.lost .lr{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:5px 0;border-bottom:1px solid var(--panel2)}.lost .lr small{grid-column:1/-1;color:var(--ink3)}.lost .lr a{color:var(--ink2)}
+.crow .nm small{display:block;color:var(--ink2);font-size:11.5px}
+.crow .v{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.crow .v b{display:block;font-weight:500}
+.crow .v span{color:var(--ink2);font-size:11.5px}
+.crow .sb{grid-column:2/4;height:3px;background:var(--panel2);border-radius:2px;overflow:hidden;margin-top:2px}
+.crow .sb i{display:block;height:100%;background:var(--accent)}
+.legend{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--ink2);margin-top:8px}
+.legend .sw{width:26px;height:10px;border-radius:2px;display:inline-block;vertical-align:-1px;margin-right:4px}
+/* o'ng tomondagi panel */
+.drawer{position:fixed;top:0;right:0;height:100vh;width:min(560px,94vw);background:var(--panel);border-left:1px solid var(--line);box-shadow:-12px 0 40px rgba(20,35,43,.18);transform:translateX(100%);transition:transform .22s ease;z-index:60;display:flex;flex-direction:column}
+.drawer.open{transform:none}
+.drawer header{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;align-items:flex-start;gap:12px}
+.drawer header h2{margin:0;font-size:19px}
+.drawer header .sub{color:var(--ink2);font-size:12.5px;display:block;margin-top:3px}
+.drawer .x{margin-left:auto;border:1px solid var(--line);background:var(--panel);border-radius:6px;width:30px;height:30px;cursor:pointer;font-size:15px;color:var(--ink2);flex:0 0 auto}
+.drawer .x:hover{border-color:var(--ink3);color:var(--ink)}
+.drawer .body{overflow:auto;padding:16px 20px 24px;display:flex;flex-direction:column;gap:14px}
+.dstat{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px}
+.dstat div{background:var(--panel2);border-radius:7px;padding:9px 11px}
+.dstat b{display:block;font-family:"IBM Plex Mono",monospace;font-size:17px;font-weight:500}
+.dstat span{font-size:11px;color:var(--ink2);text-transform:uppercase;letter-spacing:.05em}
+.scrim{position:fixed;inset:0;background:rgba(20,35,43,.28);opacity:0;pointer-events:none;transition:opacity .22s;z-index:59}
+.scrim.on{opacity:1;pointer-events:auto}
+.kpi.click{cursor:pointer;position:relative;transition:background .12s,border-color .12s,box-shadow .12s}
+.kpi.click:hover{border-color:var(--ink3)}
+.kpi.click.on{background:var(--accent-soft);border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.kpi.click.on .l{color:var(--accent);font-weight:600}
+.kpi.click.on .d{color:var(--accent)}
+.kpi.click.on::after{content:"✓";position:absolute;top:9px;right:13px;color:var(--accent);font-weight:700;font-size:14px}
+.kpi.gold.click.on{background:var(--gold-soft);border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)}
+.kpi.gold.click.on .l,.kpi.gold.click.on .d,.kpi.gold.click.on::after{color:var(--gold)}
+.kpi.click:active{transform:translateY(1px)}
+/* ko'p tanlovli filtr */
+.ms{position:relative}
+.ms-btn{display:flex;align-items:center;gap:8px;justify-content:space-between;min-width:172px;max-width:230px;cursor:pointer;text-align:left}
+.ms-btn .t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ms-btn .n{flex:0 0 auto;background:var(--accent);color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;font-weight:600;font-family:"IBM Plex Mono",monospace}
+.ms-btn.on{border-color:var(--accent);color:var(--accent)}
+.ms-pop{position:absolute;z-index:40;top:calc(100% + 4px);left:0;min-width:250px;max-height:300px;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:0 10px 26px rgba(20,35,43,.16);padding:6px}
+.ms-pop label{display:flex;gap:9px;align-items:flex-start;padding:6px 8px;border-radius:6px;cursor:pointer;font-size:13.5px;line-height:1.35}
+.ms-pop label:hover{background:var(--panel2)}
+.ms-pop input{accent-color:var(--accent);margin:2px 0 0}
+.ms-pop .all{display:block;width:100%;text-align:left;border:0;background:none;font:inherit;font-size:12.5px;color:var(--ink2);padding:6px 8px;cursor:pointer;border-bottom:1px solid var(--line);margin-bottom:4px}
+.ms-pop .all:hover{color:var(--accent)}
+.pb{display:flex;align-items:center;gap:8px}.pb .mono{min-width:44px;text-align:right;font-size:12.5px}
+
+/* ---- kanban doska (Muammo va vazifalar) ---- */
+a.btn{text-decoration:none}
+.board{display:flex;gap:12px;overflow-x:auto;align-items:flex-start;padding:2px 2px 12px;min-height:50vh}
+.col{flex:0 0 300px;width:300px;background:#EBEFED;border:1px solid var(--line);border-radius:12px;display:flex;flex-direction:column;max-height:calc(100vh - 240px);min-height:140px;border-top:3px solid var(--cc,var(--ink3))}
+.col.over{outline:2px dashed var(--accent);outline-offset:-2px}
+.col.dragging{opacity:.45}
+.col-h{display:flex;align-items:center;gap:7px;padding:10px 10px 8px 13px;cursor:grab;user-select:none}
+.col-h .nm{font-weight:600;font-size:13.5px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.col-h .cnt{font-family:"IBM Plex Mono",monospace;font-size:11px;background:var(--panel);border:1px solid var(--line);padding:1px 7px;border-radius:10px;color:var(--ink2)}
+.col-h .done{font-size:10px;color:var(--ok);background:var(--ok-soft);padding:1px 6px;border-radius:8px;font-weight:600}
+.col-h .ovr{font-size:10.5px;color:var(--bad);background:var(--bad-soft);padding:1px 7px;border-radius:8px;font-weight:600;white-space:nowrap}
+.col-h .mn{background:none;border:0;cursor:pointer;color:var(--ink2);font-size:16px;line-height:1;padding:2px 6px;border-radius:5px}
+.col-h .mn:hover{background:var(--panel);color:var(--ink)}
+.col-b{overflow-y:auto;padding:2px 8px 0;flex:1;min-height:40px}
+.col-f{padding:4px 8px 8px}
+.col-f .add{width:100%;text-align:left;background:none;border:0;color:var(--ink2);padding:7px 8px;border-radius:7px;cursor:pointer;font:inherit;font-size:12.5px}
+.col-f .add:hover{background:var(--panel);color:var(--accent)}
+.col-empty{border:1.5px dashed #CDD4D0;border-radius:10px;padding:18px 10px;text-align:center;color:var(--ink3);font-size:12px;margin-bottom:8px}
+.col-b.has-ph .col-empty{display:none}
+.col-old{width:100%;background:none;border:0;border-top:1px dashed #CDD4D0;color:var(--ink2);font:inherit;font-size:12px;padding:8px 4px 4px;cursor:pointer;text-align:left}
+.col-old:hover{color:var(--accent)}
+/* karta: ixcham, ustuvorlik — chap chiziq, belgilar yumshoq rangda, pastda muddat/qadamlar/izoh/fayl/harakatsiz kunlar */
+.card{background:var(--panel);border:1px solid #DFE4E1;border-radius:10px;padding:9px 11px 10px 13px;margin-bottom:8px;cursor:grab;box-shadow:0 1px 2px rgba(16,24,40,.05);position:relative;transition:box-shadow .15s,border-color .15s,transform .15s}
+.card::before{content:"";position:absolute;left:-1px;top:9px;bottom:9px;width:3px;border-radius:0 3px 3px 0;background:var(--pc,transparent)}
+.card:hover{border-color:#C3CBC7;box-shadow:0 6px 16px rgba(16,24,40,.09);transform:translateY(-1px)}
+.card.dragging{opacity:.35;transform:none}
+.card.closed{background:#FAFBFA}.card.closed .ttl{color:var(--ink2)}
+.card.stale{background:linear-gradient(0deg,#FFFBF5,#FFFBF5)}
+.c-top{display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-bottom:5px;min-height:17px}
+.c-no{margin-left:auto;font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--ink3);display:inline-flex;gap:4px;align-items:center;padding-left:4px}
+.c-ok{color:var(--ok);font-size:12px}
+.c-no.fl{float:right;margin:1px 0 2px 8px}
+.lbl{display:inline-block;font-size:10.5px;font-weight:600;color:#fff;padding:1px 7px;border-radius:9px;line-height:16px;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}   /* yon menyu yozuvlari ham shu klassda */
+.c-lbl,.c-pri{display:inline-block;font-size:10.5px;font-weight:600;padding:1px 7px;border-radius:5px;line-height:16px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.c-pri{text-transform:uppercase;letter-spacing:.04em;font-size:9.5px;font-weight:700}
+.c-basis{display:inline-flex;align-items:center;gap:3px;font-size:10.5px;font-weight:600;color:var(--ink2);border:1px solid var(--line);padding:0 6px;border-radius:5px;line-height:16px;white-space:nowrap}
+.c-basis svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.c-body{display:flex;gap:10px;align-items:flex-start}
+.c-main{flex:1;min-width:0}
+.card .ttl{font-weight:600;font-size:13.5px;line-height:1.38;word-break:break-word;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.card .co{font-size:12px;color:var(--ink2);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card .co .ds{color:var(--ink3)}
+.thumb{flex:0 0 46px;width:46px;height:46px;border-radius:7px;overflow:hidden;position:relative;border:1px solid var(--line);background:var(--panel2);margin-top:1px}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb span{position:absolute;right:2px;bottom:2px;background:rgba(20,30,40,.72);color:#fff;font-size:9.5px;padding:0 4px;border-radius:4px;line-height:14px;font-weight:600}
+.c-note{margin-top:7px;font-size:12px;color:var(--ink2);background:var(--panel2);border-radius:6px;padding:5px 8px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
+.c-note.res{background:var(--ok-soft);color:#276A45}
+.card .meta{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px;align-items:center}
+.bdg{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:2px 7px;border-radius:6px;background:var(--panel2);color:var(--ink2);white-space:nowrap;line-height:16px}
+.bdg svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.bdg.over{background:var(--bad);color:#fff;font-weight:600}
+.bdg.today{background:var(--bad-soft);color:var(--bad);font-weight:600}
+.bdg.soon{background:var(--warn-soft);color:var(--warn);font-weight:600}
+.bdg.okd{background:var(--ok-soft);color:var(--ok)}
+.bdg.ck .bar{width:24px;height:4px;border-radius:2px;background:rgba(0,0,0,.09);overflow:hidden;display:inline-block;margin-left:1px}
+.bdg.ck .bar i{display:block;height:100%;background:var(--ink2);border-radius:2px}
+.bdg.ck.full{background:var(--ok-soft);color:var(--ok)}.bdg.ck.full .bar i{background:var(--ok)}
+.bdg.idle{background:var(--warn-soft);color:var(--warn)}.bdg.idle.bad{background:var(--bad-soft);color:var(--bad);font-weight:600}
+.bdg.k-muammo{background:var(--bad-soft);color:var(--bad)}.bdg.k-vazifa{background:var(--accent-soft);color:var(--accent)}.bdg.k-murojaat{background:var(--gold-soft);color:var(--gold)}.bdg.k-izoh{background:var(--warn-soft);color:var(--warn)}
+.drop-ph{height:46px;border:2px dashed var(--accent);border-radius:10px;margin-bottom:8px;background:var(--accent-soft);opacity:.7}
+/* jadval ko'rinishi */
+.bd-table{padding:0;overflow:hidden}
+.bd-table td{vertical-align:top}
+.bd-table tr.rowlink{cursor:pointer}.bd-table tr.rowlink:hover td{background:#F6F8F7}
+.bd-table tr.closed td{color:var(--ink2)}.bd-table tr.closed .t-ttl b{font-weight:500}
+.bd-table th.srt{cursor:pointer;user-select:none}.bd-table th.srt:hover{color:var(--ink)}
+.bd-table th.srt.on{color:var(--accent)}.bd-table th.srt.on::after{content:" ▴"}.bd-table th.srt.on.desc::after{content:" ▾"}
+.t-ttl{min-width:220px;max-width:360px}.t-ttl b{font-weight:600}
+.t-lbls{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
+.t-col{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}.t-col::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--cc)}
+.t-note{max-width:320px;min-width:180px;font-size:12.5px;color:var(--ink2);line-height:1.4}
+.t-bad{color:var(--bad);font-weight:600}.t-warn{color:var(--warn);font-weight:600}
+#iss-st .tagdd-btn{min-width:230px}
+.tagdd.act .tagdd-btn{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.dd-row.alert .cnt{background:var(--bad-soft);color:var(--bad);border-color:#EBC4C4;font-weight:600}
+.dd-row.alert.on .cnt{background:var(--bad);color:#fff;border-color:var(--bad)}
+.chip .sw{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:0}
+.chip.lb.on{color:#fff;border-color:transparent}
+/* svod+номма-ном юклаш модали */
+.svn{padding:26px 28px 22px}
+.svn h2{margin:0 0 4px;font-size:17px}
+.svn .lead{margin:0 0 14px;font-size:12.5px;color:var(--ink2)}
+.svn-sec{border:1px solid var(--line);border-radius:10px;padding:12px 14px 10px;margin-bottom:12px;background:var(--panel);transition:opacity .15s}
+.svn-sec.off{opacity:.45;pointer-events:none}
+.svn-sec h4{margin:0 0 8px;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2);font-weight:600}
+.svn-opt{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border:1px solid var(--line);border-radius:8px;margin-bottom:6px;cursor:pointer;background:var(--bg)}
+.svn-opt:hover{border-color:var(--accent)}
+.svn-opt.on{border-color:var(--accent);background:var(--accent-soft)}
+.svn-opt.dis{opacity:.5;cursor:not-allowed}
+.svn-opt input{margin-top:3px;accent-color:var(--accent)}
+.svn-opt .t{font-weight:600;font-size:13.5px}
+.svn-opt .v{font-size:12.5px;color:var(--ink2);margin-top:2px;font-variant-numeric:tabular-nums}
+.svn-opt .v b{color:var(--ink)}
+.svn-opt .n{font-size:11.5px;color:var(--ink3);margin-top:2px}
+.svn-sum{font-size:12.5px;color:var(--ink2);background:var(--panel2);border-radius:8px;padding:9px 12px;margin:4px 0 12px}
+/* modal */
+.mbg{position:fixed;inset:0;background:rgba(20,30,40,.55);z-index:40;display:flex;align-items:flex-start;justify-content:center;padding:36px 16px;overflow:auto}
+.mdl{background:var(--bg);border-radius:12px;width:min(940px,100%);box-shadow:0 20px 60px rgba(0,0,0,.3);position:relative}
+.mdl.sm{width:min(520px,100%)}
+.mdl .x{position:absolute;top:10px;right:12px;background:none;border:0;font-size:22px;line-height:1;cursor:pointer;color:var(--ink2);padding:4px 8px;border-radius:6px}
+.mdl .x:hover{background:var(--panel2);color:var(--ink)}
+.cm{display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:0}
+@media (max-width:760px){.cm{grid-template-columns:1fr}}
+.cm-main{padding:30px 30px 28px}
+.cm-side{padding:58px 22px 24px;background:var(--panel2);border-left:1px solid var(--line);border-radius:0 12px 12px 0;display:flex;flex-direction:column;gap:12px}
+.cm-side h4,.cm-main h4{margin:12px 0 6px;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2);font-weight:600}
+.cm-main h4:first-of-type{margin-top:0}
+.cm-side .fcol label{font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+.cm-side input,.cm-side select{width:100%;min-width:0}
+.cm-title{width:100%;font:inherit;font-size:19px;font-weight:600;padding:11px 14px;border:1px solid var(--line);border-radius:8px;background:var(--panel);margin:8px 0 18px;min-width:0;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.cm-title:hover{border-color:var(--line);background:var(--panel)}.cm-title:focus{border-color:var(--accent);background:var(--panel);outline:0}
+.cm-main input[type=text],.cm-main textarea,.cm-main select{width:100%;min-width:0;font:inherit;padding:7px 10px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink)}
+.cm-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.cm-row .sel{flex:1;min-width:150px}
+.lblpick{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.lblpick .chip{font-weight:600}
+.lblpick .chip.on{color:#fff;border-color:transparent}
+.lbl-new{display:none;gap:6px;align-items:center;flex-wrap:wrap;margin-top:6px}
+.lbl-new.show{display:flex}
+.lbl-new input[type=text]{width:220px;flex:none}
+input[type=color]{width:34px;height:30px;padding:0 2px;border:1px solid var(--line);border-radius:6px;background:var(--panel);cursor:pointer}
+.att{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:6px}
+.att .im{position:relative;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--panel)}
+.att .im img{width:100%;height:110px;object-fit:cover;display:block;cursor:zoom-in}
+.att .im .nm,.att .fl .nm{font-size:11.5px;padding:5px 7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.att .fl{border:1px solid var(--line);border-radius:8px;background:var(--panel);padding:8px 9px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.att .fl .ic{font-size:20px}
+.att .rm{position:absolute;top:5px;right:5px;background:rgba(0,0,0,.55);color:#fff;border:0;border-radius:5px;font-size:11px;padding:2px 6px;cursor:pointer}
+.att .fl .rm{position:static;background:none;color:var(--bad);padding:0;font-size:11.5px;text-align:left}
+.dropz{border:2px dashed var(--line);border-radius:8px;padding:12px;text-align:center;color:var(--ink2);font-size:12.5px;cursor:pointer;margin-top:8px;background:var(--panel)}
+.dropz.over{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.cm-side .btn{width:100%;justify-content:center}
+.cm-top{position:absolute;top:14px;right:14px;display:flex;gap:2px;z-index:2}
+.cm-top .x{position:static}
+.cm-top .x.del{font-size:16px;color:var(--ink3)}.cm-top .x.del:hover{color:var(--bad);background:var(--bad-soft)}.cm-top .x.del.arm{font-size:12px;color:var(--bad);font-weight:600;background:var(--bad-soft)}
+.ac{position:relative;min-width:0}.ac input{width:100%}
+.ac-pop{position:absolute;left:0;right:0;top:calc(100% + 3px);background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.14);z-index:5;max-height:280px;overflow:auto}
+.ac-it{padding:7px 10px;cursor:pointer;display:flex;justify-content:space-between;gap:10px;font-size:13px;border-bottom:1px solid var(--line)}
+.ac-it:last-child{border-bottom:0}.ac-it b{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ac-it.on,.ac-it:hover{background:var(--accent-soft)}
+.ac-none{padding:8px 10px;color:var(--ink2);font-size:12.5px}
+.tagdd{position:relative}
+.tagdd-btn{width:100%;display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.tagdd-btn:hover{border-color:var(--ink3)}.tagdd-btn .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tagdd-btn .t.ph{color:var(--ink3)}.tagdd-btn .ar{color:var(--ink2);font-size:11px}
+.tagdd-pop{position:absolute;left:0;width:max(100%,280px);top:calc(100% + 4px);background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.14);z-index:6;padding:8px;min-width:260px}
+.tagdd-new{width:100%;font:inherit;font-size:13px;padding:7px 10px;border:1px solid var(--accent);border-radius:6px;outline:0;margin-bottom:6px}
+.tagdd-list{max-height:240px;overflow:auto}
+.tagdd-row{display:flex;align-items:center;gap:4px;padding:2px 2px 2px 4px;border-radius:6px}
+.tagdd-row:hover{background:var(--panel2)}
+.cm-side .tagdd-row label,.tagdd-row label{flex:1;min-width:0;display:flex;align-items:center;gap:8px;padding:5px 4px;cursor:pointer;font-size:13px;text-transform:none;letter-spacing:0;color:var(--ink);margin:0}
+.tagdd-row label .sw{width:10px;height:10px;border-radius:50%;flex:none}.tagdd-row label .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tagdd-row input[type=checkbox]{width:15px;height:15px;margin:0;accent-color:var(--accent);flex:none}
+.tagdd-row .ed,.tagdd-row .dl{background:none;border:0;cursor:pointer;color:var(--ink3);font-size:13px;padding:3px 5px;border-radius:5px;opacity:0;flex:none}
+.tagdd-row:hover .ed,.tagdd-row:hover .dl,.tagdd-row .dl.arm{opacity:1}
+.tagdd-row .ed:hover{color:var(--accent);background:var(--accent-soft)}.tagdd-row .dl:hover,.tagdd-row .dl.arm{color:var(--bad);background:var(--bad-soft);font-size:11.5px;font-weight:600}
+.tagdd-edit{flex:1;min-width:0;font:inherit;font-size:13px;padding:4px 8px;border:1px solid var(--accent);border-radius:6px;outline:0}
+.tagdd-hint{font-size:11.5px;color:var(--ink2);padding:6px 4px 2px}
+#iss-dd .tagdd-btn{min-width:230px}
+.dd-row{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:6px;cursor:pointer;font-size:13px}
+.dd-row:hover{background:var(--panel2)}.dd-row.on{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.dd-row .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dd-row .cnt{font-family:"IBM Plex Mono",monospace;font-size:11px;background:var(--panel2);border:1px solid var(--line);padding:1px 7px;border-radius:10px;color:var(--ink2);flex:none}
+.dd-row.on .cnt{background:var(--accent);color:#fff;border-color:var(--accent)}
+.dd-row .cnt.zero{opacity:.5}
+.tagdd-btn .cnt{font-family:"IBM Plex Mono",monospace;font-size:11px;background:var(--accent);color:#fff;padding:1px 7px;border-radius:10px;flex:none}
+.lbl.big{font-size:12px;padding:3px 6px 3px 9px;border-radius:10px;display:inline-flex;align-items:center;gap:4px;line-height:16px;cursor:default;user-select:none;border:0;font-family:inherit}
+.lbl.big .lx{background:rgba(255,255,255,.25);border:0;color:#fff;border-radius:50%;width:15px;height:15px;line-height:13px;font-size:12px;cursor:pointer;padding:0}
+.lbl.big .lx:hover{background:rgba(0,0,0,.3)}
+.lbl.big.plus{background:var(--panel);color:var(--ink2);border:1px dashed var(--ink3);cursor:pointer;padding:3px 9px;font-weight:700}
+.lbl.big.plus:hover{color:var(--accent);border-color:var(--accent)}
+.lbl-in{font:inherit;font-size:12.5px;padding:3px 8px;border:1px solid var(--accent);border-radius:10px;width:170px;outline:0}
+.sw.big{width:14px;height:14px;border-radius:4px;flex:none;display:inline-block}
+.cm-info{font-size:12px;color:var(--ink2);line-height:1.6}
+/* karta modali (26.09.2026): yo'l ko'rsatkich, korxona ma'lumoti, qadamlar, ustuvorlik, muddat presetlari, asos, izohlar+tarix */
+#card-modal .mdl{width:min(1010px,100%)}
+#card-modal .cm{grid-template-columns:minmax(0,1fr) 272px}
+#card-modal .cm-main h4{margin-top:18px}
+.cm-crumb{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--ink2);padding-right:70px}
+.cm-crumb .mono{font-weight:600;color:var(--ink);font-size:12.5px}
+.cm-col{display:inline-flex;align-items:center;gap:6px;padding:1px 9px;border-radius:10px;background:var(--panel);border:1px solid var(--line);font-weight:600;color:var(--ink)}
+.cm-col::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--cc)}
+.co-brief{margin-top:8px;border:1px solid var(--line);border-radius:9px;background:var(--panel);padding:9px 12px;font-size:12.5px;display:flex;flex-direction:column;gap:6px}
+.co-brief .r1{display:flex;gap:10px;flex-wrap:wrap;align-items:baseline}
+.co-brief .r2,.co-brief .r3{display:flex;gap:8px 14px;flex-wrap:wrap;align-items:center;color:var(--ink2)}
+.co-brief .r3 b{color:var(--ink)}
+.ck-bar{height:6px;border-radius:3px;background:var(--panel2);overflow:hidden;margin:2px 0 6px;border:1px solid var(--line)}
+.ck-bar span{display:block;height:100%;background:var(--accent);transition:width .25s}
+.ck-bar.full span{background:var(--ok)}
+.ck-list{display:flex;flex-direction:column}
+.ck-it{display:flex;align-items:flex-start;gap:9px;padding:5px 6px;border-radius:7px}
+.ck-it:hover{background:var(--panel2)}
+.ck-it input[type=checkbox]{width:16px;height:16px;accent-color:var(--ok);margin:2px 0 0;flex:none;cursor:pointer}
+.ck-it .tx{flex:1;min-width:0;font-size:13.5px;line-height:1.45;word-break:break-word;cursor:text}
+.ck-it.done .tx{text-decoration:line-through;color:var(--ink3)}
+.ck-it .ck-at{font-size:11px;color:var(--ink3);white-space:nowrap;margin-top:2px}
+.ck-it button{background:none;border:0;cursor:pointer;color:var(--ink3);font-size:12.5px;padding:1px 5px;border-radius:5px;opacity:0;flex:none}
+.ck-it:hover button{opacity:1}.ck-it .ed:hover{color:var(--accent);background:var(--accent-soft)}.ck-it .dl:hover{color:var(--bad);background:var(--bad-soft)}
+.cm-main input.ck-edit{flex:1;padding:3px 8px;border-color:var(--accent)}
+.cm-main input.ck-new{margin-top:4px;border-style:dashed;background:transparent}
+.cm-main input.ck-new:focus{border-style:solid;background:var(--panel);border-color:var(--accent);outline:0}
+.prio{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.prio button{border:1px solid var(--line);background:var(--panel);border-radius:7px;padding:6px 4px;font:inherit;font-size:12.5px;cursor:pointer;color:var(--ink2);display:flex;align-items:center;gap:6px;justify-content:center}
+.prio button::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--pc)}
+.prio button:hover{border-color:var(--ink3)}
+.prio button.on{border-color:var(--pc);color:var(--ink);font-weight:600;box-shadow:inset 0 0 0 1px var(--pc)}
+.presets{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
+.presets button{border:1px solid var(--line);background:var(--panel);border-radius:12px;font:inherit;font-size:11.5px;padding:2px 8px;cursor:pointer;color:var(--ink2)}
+.presets button:hover{border-color:var(--accent);color:var(--accent)}
+.due-hint{font-size:11.5px;margin-top:5px;color:var(--ink2);min-height:0}.due-hint.warn{color:var(--warn);font-weight:600}.due-hint.bad{color:var(--bad);font-weight:600}
+.basis-more{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+.kbd-hint{font-size:11px;color:var(--ink3);text-align:center;line-height:1.5}
+.cm-tl-h{display:flex;align-items:center;gap:10px;margin-top:22px;padding-top:16px;border-top:1px solid var(--line)}
+#card-modal .cm-tl-h h4{margin:0}
+.cm-cmt{display:flex;gap:8px;align-items:flex-end;margin:10px 0 12px}
+.cm-cmt textarea{flex:1}
+.cm-main textarea:focus,.cm-main input[type=text]:focus,.cm-side input:focus,.cm-side select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);outline:0}
+.tl{display:flex;flex-direction:column;gap:7px;border-left:2px solid var(--line);margin-left:5px;padding-left:16px}
+.tl:empty{display:none}
+.tl-note{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:7px 11px 9px;position:relative}
+.tl-note::before{content:"";position:absolute;left:-23px;top:11px;width:10px;height:10px;border-radius:50%;background:var(--accent);border:2px solid var(--bg)}
+.tl-h{display:flex;gap:6px;align-items:center;font-size:11.5px;color:var(--ink3);margin-bottom:2px}
+.tl-t{white-space:pre-wrap;word-break:break-word;font-size:13px;line-height:1.45}
+.tl-act{margin-left:auto;display:flex;gap:2px;opacity:0}.tl-note:hover .tl-act,.tl-act .arm{opacity:1}
+.tl-act button{background:none;border:0;cursor:pointer;color:var(--ink3);font-size:12px;padding:1px 5px;border-radius:5px}
+.tl-act .ed:hover{color:var(--accent);background:var(--accent-soft)}.tl-act .dl:hover,.tl-act .dl.arm{color:var(--bad);background:var(--bad-soft);font-weight:600}
+.tl-note .tl-act{opacity:0}.tl-note:hover .tl-act{opacity:1}
+.cm-main textarea.tl-edit{margin:4px 0 6px}
+.tl-log{display:flex;gap:10px;align-items:baseline;font-size:12px;color:var(--ink2);position:relative;padding:1px 0}
+.tl-log::before{content:"";position:absolute;left:-21px;top:6px;width:6px;height:6px;border-radius:50%;background:#B9C1BD}
+.tl-log .tl-t{font-size:12px}
+.tl-log .tl-at{margin-left:auto;color:var(--ink3);white-space:nowrap;font-size:11px}
+.tl-empty{font-size:12px;color:var(--ink3)}
+.co-brief .tel{font-size:12px}
+.tagdd-btn .t .sw{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:1px}
+.tagdd-btn .t .sep{color:var(--ink3)}
+.svod table{font-size:12.5px}.svod th:first-child{position:sticky;left:0}.svod td:first-child{font-weight:500}
+.svod td.num{font-family:"IBM Plex Mono",monospace}.svod tr.tot td{font-weight:700;background:var(--panel2)}
+.svod h3{font-size:13px;margin:14px 0 6px;font-weight:600}.svod h3:first-child{margin-top:0}
+.lblm .row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.lblm .row input[type=text]{flex:1;min-width:0}
+.lblm .used{font-size:11.5px;color:var(--ink2);white-space:nowrap}
+/* ---------------------------------------------------------------- contacts (Алоқа) */
+.ct-form{display:flex;flex-direction:column;gap:12px}
+.ct-form .f{display:flex;flex-direction:column;gap:5px}
+.ct-form .f>label{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2);font-weight:600}
+.ct-form input,.ct-form textarea{width:100%;min-width:0;padding:8px 11px;border-radius:7px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:inherit;transition:border-color .12s,box-shadow .12s}
+.ct-form input::placeholder,.ct-form textarea::placeholder{color:var(--ink3)}
+.ct-form input:focus,.ct-form textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);outline:none}
+.ct-form .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:640px){.ct-form .row2{grid-template-columns:1fr}}
+.phones{display:flex;flex-direction:column;gap:6px}
+.ph{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:7px;background:var(--panel);padding:0 4px 0 10px;transition:border-color .12s,box-shadow .12s}
+.ph:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.ph .ic{color:var(--ink3);font-size:13px;flex:none}
+.ph input.ct-ph{border:0!important;box-shadow:none!important;padding:8px 4px!important;font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;letter-spacing:.02em;flex:1}
+.ph .tag{font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--accent);background:var(--accent-soft);padding:2px 7px;border-radius:9px;flex:none}
+.ph .x{border:0;background:none;color:var(--ink3);font-size:14px;cursor:pointer;padding:6px 8px;border-radius:5px;flex:none;line-height:1}
+.ph .x:hover{color:var(--bad);background:var(--bad-soft)}
+.btn.link{border-color:transparent;background:none;color:var(--accent);padding-left:4px;padding-right:4px;font-weight:600}
+.btn.link:hover{background:var(--accent-soft)}
+.ct-foot{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding-top:4px}
+.ct-foot .note{margin:0}
+.ct-persons{margin-top:18px;border-top:1px solid var(--line);padding-top:14px}
+.ct-persons h3{font-size:13.5px;font-weight:600;margin:0 0 10px;display:flex;align-items:center;gap:10px}
+.ct-persons h3 .hint{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ct-persons h3 .cnt{font-family:"IBM Plex Mono",monospace;font-weight:500;color:var(--ink2);font-size:12px}
+.ct-persons h3 .btn{margin-left:auto}
+.plist{display:flex;flex-direction:column;gap:8px}
+.person{display:grid;grid-template-columns:38px 1fr auto;gap:12px;align-items:start;border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--panel)}
+.person:hover{border-color:var(--ink3)}
+.person .av{width:38px;height:38px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;letter-spacing:.03em}
+.person .pbody{min-width:0}
+.person .nm{font-weight:600;font-size:13.5px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.person .role{font-weight:400;color:var(--ink2);font-size:12.5px;background:var(--panel2);padding:1px 8px;border-radius:9px}
+.person .phs{display:flex;gap:6px 14px;flex-wrap:wrap;margin-top:4px}
+.person .nt{color:var(--ink2);font-size:12.5px;margin-top:4px;white-space:pre-wrap}
+.person .acts{display:flex;gap:2px}
+.ib{border:0;background:none;color:var(--ink3);cursor:pointer;font-size:14px;padding:5px 7px;border-radius:5px;line-height:1}
+.ib:hover{color:var(--accent);background:var(--accent-soft)}
+.ib.del:hover{color:var(--bad);background:var(--bad-soft)}
+.tel{color:var(--ink);text-decoration:none;font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;font-size:12.5px;display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:6px;background:var(--panel2);white-space:nowrap}
+.tel:hover{background:var(--accent-soft);color:var(--accent)}
+.pform{border:1px solid var(--accent);border-radius:8px;padding:12px 14px;background:var(--panel);box-shadow:0 0 0 3px var(--accent-soft);margin-top:8px}
+.pform .ttl{font-size:12px;font-weight:600;color:var(--accent);margin-bottom:10px;letter-spacing:.04em;text-transform:uppercase}
+.pempty{color:var(--ink2);font-size:12.5px;padding:10px 0 2px}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <aside class="side">
+    <div class="brand"><div class="bt"><b>Buxoro export</b></div>
+      <button class="tg" id="side-tg" title="Menyuni yig'ish / yoyish" aria-label="Menyu"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button></div>
+    <button class="nav active" data-p="dash" data-t="Dashboard"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8"/><rect x="13" y="3" width="8" height="5"/><rect x="13" y="12" width="8" height="9"/><rect x="3" y="15" width="8" height="6"/></svg><span class="lbl">Dashboard</span></button>
+    <button class="nav" data-p="daily" data-t="Kunlik hisobot"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg><span class="lbl">Kunlik hisobot</span><span class="n" id="nav-last">—</span></button>
+    <div class="nav-sec">Jadvallar</div>
+    <button class="nav" data-p="nom" data-t="Номма-ном"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg><span class="lbl">Номма-ном</span></button>
+    <button class="nav" data-p="svod" data-t="Свод (туманлар)"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg><span class="lbl">Свод (туманлар)</span></button>
+    <button class="nav" data-p="prod" data-t="Тармоқ ва маҳсулот"><svg viewBox="0 0 24 24"><path d="M4 5h6v6H4zM14 5h6v6h-6zM4 15h6v6H4zM14 15h6v6h-6z"/></svg><span class="lbl">Тармоқ ва маҳсулот</span></button>
+    <button class="nav" data-p="rep" data-t="Ҳисоботлар"><svg viewBox="0 0 24 24"><path d="M6 3h9l5 5v13H6z"/><path d="M14 3v6h6M9 13h7M9 17h7"/></svg><span class="lbl">Ҳисоботлар</span></button>
+    <button class="nav" data-p="dyn" data-t="Динамика"><svg viewBox="0 0 24 24"><path d="M3 20h18M4 16l5-6 4 3 7-8"/></svg><span class="lbl">Динамика</span></button>
+    <button class="nav" data-p="geo" data-t="Географияси"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 3 4 5.9 4 9s-1.4 6-4 9c-2.6-3-4-5.9-4-9s1.4-6 4-9z"/></svg><span class="lbl">Экспорт географияси</span></button>
+    <button class="nav" data-p="kar" data-t="Мева-сабзавот"><svg viewBox="0 0 24 24"><path d="M12 21c4-4 7-7 7-11a7 7 0 0 0-14 0c0 4 3 7 7 11z"/></svg><span class="lbl">Мева-сабзавот (карантин)</span></button>
+    <div class="nav-sec">Маркетинг</div>
+    <button class="nav" data-p="cat" data-t="Каталог"><svg viewBox="0 0 24 24"><path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M3 7l9 4 9-4M12 11v10"/></svg><span class="lbl">Каталог</span><span class="n" id="nav-cat">—</span></button>
+    <div class="nav-sec">Ma'lumotnoma</div>
+    <button class="nav" data-p="reg" data-t="Korxonalar"><svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg><span class="lbl">Korxonalar</span><span class="n" id="nav-reg">—</span></button>
+    <button class="nav" data-p="mov" data-t="Корхона ҳаракати"><svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg><span class="lbl">Корхона ҳаракати</span></button>
+    <button class="nav" data-p="iss" data-t="Muammo va vazifalar"><svg viewBox="0 0 24 24"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"/></svg><span class="lbl">Muammo va vazifalar</span><span class="n" id="nav-iss">—</span></button>
+    <button class="nav" data-p="ctrl" data-t="Nazorat va tarix"><svg viewBox="0 0 24 24"><path d="M12 3l9 4v5c0 5-4 8-9 9-5-1-9-4-9-9V7z"/><path d="M9 12l2 2 4-4"/></svg><span class="lbl">Nazorat va tarix</span></button>
+    <button class="nav" data-p="set" data-t="Sozlamalar"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg><span class="lbl">Sozlamalar</span></button>
+  </aside>
+
+  <main class="main">
+    <div class="banner" id="banner"></div>
+
+    <!-- DASHBOARD -->
+    <section class="page active" id="p-dash">
+      <div class="panel" id="onboard" hidden style="margin-bottom:14px">
+        <h2>Baza bo'sh — ma'lumotni bosqichma-bosqich kiriting</h2>
+        <div id="onboard-steps"></div>
+      </div>
+      <div id="dash-body">
+      <div class="topbar"><h1>Dashboard</h1><span class="sub" id="dash-sub"></span>
+        <div class="right"><label class="sub" for="dash-date">Ҳолат</label><input type="date" id="dash-date"><button class="btn" id="btn-reset">Filtrlarni tozalash</button></div></div>
+      <div class="fbar">
+        <div class="fgrp wide"><label>Туманлар</label><div class="chips" id="f-dist"></div></div>
+        <div class="fgrp"><label>Тур</label><div class="seg" id="f-type"><button data-v="all" class="on">Жами</button><button data-v="sanoat">Саноат</button><button data-v="meva">Мева-сабзавот</button></div></div>
+        <div class="fgrp"><label>Давр</label><div style="display:flex;gap:6px;align-items:center"><select class="sel" id="f-m1"></select><span class="muted">—</span><select class="sel" id="f-m2"></select></div></div>
+        <div class="fgrp"><label>Тармоқ</label><select class="sel" id="f-tar"><option value="">Барча тармоқлар</option></select></div>
+      </div>
+      <div class="grid kpis row5" style="margin-bottom:14px">
+        <div class="kpi accent"><div class="l" id="k1l">Экспорт</div><div class="v" id="k1">—</div><div class="d" id="k1d"></div></div>
+        <div class="kpi"><div class="l">Прогноз бажарилиши</div><div class="v" id="k2">—</div><div class="d" id="k2d"></div></div>
+        <div class="kpi"><div class="l" id="k3l">Ўтган йил шу даврга</div><div class="v" id="k3">—</div><div class="d" id="k3d"></div></div>
+        <div class="kpi gold"><div class="l" id="k4l">Жорий ой</div><div class="v" id="k4">—</div><div class="d" id="k4d"></div></div>
+        <div class="kpi"><div class="l" id="k5l">Охирги кун</div><div class="v" id="k5">—</div><div class="d" id="k5d"></div></div>
+      </div>
+      <div class="g3">
+        <div class="panel"><h2>Ойлар кесимида <span class="hint" id="c1h"></span></h2><div class="cw" style="height:270px"><canvas id="c-month"></canvas></div><div class="note" id="c1n"></div></div>
+        <div class="panel"><h2><span id="c2t">Тармоқлар улуши</span> <span class="hint">йил боши</span><span style="margin-left:auto" class="seg sm" id="pie-mode"><button data-v="tar" class="on">Тармоқлар</button><button data-v="dist">Туманлар</button></span></h2><div class="cw" style="height:270px"><canvas id="c-pie"></canvas></div></div>
+      </div>
+      <div class="g2" style="margin-top:14px">
+        <div class="panel"><h2>Туманлар: амалда ва прогноз <span class="hint">йил бошидан · минг долл. · бажарилиш %</span></h2><div class="cw" id="c-dist-w" style="height:420px"><canvas id="c-dist"></canvas></div></div>
+        <div class="panel"><h2><span>Топ-<span id="top-n-l">10</span> экспортёр</span> <span class="hint" id="c4h"></span><span class="topn"><label for="top-n">Сони</label><input type="number" id="top-n" value="10" min="1" max="500" step="1"><span id="top-n-of"></span></span></h2><div class="rank" id="rank"></div></div>
+      </div>
+      <div class="panel" style="margin-top:14px"><h2>Туманлар жадвали <span class="hint">филтрга мос · БНПЗ киритилмаган</span></h2>
+        <div class="tw" style="max-height:none"><table id="t-dist"><thead><tr><th>Туман / шаҳар</th><th class="num">Йил прогнози</th><th class="num">Давр прогнози</th><th class="num">Амалда</th><th class="num">Фарқ</th><th class="num">%</th><th style="width:16%">Бажарилиши</th><th class="num">Ўтган йил</th><th class="num">Ўсиш %</th><th class="num" id="t-mon-h">Ой</th><th class="num">1 кунда</th></tr></thead><tbody></tbody></table></div>
+      </div>
+      </div>
+    </section>
+
+    <!-- KUNLIK -->
+    <section class="page" id="p-daily">
+      <div class="topbar"><h1>Kunlik hisobot</h1><span class="sub">kunni tanlang → bojxona faylini yuklang → nazorat → saqlash → Excel</span><div class="right"><button class="btn sm" id="d-rtoggle" aria-controls="d-rcol" aria-expanded="true">Excel / yuklash</button><span class="pill info" id="d-badge"></span></div></div>
+      <div class="g3">
+        <div>
+          <div class="panel">
+            <div class="calhead"><button class="btn sm" id="cal-prev" aria-label="Oldingi oy">‹</button><b id="cal-title"></b><button class="btn sm" id="cal-next" aria-label="Keyingi oy">›</button><span class="muted" style="margin-left:auto;font-size:12.5px">Ой жами (юкланган): <b class="mono" id="cal-sum"></b></span></div>
+            <div class="cal" id="cal"></div>
+            <div class="legend"><span><i class="dot ok"></i>yuklangan</span><span><i class="dot warn"></i>fayl yo'q</span><span><i class="dot open"></i>boshlang'ich qoldiq ichida</span></div>
+          </div>
+          <div class="panel" style="margin-top:14px">
+            <h2 id="d-res-t">Korxonalar</h2>
+            <div class="tw"><table><thead><tr><th>ИНН</th><th>Корхона</th><th>Туман</th><th class="num">ГТД</th><th class="num">Шу кун</th><th class="num">Шу ой</th><th class="num">Йил боши</th></tr></thead><tbody id="d-comp"></tbody></table></div>
+            <h2 style="margin-top:16px">Мева-сабзавот (карантин 1706)</h2>
+            <div class="tw"><table><thead><tr><th>ИНН</th><th>Экспортёр</th><th>Ўстирилган туман</th><th>Маҳсулот</th><th>Давлат</th><th class="num">минг $</th></tr></thead><tbody id="d-meva"></tbody></table></div>
+          </div>
+        </div>
+        <div class="rcol" id="d-rcol">
+          <div class="panel">
+            <h2 id="d-sel-t">—</h2>
+            <div class="dl">
+              <div class="dlcard"><div class="t">Шу кун</div><div class="v" id="d-day">—</div><button class="btn" id="dl-day">Kunlik Excel</button></div>
+              <div class="dlcard"><div class="t">Йил бошидан шу кунгача</div><div class="v" id="d-ytd">—</div><button class="btn" id="dl-cum">O'sib boruvchi Excel</button><button class="btn" id="dl-svn">Свод + туманлар</button></div>
+            </div>
+            <p class="note" id="d-note"></p>
+            <p class="note" id="d-tpl"></p>
+            <div id="d-uploads"></div>
+          </div>
+          <div class="panel" style="margin-top:14px">
+            <h2>Yuklash <span class="hint">bojxona GTD fayli</span></h2>
+            <label class="drop" id="drop" for="file"><b>Bojxonaning kunlik GTD faylini shu yerga tashlang yoki bosing</b>masalan «GTD(01.09.2026).xls» · sana «Дата выгрузки» ustunidan olinadi<input type="file" id="file" accept=".xls,.xlsx" hidden></label>
+            <div id="pv" hidden>
+              <div class="steps" id="pv-steps"></div>
+              <div style="margin-top:12px" id="pv-checks"></div>
+              <div id="pv-cands"></div>
+              <div class="form-row"><button class="btn primary" id="pv-save">Tasdiqlash va saqlash</button><button class="btn" id="pv-cancel">Bekor qilish</button></div>
+              <p class="note">Saqlashdan oldin baza zaxirasi olinadi; hamma qatorlar bitta tranzaksiyada yoziladi — yo hammasi, yo hech biri.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- NOMMA-NOM -->
+    <section class="page" id="p-nom">
+      <div class="topbar"><h1>Номма-ном</h1><span class="sub" id="nom-sub"></span><div class="right"><button class="btn" id="nom-xl">Excel'ga chiqarish</button></div></div>
+      <div class="fbar"><input type="text" id="nom-q" placeholder="ИНН ёки корхона номи…"><select class="sel" id="nom-d"><option value="">Барча туманлар</option></select><select class="sel" id="nom-t"><option value="sanoat">Саноат</option><option value="meva">Мева-сабзавот (эски қаторлар)</option><option value="">Ҳаммаси</option></select></div>
+      <div class="panel"><div class="tw"><table id="t-nom"><thead></thead><tbody></tbody></table></div></div>
+    </section>
+
+    <!-- SVOD -->
+    <section class="page" id="p-svod">
+      <div class="topbar"><h1>Свод — туманлар кесимида</h1><span class="sub" id="svod-sub"></span><div class="right"><button class="btn" id="svod-xl">Excel'ga chiqarish</button></div></div>
+      <div class="panel"><div class="tw" style="max-height:none"><table id="t-svod"><thead></thead><tbody></tbody></table></div>
+      <p class="note">Мева-сабзавот — карантин сертификати берилган вилоят бўйича (СВОД (карантин) 292 355). Ўтган йил — <span id="svod-prev"></span>.</p></div>
+    </section>
+
+    <!-- KARANTIN -->
+    <section class="page" id="p-kar">
+      <div class="topbar"><h1>Мева-сабзавот (карантин)</h1><span class="sub">«Область выращенной продукции» = 1706 · экспортёр қайси вилоятдан бўлишидан қатъи назар</span></div>
+      <div class="g2">
+        <div class="panel"><h2>Туманлар бўйича <span class="hint" id="kar-h"></span></h2><div class="tw" style="max-height:none"><table id="t-kar-d"><thead><tr><th>Туман</th><th class="num">Йил боши</th><th class="num">Шу ой</th><th class="num">1 кунда</th></tr></thead><tbody></tbody></table></div></div>
+        <div class="panel"><h2>Юкланган ГТД қаторлари <span class="hint" id="kar-h2"></span></h2><div class="tw"><table><thead><tr><th>Сана</th><th>Экспортёр</th><th>Туман</th><th>Маҳсулот</th><th>Давлат</th><th class="num">Нетто</th><th class="num">минг $</th></tr></thead><tbody id="t-kar-r"></tbody></table></div></div>
+      </div>
+    </section>
+
+    <!-- KORXONALAR -->
+    <section class="page" id="p-prod">
+      <div class="topbar"><h1>Тармоқ ва маҳсулот</h1><span class="sub" id="prod-sub">тармоқ → соҳа → маҳсулот → ТН ВЭД → корхоналар</span>
+        <div class="right"><button class="btn" id="prod-xl">📗 Excel</button></div></div>
+      <div class="grid kpis" id="prod-kpi" style="margin-bottom:14px"></div>
+      <div class="fbar">
+        <div class="fgrp"><label>Йил</label><div class="seg" id="prod-y"></div></div>
+        <div class="fgrp"><label>Дарахт</label><div class="seg" id="prod-cls"><button data-c="A" class="on" title="товар1 → товар2 → справ товар 2 → ТН ВЭД">Тармоқ бўйича</button><button data-c="B" title="справ товар 1 → справ товар 2 → ТН ВЭД">Маҳсулот бўйича</button></div></div>
+        <div class="fgrp"><label>Туман</label><div class="ms" id="prod-d"></div></div>
+        <div class="fgrp"><label>Тур</label><div class="ms" id="prod-k"></div></div>
+        <div class="fgrp"><label>&nbsp;</label><label class="btn" style="cursor:pointer"><input type="checkbox" id="prod-memo" style="margin-right:7px">Алоҳида ҳисоб (БНПЗ, SDK)</label></div>
+        <div class="fgrp"><label>Қидирув</label><input type="text" id="prod-q" placeholder="тармоқ, маҳсулот, ТН ВЭД, корхона…" style="min-width:240px"></div>
+        <div class="fgrp"><label>&nbsp;</label><div class="seg"><button id="prod-open">Ҳаммасини очиш</button><button id="prod-close">Ёпиш</button></div></div>
+      </div>
+      <div class="panel"><div class="tw" style="max-height:72vh"><table id="t-prod" class="ptree"><thead><tr><th id="prod-h0">Тармоқ / соҳа / маҳсулот / ТН ВЭД</th><th class="num">Қиймати</th><th style="min-width:110px">Улуши</th><th class="num" id="prod-hp">Ўтган йил</th><th class="num">Ўсиш</th><th class="num">Нетто, т</th><th class="num">Корхона</th><th class="num">ГТД</th></tr></thead><tbody></tbody></table></div>
+        <p class="note" id="prod-note"></p></div>
+    </section>
+    <section class="page" id="p-rep">
+      <div id="rep-home">
+        <div class="topbar"><h1>Ҳисоботлар</h1><span class="sub">таҳлил турини танланг</span></div>
+        <div class="rcards">
+          <button class="rcard" data-open="ta">
+            <div class="ico"><svg viewBox="0 0 24 24"><path d="M4 5h6v6H4zM14 5h6v6h-6zM4 15h6v6H4zM14 15h6v6h-6z"/></svg></div>
+            <b>Тармоқлар таҳлили</b>
+            <span>Тармоқ (категория) танланади — корхоналар кўпайган / янги / камайган / экспорт қилмаган гуруҳларда, ҳар бири маҳсулотлари билан, ўтган йилнинг шу даврига солиштирилади. Excel — расмий шаблон кўринишида.</span>
+            <span class="go">Очиш →</span>
+          </button>
+          <button class="rcard" data-open="rk">
+            <div class="ico"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h11M4 18h6"/><path d="M19 11v8m0 0-2.5-2.5M19 19l2.5-2.5"/></svg></div>
+            <b>Экспорт қилган корхоналар</b>
+            <span>Танланган даврда (стандарт — йил бошидан охирги маълумот кунигача) экспорт қилган корхоналар — каттадан кичик суммага: корхона номи, тармоқ, туман, экспорт ҳажми. Мева-сабзавот — карантин бўйича туманлар кесимида; жами Dashboard билан бир хил. Excel.</span>
+            <span class="go">Очиш →</span>
+          </button>
+          <button class="rcard" data-open="mp">
+            <div class="ico"><svg viewBox="0 0 24 24"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 12l9 4 9-4M3 17l9 4 9-4"/></svg></div>
+            <b>Маҳсулотлар таҳлили</b>
+            <span>Тармоқлар ва уларнинг ичидаги маҳсулотлар кўп танлов билан (масалан, паррандачилик: товуқ + тухум) — маҳсулотлар, корхоналар, туманлар, давлатлар, ойлар кесимида, ўтган йилнинг шу даврига солиштирилади. Импорт ҳам алоҳида. Танлов «тўплам» бўлиб сақланади. Excel — 6 варақ: жами экспорт ва жами импорт (икки йил ёнма-ён), сўнг экспорт ва импорт ҳар йил алоҳида (туман · корхона · маҳсулот · тонна · минг $ · давлат), принтга мос.</span>
+            <span class="go">Очиш →</span>
+          </button>
+          <div class="rcard soon">Янги таҳлиллар шу ерга қўшилади</div>
+        </div>
+      </div>
+      <div id="rep-ta" hidden>
+        <div class="topbar"><button class="back" id="ta-back">← Ҳисоботлар</button><h1>Тармоқлар таҳлили</h1><span class="sub" id="ta-sub"></span>
+          <div class="right"><button class="btn primary" id="ta-xl">📗 Excel юклаб олиш</button></div></div>
+        <div class="fbar">
+          <div class="fgrp"><label>Категория (тармоқ)</label><select class="sel" id="ta-cat" style="min-width:300px"></select></div>
+          <div class="fgrp"><label>Йил</label><select class="sel" id="ta-year"></select></div>
+          <div class="fgrp"><label>Давр</label><div class="form-row" style="margin:0"><select class="sel" id="ta-ptype"><option value="months">Йил бошидан N ой</option><option value="ytd">Охирги маълумот кунигача</option><option value="range">Сана оралиғи</option></select>
+            <select class="sel" id="ta-months"></select><span id="ta-range" hidden><input type="date" id="ta-from"> — <input type="date" id="ta-to"></span></div></div>
+          <div class="fgrp"><label>Туман</label><div class="ms" id="ta-d"></div></div>
+          <div class="fgrp"><label>Кўриниш</label><div class="seg sm" id="ta-view"><button data-v="prod" class="on">Соҳалар билан</button><button data-v="co">Корхоналар</button></div></div>
+          <div class="fgrp wide"><label>Сарлавҳа <span class="hint">бўш қолса — ўзи ёзилади</span></label><input type="text" id="ta-title" style="width:100%"></div>
+        </div>
+        <div class="ta-kpis" id="ta-kpis"></div>
+        <div class="panel"><h2 id="ta-h"></h2>
+          <div class="tw" style="max-height:72vh"><table class="ta" id="t-ta"><thead></thead><tbody></tbody></table></div>
+          <p class="note" id="ta-note"></p></div>
+      </div>
+      <div id="rep-mp" hidden>
+        <div class="topbar"><button class="back" id="mp-back">← Ҳисоботлар</button><h1>Маҳсулотлар таҳлили</h1><span class="sub" id="mp-sub"></span>
+          <div class="right"><button class="btn primary" id="mp-xl" title="6 варақ: Жами экспорт, Жами импорт (икки йил ёнма-ён), Экспорт ва Импорт — ўтган йил тўлиқ, жорий йил бошидан">📗 Excel (6 варақ)</button></div></div>
+        <div class="fbar">
+          <div class="fgrp"><label>Тўплам</label><div class="form-row" style="margin:0"><select class="sel" id="mp-set" style="min-width:220px"></select>
+            <button class="btn" id="mp-save" title="Жорий танловни тўплам қилиб сақлаш">💾 Сақлаш</button><button class="btn" id="mp-del" title="Тўпламни ўчириш">🗑</button></div></div>
+          <div class="fgrp"><label>Тармоқлар <span class="hint">тўлиқ — ҳамма маҳсулоти билан</span></label><div class="ms" id="mp-cat"></div></div>
+          <div class="fgrp"><label>Йил</label><select class="sel" id="mp-year"></select></div>
+          <div class="fgrp"><label>Давр</label><div class="form-row" style="margin:0"><select class="sel" id="mp-ptype"><option value="ytd">Охирги маълумот кунигача</option><option value="months">Йил бошидан N ой</option><option value="range">Сана оралиғи</option></select>
+            <select class="sel" id="mp-months" hidden></select><span id="mp-range" hidden><input type="date" id="mp-from"> — <input type="date" id="mp-to"></span></div></div>
+          <div class="fgrp"><label>Туман</label><div class="ms" id="mp-d"></div></div>
+          <div class="fgrp"><label>&nbsp;</label><label class="btn" style="cursor:pointer"><input type="checkbox" id="mp-memo" style="margin-right:7px">Алоҳида ҳисоб (БНПЗ, SDK)</label></div>
+          <div class="fgrp wide"><label>Маҳсулотлар <span class="hint" id="mp-selinfo"></span></label>
+            <div class="mp-pick"><div class="mp-pick-top"><input type="text" id="mp-q" placeholder="маҳсулот, гуруҳ ёки ТН ВЭД коди…"><label class="hint"><input type="checkbox" id="mp-onlysel"> фақат танланганлар</label><button class="btn sm" id="mp-clear">Танловни тозалаш</button></div>
+              <div class="mp-tree" id="mp-tree"></div></div></div>
+          <div class="fgrp wide"><label>Сарлавҳа <span class="hint">бўш қолса — ўзи ёзилади</span></label><input type="text" id="mp-title" style="width:100%"></div>
+        </div>
+        <div class="grid kpis" id="mp-kpis" style="margin-bottom:14px"></div>
+        <div class="panel"><h2 id="mp-h"></h2>
+          <div class="seg sm" id="mp-tabs" style="margin-bottom:10px"><button data-t="prod" class="on">Маҳсулотлар</button><button data-t="co">Корхоналар</button><button data-t="dist">Туманлар</button><button data-t="ctry">Давлатлар</button><button data-t="mon">Ойлар</button><button data-t="imp">Импорт</button></div>
+          <div class="cw" id="mp-chart-w" style="height:260px;margin-bottom:10px" hidden><canvas id="c-mp"></canvas></div>
+          <div class="tw" style="max-height:66vh"><table class="ta" id="t-mp"><thead></thead><tbody></tbody></table></div>
+          <p class="note" id="mp-note"></p></div>
+      </div>
+      <div id="rep-rk" hidden>
+        <div class="topbar"><button class="back" id="rk-back">← Ҳисоботлар</button><h1>Экспорт қилган корхоналар</h1><span class="sub" id="rk-sub"></span>
+          <div class="right"><button class="btn primary" id="rk-xl">📗 Excel юклаб олиш</button></div></div>
+        <div class="fbar">
+          <div class="fgrp"><label>Давр (ойлар)</label><div class="form-row" style="margin:0"><select class="sel" id="rk-m1"></select> — <select class="sel" id="rk-m2"></select></div></div>
+          <div class="fgrp"><label>Тур</label><div class="seg sm" id="rk-t"><button data-t="all" class="on">Барчаси</button><button data-t="sanoat">Саноат</button><button data-t="meva">Мева-сабзавот</button></div></div>
+          <div class="fgrp"><label>Туман</label><div class="ms" id="rk-d"></div></div>
+          <div class="fgrp"><label>&nbsp;</label><label class="btn" style="cursor:pointer"><input type="checkbox" id="rk-memo" style="margin-right:7px">Алоҳида ҳисоб (БНПЗ, SDK)</label></div>
+          <div class="fgrp"><label>Қидирув <span class="hint">фақат экранда</span></label><input type="text" id="rk-q" placeholder="корхона, ИНН, тармоқ…"></div>
+          <div class="fgrp wide"><label>Сарлавҳа <span class="hint">бўш қолса — ўзи ёзилади</span></label><input type="text" id="rk-title" style="width:100%"></div>
+        </div>
+        <div class="grid kpis" id="rk-kpis" style="margin-bottom:14px"></div>
+        <div class="panel"><h2 id="rk-h"></h2>
+          <div class="tw" style="max-height:70vh"><table id="t-rk"><thead><tr><th class="num">№</th><th>Корхона номи</th><th>Тармоқ номи</th><th>Туман</th><th class="num">Экспорт ҳажми, минг $</th><th style="min-width:120px">Улуши</th></tr></thead><tbody></tbody></table></div>
+          <p class="note" id="rk-note"></p></div>
+      </div>
+    </section>
+    <section class="page" id="p-dyn">
+      <div class="topbar"><h1>Динамика</h1><span class="sub" id="dyn-sub">ойлар кесимида, ўтган йил билан</span>
+        <div class="right"><button class="btn" id="dyn-xl">📗 Excel</button></div></div>
+      <div class="grid kpis" id="dyn-kpi" style="margin-bottom:14px"></div>
+      <div class="fbar">
+        <div class="fgrp"><label>Йил</label><div class="seg" id="dyn-y"></div></div>
+        <div class="fgrp"><label>Кесим</label><div class="seg" id="dyn-by"><button data-b="total" class="on">Жами</button><button data-b="district">Туманлар</button><button data-b="tarmoq">Тармоқлар</button><button data-b="country">Давлатлар</button><button data-b="union">Уюшмалар</button><button data-b="company">Корхоналар</button></div></div>
+        <div class="fgrp"><label>Туман</label><div class="ms" id="dyn-d"></div></div>
+        <div class="fgrp"><label>Тур</label><div class="ms" id="dyn-k"></div></div>
+        <div class="fgrp"><label>&nbsp;</label><label class="btn" style="cursor:pointer"><input type="checkbox" id="dyn-memo" style="margin-right:7px">Алоҳида ҳисоб</label></div>
+        <div class="fgrp"><label>Қидирув</label><input type="text" id="dyn-q" placeholder="қатор номи…"></div>
+      </div>
+      <div class="panel" style="margin-bottom:14px"><h2 id="dyn-ct">Ойлар кесимида</h2><div class="cw" style="height:300px"><canvas id="c-dyn"></canvas></div></div>
+      <div class="panel"><div class="tw" style="max-height:62vh"><table id="t-dyn"><thead></thead><tbody></tbody></table></div>
+        <p class="note" id="dyn-note"></p></div>
+    </section>
+    <section class="page" id="p-mov">
+      <div class="topbar"><h1>Корхона ҳаракати</h1><span class="sub" id="mov-sub">йилдан йилга: янги, тўхтаган, ўсган, камайган</span>
+        <div class="right"><button class="btn" id="mov-xl">📗 Excel</button></div></div>
+      <div class="grid kpis" id="mov-kpi" style="margin-bottom:14px"></div>
+      <div class="fbar">
+        <div class="fgrp"><label>Йил</label><div class="seg" id="mov-y"></div></div>
+        <div class="fgrp"><label>Рўйхат</label><div class="seg" id="mov-tab"><button data-t="new" class="on">Янги</button><button data-t="stopped">Тўхтаган / ҳали йўқ</button><button data-t="up">Ўсганлар</button><button data-t="down">Камайганлар</button></div></div>
+        <div class="fgrp"><label>Туман</label><div class="ms" id="mov-d"></div></div>
+        <div class="fgrp"><label>Қидирув</label><input type="text" id="mov-q" placeholder="ИНН ёки ном…"></div>
+      </div>
+      <div class="panel"><div class="tw" style="max-height:68vh"><table id="t-mov"><thead><tr><th>№</th><th>ИНН</th><th>Корхона / тармоқ</th><th>Туман</th><th class="num" id="mov-h1">Бу йил</th><th class="num" id="mov-h2">Ўтган йил шу давр</th><th class="num" id="mov-h3">Ўтган йил жами</th><th class="num">Ўсиш</th><th class="num">Фарқ</th><th>Охирги экспорт</th></tr></thead><tbody></tbody></table></div>
+        <p class="note" id="mov-note"></p></div>
+    </section>
+    <section class="page" id="p-geo">
+      <div class="topbar"><h1>Экспорт географияси</h1><span class="sub" id="geo-sub">давлатлар кесимида</span>
+        <div class="right"><button class="btn" id="geo-xl">📗 Excel</button></div></div>
+      <div class="grid kpis" id="geo-kpi" style="margin-bottom:14px"></div>
+      <div class="fbar">
+        <div class="fgrp"><label>Давр</label><div class="form-row" style="margin:0"><input type="date" id="geo-f"><span class="muted">—</span><input type="date" id="geo-t"></div></div>
+        <div class="fgrp"><label>Тез танлаш</label><div class="seg" id="geo-quick">
+          <button data-q="ytd" class="on">Йил бошидан</button><button data-q="m">Шу ой</button><button data-q="q">Шу чорак</button><button data-q="30">30 кун</button><button data-q="y2025">2025</button><button data-q="y2024">2024</button></div></div>
+        <div class="fgrp"><label>Туман</label><div class="ms" id="geo-d"></div></div>
+        <div class="fgrp"><label>Тармоқ</label><div class="ms" id="geo-tr"></div></div>
+        <div class="fgrp"><label>Давлат</label><div class="ms" id="geo-c"></div></div>
+        <div class="fgrp"><label>Тур</label><div class="ms" id="geo-k"></div></div>
+        <div class="fgrp"><label>&nbsp;</label><label class="btn" style="cursor:pointer"><input type="checkbox" id="geo-memo" style="margin-right:7px">Алоҳида ҳисоб</label></div>
+      </div>
+      <div class="geo-wrap">
+        <div class="panel"><h2>Дунё харитаси <span class="hint">давлат устига босинг — ўнг томонда корхоналар очилади</span></h2>
+          <div id="map"></div><div class="legend" id="geo-legend"></div></div>
+        <div class="panel"><h2>Давлатлар <span class="hint" id="geo-cnt"></span></h2><div class="clist" id="geo-list"></div></div>
+      </div>
+    </section>
+    <section class="page" id="p-reg">
+      <div id="reg-list">
+        <div class="topbar"><h1>Korxonalar</h1><span class="sub" id="reg-sub">eksportyorlar, reja bajarilishi, muammolar</span>
+          <div class="right"><button class="btn" id="reg-ci" title="Раҳбар, телефон, ҳисобчи, масъул шахс… Excel'дан">📇 Алоқа Excel юклаш</button><input type="file" id="reg-ci-file" accept=".xlsx,.xls" hidden><button class="btn" id="reg-xl">📗 Ro'yxat Excel</button></div></div>
+        <div class="grid kpis" id="reg-kpi" style="margin-bottom:14px"></div>
+        <div class="fbar">
+          <div class="fgrp"><label>Qidiruv</label><input type="text" id="reg-q" placeholder="ИНН ёки ном…"></div>
+          <div class="fgrp"><label>Holat</label><div class="ms" id="reg-s"></div></div>
+          <div class="fgrp"><label>Tuman</label><div class="ms" id="reg-d"></div></div>
+          <div class="fgrp"><label>Tarmoq</label><div class="ms" id="reg-t"></div></div>
+          <div class="fgrp"><label>Tur</label><div class="ms" id="reg-k"></div></div>
+          <div class="fgrp"><label>&nbsp;</label><button class="btn" id="reg-clr" hidden>✕ Filtrni tozalash</button></div>
+          <div class="fgrp"><label>Saralash</label><select class="sel" id="reg-o"><option value="ytd">Йил бошидан ↓</option><option value="month">Шу ой ↓</option><option value="share">Туманда улуши ↓</option><option value="last">Охирги экспорт</option><option value="new">Янги (сана)</option><option value="name">Номи</option></select></div>
+        </div>
+        <div class="panel"><div class="tw" style="max-height:66vh"><table id="t-reg"><thead><tr><th>ИНН</th><th>Корхона / тармоқ</th><th>Туман</th><th class="num">Йил бошидан</th><th class="num" id="reg-mh">Шу ой</th><th>Охирги</th><th class="num">Туман экспорти</th><th style="min-width:130px">Туманда улуши</th><th>Сигнал</th></tr></thead><tbody></tbody></table></div>
+          <p class="note" id="reg-note"></p></div>
+      </div>
+      <div id="reg-prof" hidden></div>
+    </section>
+
+    <!-- КАТАЛОГ (экспорт салоҳияти витринаси — catalog.js) -->
+    <section class="page" id="p-cat">
+      <div class="topbar"><h1>Каталог</h1><span class="sub">корхоналар маҳсулотлари витринаси — элчихоналар орқали хорижий ҳамкор топиш учун</span>
+        <div class="right">
+          <div class="seg" id="ct-view"><button data-v="list" class="on">Корхоналар</button><button data-v="show">Витрина</button><button data-v="inq">Сўровлар</button></div>
+          <button class="btn" id="ct-open" title="Сайтни янги ойнада очиш (фақат эълон қилинганлар)">↗ Сайт</button>
+          <button class="btn" id="ct-site" title="Статик сайт пакети (zip) — истаган хостингга жойлаш ёки флешкада бериш учун">🌐 Сайт пакети</button>
+          <span class="seg sm" id="ct-price" title="Элчихоналар учун прайс-лист (Excel)"><button data-l="en">📗 EN</button><button data-l="ru">RU</button><button data-l="uz">UZ</button></span>
+          <button class="btn" id="ct-setb">⚙ Созламалар</button>
+        </div></div>
+      <div class="ct-seed" id="ct-seedb" hidden></div>
+      <div class="grid kpis" id="ct-kpi"></div>
+      <div id="ct-listw">
+        <div class="fbar">
+          <div class="fgrp"><label>Қидирув</label><input type="text" id="ct-q" placeholder="ном, ИНН, тармоқ…"></div>
+          <div class="fgrp"><label>Ҳолат</label><select class="sel" id="ct-st"><option value="">Барчаси</option><option value="published">Эълон қилинган</option><option value="draft">Қоралама</option><option value="hidden">Яширин</option></select></div>
+          <div class="fgrp wide"><label>Нима етишмайди</label><div class="chips" id="ct-wf"></div></div>
+          <div class="fgrp" style="margin-left:auto"><label>&nbsp;</label><div class="form-row" style="margin:0"><button class="btn" id="ct-bulk" title="Барча экспортёрлар — ГТД/ТН ВЭД бўйича шаблон">⚡ ГТД'дан барча экспортёрлар</button><button class="btn primary" id="ct-add">+ Корхона қўшиш</button></div></div>
+        </div>
+        <div class="panel"><h2>Каталогдаги корхоналар <span class="hint" id="ct-cnt"></span></h2><div class="tw" style="max-height:66vh"><table class="ct-t" id="ct-t"><thead><tr><th>Корхона</th><th>Тармоқ</th><th class="num">Маҳсулот<br><span class="hint">эълон / жами</span></th><th class="num">Расм</th><th class="num">Нарх</th><th>Тўлиқлик</th><th>Ҳолат</th><th>Янгиланди</th></tr></thead><tbody></tbody></table></div></div>
+      </div>
+      <div id="ct-show" hidden><iframe class="ct-frame" id="ct-frame" title="Каталог витринаси"></iframe></div>
+      <div id="ct-inq" hidden></div>
+      <div id="ct-ed" hidden></div>
+    </section>
+
+    <!-- MUAMMO VA VAZIFALAR (kanban doska) -->
+    <section class="page" id="p-iss">
+      <div class="topbar"><h1>Muammo va vazifalar</h1><span class="sub" id="bd-sub">карталарни устунлар орасида сичқонча билан судраб кўчиринг</span>
+        <div class="right">
+          <div class="seg" id="bd-view" title="Кўриниш"><button data-v="board" class="on">Доска</button><button data-v="table">Жадвал</button></div>
+          <button class="btn" id="bd-svod" title="Устунлар бўйича свод">Свод</button>
+          <a class="btn" id="bd-xlsx" href="/api/export/issues" title="Свод ва рўйхатни Excel'га чиқариш">Excel</a>
+          <button class="btn" id="bd-labels" title="Ташкилот белгиларини бошқариш">Белгилар</button>
+          <button class="btn" id="bd-addcol">+ Устун</button>
+          <button class="btn primary" id="iss-new" title="Янги карта (N)">+ Янги карта</button></div></div>
+      <div class="fbar" id="bd-fbar">
+        <div class="fgrp"><label>Qidiruv</label><input type="text" id="iss-q" placeholder="матн, корхона, №, ташкилот…  ( / )"></div>
+        <div class="fgrp"><label>Tuman</label><select class="sel" id="iss-d" hidden><option value="">Барча туманлар</option></select><div class="tagdd" id="iss-dd"></div></div>
+        <div class="fgrp"><label>Ҳолат</label><div class="tagdd" id="iss-st"></div></div>
+        <div class="fgrp" style="margin-left:auto"><label>&nbsp;</label><button class="btn sm" id="bd-clear">Филтрларни тозалаш</button></div>
+        <div class="fgrp wide"><label>Ташкилотлар (белгилар) — бир нечтасини танлаш мумкин</label><div class="chips" id="bd-lchips"></div></div>
+      </div>
+      <div class="panel" id="bd-svod-panel" hidden></div>
+      <div class="board" id="board"></div>
+      <div class="panel bd-table" id="bd-table" hidden></div>
+    </section>
+
+    <!-- NAZORAT -->
+    <section class="page" id="p-ctrl">
+      <div class="topbar"><h1>Nazorat va tarix</h1><span class="sub">har bir yuklash saqlanadi; bekor qilish tarixni o'chirmaydi</span><div class="right"><button class="btn" id="bk-create">Hozir zaxira olish</button></div></div>
+      <div class="panel"><h2>Yuklashlar</h2><div class="tw"><table><thead><tr><th>№</th><th>Vaqt</th><th>Fayl</th><th>Sana(lar)</th><th class="num">Qator</th><th class="num">Buxoro</th><th class="num">Karantin</th><th class="num">Sanoat</th><th class="num">Meva</th><th>Yangi INN</th><th>Holat</th><th></th></tr></thead><tbody id="t-up"></tbody></table></div></div>
+      <div class="g2" style="margin-top:14px">
+        <div class="panel"><h2>Zaxira nusxalar</h2><div class="tw"><table><thead><tr><th>Fayl</th><th>Vaqt</th><th class="num">Hajm</th><th></th></tr></thead><tbody id="t-bk"></tbody></table></div></div>
+        <div class="panel"><h2>Baza holati</h2><div id="db-state"></div><h2 style="margin-top:14px">Amallar jurnali</h2><div class="tw" style="max-height:320px"><table><tbody id="t-audit"></tbody></table></div></div>
+      </div>
+    </section>
+
+    <!-- SOZLAMALAR -->
+    <section class="page" id="p-set">
+      <div class="topbar"><h1>Sozlamalar</h1></div>
+      <div class="panel" style="margin-bottom:14px" id="plan-panel"><h2>Режа (прогноз) <span class="hint">туман ва тур кесимида, ойлар бўйича · режа йил ичида ўзгарса — янги версия «... дан» санаси билан; ҳисобот кунида амалдаги версия олинади</span></h2>
+        <div class="fbar" style="margin-top:10px">
+          <div class="fgrp"><label>Версиялар</label><select class="sel" id="pl-ver" style="min-width:320px"></select></div>
+          <div class="fgrp"><label>Кучга кириш санаси</label><input type="date" id="pl-from"></div>
+          <div class="fgrp wide" style="flex:1 1 260px"><label>Номи</label><input type="text" id="pl-title" placeholder="масалан: Сентябрдан янги режа"></div>
+          <div class="fgrp"><label>&nbsp;</label><div class="form-row"><button class="btn primary" id="pl-save">Сақлаш</button><button class="btn" id="pl-del">Ўчириш</button></div></div>
+        </div>
+        <div class="fbar">
+          <div class="fgrp"><label>Янги версия</label><div class="form-row"><input type="number" id="pl-ny" style="width:90px"><input type="date" id="pl-nfrom"><select class="sel" id="pl-nsrc"><option value="copy">танланган версиядан нусха</option><option value="workbook">жадвал (СВОД) прогнозидан</option><option value="empty">бўш</option></select><button class="btn" id="pl-new">Яратиш</button></div></div>
+          <div class="fgrp"><label>Excel</label><div class="form-row"><button class="btn" id="pl-tpl">📗 Шаблонни юклаб олиш</button><label class="btn" style="cursor:pointer">📥 Excel юклаш<input type="file" id="pl-imp" accept=".xlsx" hidden></label></div></div>
+        </div>
+        <div class="tw" style="max-height:60vh"><table id="t-plan"><thead></thead><tbody></tbody></table></div>
+        <p class="note" id="pl-note">Ҳар катак — ойлик режа (минг $). «Йил жами» катагига рақам ёзилса, у 12 ойга тенг тақсимланади. Виловят қатори — туманлар йиғиндиси.</p>
+      </div>
+      <div class="panel" style="margin-bottom:14px" id="per-panel"><h2>Тугаган йиллар натижалари <span class="hint">фақат тугаган йиллар: йил ва давр танланади → Excel шаблон юклаб олинади → тўлдирилиб қайта юкланади · «ўтган йил шу даврга» солиштириш ҳамма саҳифада аввало шундан олинади</span></h2>
+        <div class="fbar" style="margin-top:10px">
+          <div class="fgrp"><label>Йил</label><select class="sel" id="pr-ny" style="min-width:110px"></select></div>
+          <div class="fgrp"><label>Давр (йил бошидан)</label><select class="sel" id="pr-nm" style="min-width:260px"></select></div>
+          <div class="fgrp"><label>Excel</label><div class="form-row"><button class="btn" id="pr-tpl">📗 Шаблонни юклаб олиш</button><label class="btn" style="cursor:pointer">📥 Тўлдирилганини юклаш<input type="file" id="pr-imp" accept=".xlsx,.xls" hidden></label></div></div>
+          <div class="fgrp"><label>&nbsp;</label><div class="form-row"><button class="btn primary" id="pr-save">Сақлаш</button><button class="btn" id="pr-del">Ўчириш</button></div></div>
+        </div>
+        <div class="tw" style="max-height:60vh"><table id="t-per"><thead></thead><tbody></tbody></table></div>
+        <p class="note" id="pr-note">Фақат <b>тугаган</b> йиллар киритилади: жорий йил режаси юқоридаги «Режа» панелида, жорий йил амалдаги кўрсаткичи эса кунлик божхона маълумотидан ўзи шаклланади. Ҳар катак — шу йилнинг январь–N ой якуни (амалда, минг $). Ой охирида сайт аниқ шу рақамни олади (масалан 31.08 — 8 ойлик), оралиқ кунда икки давр орасида кунлар бўйича ҳисоблайди; давр умуман йўқ бўлса пастдаги «Ўтган йил базаси» захира сифатида ишлайди. Вилоят қатори — туманлар йиғиндиси. Excel: шаблонни юклаб олиб тўлдиринг, ёки расмий жадвални тўғридан-тўғри юкланг — унда «{йил} йил N ойда амалда» устуни бўлса етарли, туманлар номи бўйича танилади. <span id="pr-src"></span></p>
+      </div>
+      <div class="panel" style="margin-bottom:14px" id="prev-panel"><h2>Ўтган йил базаси <span class="hint">«ўтган йил шу даврга» солиштириш учун қўлда киритилган рақамлар (минг $) · божхона базасидаги ўтган йил маълумоти ишлатилмайди</span></h2>
+        <div class="fbar" style="margin-top:10px">
+          <div class="fgrp"><label>Йил</label><input type="number" id="py-year" style="width:90px"></div>
+          <div class="fgrp"><label>Ҳолат кунлари</label><input type="number" id="py-days" style="width:90px" min="1" max="366"></div>
+          <div class="fgrp wide" style="flex:1 1 320px"><label>Изоҳ/номи</label><input type="text" id="py-label" placeholder="масалан: 2025 йил 1 октябрь ҳолатида амалдаги экспорт"></div>
+          <div class="fgrp"><label>&nbsp;</label><div class="form-row"><button class="btn primary" id="py-save">Сақлаш</button></div></div>
+        </div>
+        <div class="tw" style="max-height:60vh"><table id="t-prev"><thead><tr><th>Туман</th><th class="num">Саноат</th><th class="num">Мева-сабзавот</th><th class="num">Жами</th></tr></thead><tbody></tbody></table></div>
+        <p class="note" id="py-note">Рақам — ўтган йилнинг «Ҳолат кунлари» кунидаги (одатда 273 кун = 1 октябрь ҳолатида) амалдаги экспорти. Ҳисобот кунида у йил бошидан ўтган кунлар сонига мутаносиб қайта ҳисобланади (рақам / кунлар × ҳисобот кунигача кунлар) ва Dashboard, Свод, Ҳисоботлар, Динамика, География саҳифаларида «ўтган йил шу даврга» устунида ишлатилади. «Жами» = саноат + мева-сабзавот (ўзи ҳисобланади); вилоят қатори бўш қолдирилса — туманлар йиғиндиси, ёзилса — ёзилгани олинади. Диққат: «2. Ўз жадвалингиз» қайта юкланса, СВОД варағидаги ўтган йил рақамлари шу жадвални қайта ёзади.</p>
+      </div>
+      <div class="panel" style="margin-bottom:14px" id="disp-panel"><h2>Баҳсли корхоналар <span class="hint">шаблон (номманом, қўлда) ≠ божхона базаси · қарор — корхона профилида («Йил боши манбаси», «Бухоро корхонаси»)</span></h2>
+        <div class="tw" style="max-height:60vh"><table id="t-disp"><thead><tr><th>Корхона</th><th>Туман</th><th>Шаблонда</th><th>Базада</th><th class="num">Шаблон янв–база ойи</th><th class="num">Божхона базаси</th><th class="num">Фарқ</th><th>Ойлар (фарқ)</th><th>Қарор</th><th>Excel га таъсири</th></tr></thead><tbody></tbody></table></div>
+        <p class="note" id="disp-note">Қоида (19.09.2026): (а) «Бухоро» + манба «Шаблон» — сайт шаблон рақамларини олади (Dashboard, Номма-ном, Корхоналар, Excel бир хил); (б) «Бухоро» + манба «Божхона базаси» — Excel чиқаришда шу корхонанинг янв–база ойи катаклари база рақамлари билан қайта ёзилади; (в) «Бухоро эмас» — ҳеч қаерда чиқмайди, Excel да ой катаклари тозаланиб «Бухоро эмас — сайт бўйича» изоҳи қўйилади; (г) базада бор, шаблонда йўқ — Excel да туман блокига сариқ янги қатор (база ойлари билан) қўшилади. Ўзгартириш учун корхона номини босинг.</p>
+      </div>
+      <div class="g2">
+        <div class="panel"><h2>Baza va papkalar</h2><div id="set-paths"></div>
+          <h2 style="margin-top:14px">O'tgan yil bilan solishtirish</h2>
+          <div class="form-row"><label for="set-off">Kunlar soni = yil boshidan hisobot sanasigacha kunlar +</label><input type="number" id="set-off" style="width:80px"><button class="btn sm" id="set-save">Saqlash</button></div>
+          <p class="note">Kun soni = yil boshidan ma'lumot sanasigacha (0). Jadvalingizda «01.09.2026 йил» uchun 151+30+31+31 = 243 kun, ya'ni 31.08 gacha — bu 0 ga to'g'ri keladi. <span id="set-prev"></span></p>
+        </div>
+        <div class="panel"><h2>Boshlang'ich ma'lumot</h2>
+          <div class="initstep">
+            <h3>1. Bojxona bazasi <span class="hint">majburiy · «SQL Hokimyat baza N oylik» yoki yillik «… 12 oy YYYY»</span></h3>
+            <p class="note">INN → tuman reyestri va yil boshidan <b>sanoat</b> eksporti (bazadagi oxirgi rasmiylashtirilgan sanagacha). БНПЗ va meva-sabzavot olinmaydi.
+              Bazaning har bir qatori ma'lumot daraxtiga (korxona → GTD → tovar qatori) saqlanadi: eksport ham, import ham, hamma yillar. O'tgan yil fayli (masalan 2025 yillik) tarix sifatida yuklanadi — joriy hisobga tegmaydi; katta fayl 3–5 daqiqa tekshiriladi.</p>
+            <div class="form-row"><input type="file" id="in-bz" accept=".xls,.xlsx"><span class="muted" id="in-bz-s"></span></div>
+            <div class="form-row"><button class="btn" id="bz-check">Tekshirish</button><button class="btn primary" id="bz-apply" disabled>Almashtirish</button></div>
+            <div id="bz-res"></div>
+          </div>
+          <div class="initstep">
+            <h3>2. O'z jadvalingiz — Excel shabloni <span class="hint">majburiy · «… йил экспорт»</span></h3>
+            <p class="note">Eng oxirgi jadvalingiz (номманом, СВОД varaqlari bor fayl). <b>.xls</b> bo'lsa, sayt uni kompyuteringizdagi Excel orqali .xlsx ga o'giradi (Tekshirish 10–30 soniya). Sayt shu faylga faqat A2 sanasidan <b>keyingi</b> kunlarni qo'shadi: номманом (joriy oy «+X», «1 кунда», yangi korxona — sariq qator), karantin svoddagi meva-sabzavot, «СВОД 450 млн» dagi БНПЗ va «2025 yilning shu kuniga» kun soni. Boshqa formulalarga tegilmaydi.</p>
+            <p class="note"><b>Qoidalar:</b> chiqqan faylni qo'lda tuzatsangiz — shu yerga qayta yuklang; yangi oy boshlanganda jadvalni yangi oyga tayyorlab yuklang.</p>
+            <div class="form-row"><input type="file" id="in-wb" accept=".xls,.xlsx"><span class="muted" id="in-wb-s"></span></div>
+            <div class="form-row"><button class="btn" id="wb-check">Tekshirish</button><button class="btn primary" id="wb-apply" disabled>Almashtirish</button></div>
+            <div id="wb-res"></div>
+          </div>
+          <h2 style="margin-top:18px">Bazani tozalash</h2>
+          <p class="note" style="margin-top:0">Hamma korxonalar, qoldiq, prognoz va yuklashlar o'chadi (faqat 13 tuman ro'yxati qoladi). Oldin zaxira olinadi — «Nazorat va tarix» dan qaytarish mumkin.</p>
+          <label class="form-row" style="gap:8px"><input type="checkbox" id="rs-keep" checked> Korxona profillaridagi qo'lda kiritilganlar saqlansin: aloqa, muammo va vazifalar, hujjatlar, tarix, vazirlik rejasi</label>
+          <div class="form-row"><label for="rs-word">Tasdiqlash uchun <b class="mono">TOZALASH</b> deb yozing</label><input type="text" id="rs-word" style="min-width:140px;width:140px" autocomplete="off"><button class="btn danger" id="rs-go">Bazani tozalash</button></div>
+        </div>
+        <div class="panel"><h2>Qoidalar</h2>
+          <div class="check"><div class="ic ok">✓</div><div><b>Rejim</b><span>bojxona rejimiga qaralmaydi — fayldagi hamma qatorlar eksport</span></div></div>
+          <div class="check"><div class="ic ok">✓</div><div><b>Sana</b><span>«Дата выгрузки» (C ustun); ko'p kunlik fayl kunlarga bo'lib saqlanadi</span></div></div>
+          <div class="check"><div class="ic ok">✓</div><div><b>Buxoro qatorlari</b><span>INN reyestri bo'yicha; reyestrda yo'q, lekin manzili Buxoro — «yangi korxona» sifatida tasdiqlashga chiqadi</span></div></div>
+          <div class="check"><div class="ic ok">✓</div><div><b>Meva-sabzavot</b><span>«Область выращенной продукции» = 1706 → karantin svodiga; номманом dagi meva-sabzavot korxonasining eksporti uning qatoriga ham yoziladi; sanoatga yozilmaydi</span></div></div>
+          <div class="check"><div class="ic ok">✓</div><div><b>Dublikat</b><span>kalit: ГТД raqami (пост/сана/№) + товар №; bir fayl ikki marta yuklanmaydi</span></div></div>
+          <div class="check"><div class="ic ok">✓</div><div><b>БНПЗ</b><span>dashboard va sanoat jamiga kirmaydi; Excelda faqat «СВОД 450 млн» Қоровулбозор (va номманом pastidagi БНПЗ qatori); SDK Group — номманом pastida alohida</span></div></div>
+          <div class="check"><div class="ic ok">✓</div><div><b>Yil boshidan qoldiq</b><span>sanoat — bojxona oylik bazasidan (oy yakuni); meva-sabzavot — har doim kunlik GTD dan karantin qoidasi bo'yicha</span></div></div>
+          <div class="check"><div class="ic ok">✓</div><div><b>Ustunlar</b><span>bojxona fayli ustunlari joyi emas, nomi bo'yicha topiladi</span></div></div>
+          <div class="check"><div class="ic ok">✓</div><div><b>Excel</b><span>o'z jadvalingiz shablon: sayt faqat номманом, meva-sabzavot, БНПЗ va «2025 yil shu kuni» kun sonini yozadi; boshqa formulalar o'zgarmaydi; yangi korxona — sariq qator</span></div></div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+<!-- KARTA MODALI -->
+<div class="mbg" id="card-modal" hidden><div class="mdl" role="dialog" aria-modal="true" aria-labelledby="cm-title"><div id="cm-body"></div></div></div>
+<div class="mbg" id="col-modal" hidden><div class="mdl sm" role="dialog" aria-modal="true"><div id="colm-body"></div></div></div>
+<div class="mbg" id="svn-modal" hidden><div class="mdl" style="width:min(760px,100%)" role="dialog" aria-modal="true" aria-labelledby="svn-title"><div id="svn-body"></div></div></div>
+<div class="mbg" id="lbl-modal" hidden><div class="mdl sm" role="dialog" aria-modal="true"><div id="lblm-body"></div></div></div>
+<div class="toast" id="toast" role="status"></div>
+<script src="/static/app.js"></script>
+<script src="/static/catalog.js"></script>
+<script>
+(function(){
+  var g=document.querySelector('#p-daily .g3'), b=document.getElementById('d-rtoggle');
+  if(!g||!b) return;
+  function sync(){
+    var off=g.classList.contains('rcol-off');
+    b.textContent=(off?'\u25B8 ':'\u25C2 ')+'Excel / yuklash';
+    b.setAttribute('aria-expanded', off?'false':'true');
+    b.title=off?"O'ng panelni ko'rsatish":"O'ng panelni yashirish";
+  }
+  var st='1'; try{ st=localStorage.getItem('daily-rcol')||'1'; }catch(e){}
+  if(st==='0') g.classList.add('rcol-off');
+  sync();
+  b.addEventListener('click',function(){
+    g.classList.toggle('rcol-off');
+    try{ localStorage.setItem('daily-rcol', g.classList.contains('rcol-off')?'0':'1'); }catch(e){}
+    sync();
+    window.dispatchEvent(new Event('resize'));
+  });
+})();
+</script>
+<div class="scrim" id="geo-scrim"></div>
+<aside class="drawer" id="geo-drawer" aria-hidden="true"><header><div><h2 id="gd-title">—</h2><span class="sub" id="gd-sub"></span></div><button class="x" id="gd-close" title="Ёпиш">✕</button></header><div class="body" id="gd-body"></div></aside>
+</body>
+</html>

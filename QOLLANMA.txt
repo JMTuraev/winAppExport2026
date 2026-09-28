@@ -13,7 +13,9 @@ Ishga tushirish
   Ishga_tushirish.bat — eski usul (server + brauzer), zaxira variant.
 
 Talablar: Windows 10/11 (Microsoft Edge WebView2 va .NET Framework 4.7+ odatda o'rnatilgan bo'ladi).
-AppWin papkasi D:\2026 export\ ichida, EksportMonitor yonida turishi shart (python va kod o'sha yerdan).
+AppWin MUSTAQIL: python\, app\ (sayt kodi), vendor\ — hammasi AppWin ichida. EksportMonitor papkasi kerak emas.
+Bir marta: Mustaqil_qilish.bat — EksportMonitor'dan python/app/vendor ni AppWin ichiga ko'chiradi (eski tartibdan o'tish).
+Ma'lumotlar: AppWin yonidagi data\ (D:\2026 export\data) — config.json da "data_dir" bilan o'zgartirish mumkin.
 
 config.json (AppWin\)
 ---------------------
@@ -40,6 +42,15 @@ Nima bor
   Superadmin panel: oynadagi «Dastur» menyusi → «Superadmin panel» (yoki brauzerda /admin).
   «Dastur» menyusi: Sayt · Superadmin panel · Tashqi diskka zaxira · Brauzerda ochish · Yangilash · Chiqish.
 
+Yangilash (o'rnatishsiz)
+------------------------
+  Server (siz): Superadmin -> «Zaxira va server» -> «Yangilanish»: Tekshirish -> Yangilash (git pull) -> Qayta ishga tushirish.
+  Repo: https://github.com/JMTuraev/winAppExport2026 (git-sozlash.bat bilan sozlangan). O'zgarishlar: git-push.bat / git-pull.bat.
+  Sayt kodi (app\) endi AppWin ichida — bitta repo, bitta yangilanish. EksportMonitor (export2026) — eski, alohida.
+  Qo'lda: fayllarni almashtiring -> «Qayta ishga tushirish» (yoki exe'ni yopib-oching).
+  Xodim kompyuterlari (client rejimi): dastur har ochilganda o'zgargan fayllarni serverdan LAN orqali o'zi oladi
+  va qayta ochiladi. Internet kerak emas. O'chirish: config.json -> "auto_update": false.
+
 Xodimlar
 --------
   Superadmin → Foydalanuvchilar → «+ Foydalanuvchi qo'shish». Xodim: brauzerda http://<server IP>:8765/
@@ -47,10 +58,13 @@ Xodimlar
 
 Fayllar
 -------
-  EksportMonitor.exe  — ishga tushirgich (pythonw + appwin.desktop), build\ ichida manbasi (launcher.c, app.ico)
+  EksportMonitor.exe  — ishga tushirgich (python\pythonw.exe -m appwin.desktop), build\ ichida manbasi (launcher.c, app.ico)
+  app\                — sayt (server, sahifalar, Excel) — endi AppWin ning bir qismi, shu yerda rivojlantiriladi
+  python\             — o'rnatilgan Python 3.12 (embedded)
   appwin\desktop.py   — oyna (pywebview/WebView2), yopishdagi modal, server/client rejimi
   appwin\server.py    — server (EksportMonitor ustida): login, rollar, audit, LAN, shell, zaxira API
   appwin\auth.py      — users / user_sessions / user_audit — alohida data\appwin.db (zaxiradan qaytarish/tozalash ularga tegmaydi)
   appwin\backup.py    — tashqi disk zaxirasi
+  appwin\update.py    — yangilanish: manifest/fayl (xodimlarga), git pull + restart (server)
   appwin\static\      — login.html, admin.html (Superadmin panel), brand.css/js + logo.svg (saytga logo va foydalanuvchi chipi — sayt fayllari o'zgarmaydi)
-  vendor\             — pywebview, pythonnet va boshqalar (Windows, Python 3.12)
+  vendor\             — pywebview, pythonnet, openpyxl, xlrd va boshqalar (Windows, Python 3.12)
