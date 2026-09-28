@@ -1,0 +1,9 @@
+# lokal narsalar gitga kirmaydi
+config.json
+appwin.log
+webview-data/
+_update/
+__pycache__/
+*.pyc
+*.tmp
+build/app.res

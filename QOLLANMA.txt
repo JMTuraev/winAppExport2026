@@ -1,0 +1,56 @@
+EKSPORT MONITOR — AppWin (Windows ilova), 1-bosqich
+====================================================
+
+Ishga tushirish
+---------------
+  D:\2026 export\AppWin\EksportMonitor.exe   — alohida oynali dastur (brauzer emas).
+  Yorliq: exe ustida o'ng tugma → «Send to → Desktop (create shortcut)».
+  Birinchi ochilishda Windows Firewall so'rasa — «Ruxsat» (xodimlar ulanishi uchun).
+  Birinchi marta: superadmin login «admin», paroli D:\2026 export\data\ADMIN_PAROL.txt faylida
+  (yoki EksportMonitor.exe --console bilan ochsangiz qora oynada). Kirgach parol o'zgartiriladi.
+
+  Ishlamasa: AppWin\appwin.log faylini yuboring. EksportMonitor.exe --console — xatolarni oynada ko'rsatadi.
+  Ishga_tushirish.bat — eski usul (server + brauzer), zaxira variant.
+
+Talablar: Windows 10/11 (Microsoft Edge WebView2 va .NET Framework 4.7+ odatda o'rnatilgan bo'ladi).
+AppWin papkasi D:\2026 export\ ichida, EksportMonitor yonida turishi shart (python va kod o'sha yerdan).
+
+config.json (AppWin\)
+---------------------
+  "mode": "server"      — bu kompyuter server (siz). Ma'lumot + tarmoq shu yerda.
+  "mode": "client"      — xodim kompyuteri: faqat oyna, "server_url": "http://192.168.1.10:8765"
+                          (config.client.example.json — namuna). Xodim brauzerda ham ochishi mumkin.
+  "backup_dir"          — tashqi disk papkasi, masalan "E:\\EksportMonitor_zaxira" (ikki \\ bilan).
+  "host": "0.0.0.0"     — tarmoqqa ochiq; "127.0.0.1" — faqat shu kompyuter.
+
+Zaxira (server rejimi)
+----------------------
+  Oyna yopilganda modal: «Zaxira nusxa olinsinmi?» — Ha: tashqi diskka yozib yopadi; Yo'q: shunchaki yopadi; Bekor.
+  Tashqi diskda: <backup_dir>\YYYY-MM-DD_HH-MM\export.db + hujjatlar; 30 kunlik + har oy 1 tasi 12 oy saqlanadi.
+  Disk ulanmagan bo'lsa holat qatorida qizil «Zaxira diski ulanmagan!».
+  Superadmin → «Zaxira va server»: hozir zaxiralash, zaxirani tekshirish (jonli baza bilan solishtiradi).
+  Ichki zaxira (data\backups) avvalgidek ishlaydi.
+
+Nima bor
+--------
+  Oyna ichida — hozirgi sayt o'zgarishsiz. Oldin login oynasi.
+  Login, rollar (Superadmin / Operator / Ko'ruvchi / Tuman xodimi), audit (kim · qachon · IP · nima qildi, Excel).
+  Ko'ruvchi o'zgartira olmaydi — rad etiladi va jurnalga tushadi. Zaxiradan qaytarish / bazani tozalash / qayta init — faqat superadmin.
+  5 marta noto'g'ri parol → 30 soniya kutish. Vaqtinchalik parol bilan kirgan xodim avval parolini o'zgartiradi.
+  Superadmin panel: oynadagi «Dastur» menyusi → «Superadmin panel» (yoki brauzerda /admin).
+  «Dastur» menyusi: Sayt · Superadmin panel · Tashqi diskka zaxira · Brauzerda ochish · Yangilash · Chiqish.
+
+Xodimlar
+--------
+  Superadmin → Foydalanuvchilar → «+ Foydalanuvchi qo'shish». Xodim: brauzerda http://<server IP>:8765/
+  yoki AppWin nusxasi (mode=client). IP holat qatorida va Superadmin → Server'da.
+
+Fayllar
+-------
+  EksportMonitor.exe  — ishga tushirgich (pythonw + appwin.desktop), build\ ichida manbasi (launcher.c, app.ico)
+  appwin\desktop.py   — oyna (pywebview/WebView2), yopishdagi modal, server/client rejimi
+  appwin\server.py    — server (EksportMonitor ustida): login, rollar, audit, LAN, shell, zaxira API
+  appwin\auth.py      — users / user_sessions / user_audit — alohida data\appwin.db (zaxiradan qaytarish/tozalash ularga tegmaydi)
+  appwin\backup.py    — tashqi disk zaxirasi
+  appwin\static\      — login.html, admin.html (Superadmin panel), brand.css/js + logo.svg (saytga logo va foydalanuvchi chipi — sayt fayllari o'zgarmaydi)
+  vendor\             — pywebview, pythonnet va boshqalar (Windows, Python 3.12)

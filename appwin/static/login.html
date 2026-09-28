@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kirish — Eksport Monitor</title>
+<link rel="icon" href="/appwin/logo.svg">
+<link rel="stylesheet" href="/static/fonts/fonts.css">
+<style>
+:root{--bg:#14232B;--panel:#fff;--line:#DCE1DD;--ink:#182029;--ink2:#5A6470;--accent:#0F6E63;--accent-soft:#DDEFEB;--bad:#B23A3A;--bad-soft:#F8E0E0;--ok:#2E8B57}
+*{box-sizing:border-box}html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans",system-ui,"Segoe UI",Arial,sans-serif;font-size:13px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:24px}
+.card{width:min(400px,100%);background:var(--panel);border-radius:14px;padding:32px 32px 26px;box-shadow:0 20px 50px rgba(0,0,0,.35);display:flex;flex-direction:column;gap:18px}
+.brand{display:flex;align-items:center;gap:12px}.brand .lg{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(20,35,43,.18)}.brand .lg svg{display:block}
+.brand b{font-size:17px;font-weight:600;display:block}.brand span{font-size:11px;color:var(--ink2)}
+.srv{display:flex;align-items:center;gap:8px;padding:9px 12px;background:#F4F6F5;border-radius:8px;font-size:12px}.srv .dot{width:8px;height:8px;border-radius:4px;background:var(--ok)}
+.srv .mono{font-family:"IBM Plex Mono",monospace;font-weight:500}.srv .lock{margin-left:auto;font-size:10px;color:var(--ink2)}
+label{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:500}
+input[type=text],input[type=password]{height:40px;border:1px solid var(--line);border-radius:8px;padding:0 12px;font-size:14px;font-family:inherit;outline:none}
+input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.chk{flex-direction:row;align-items:center;gap:8px;font-weight:400;color:var(--ink2)}.chk input{width:15px;height:15px;margin:0;accent-color:var(--accent)}
+button{height:44px;border-radius:9px;border:0;background:var(--accent);color:#fff;font-weight:600;font-size:14px;font-family:inherit;cursor:pointer}
+button:disabled{opacity:.6;cursor:default}
+.err{display:none;background:var(--bad-soft);color:var(--bad);border-radius:8px;padding:9px 12px;font-size:12px}.err.show{display:block}
+.hint{font-size:11px;color:var(--ink2);text-align:center;line-height:1.5}
+.foot{font-size:11px;color:#8A929C;display:flex;gap:14px}
+</style>
+</head>
+<body>
+<form class="card" id="f" autocomplete="on">
+  <div class="brand"><div class="lg"><svg viewBox="0 0 64 64" aria-hidden="true" width="40" height="40"><defs><linearGradient id="awg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#149B8A"/><stop offset="1" stop-color="#0B564D"/></linearGradient></defs><rect x="2" y="2" width="60" height="60" rx="14" fill="url(#awg)"/><rect x="14" y="34" width="8" height="16" rx="2.5" fill="#fff"/><rect x="28" y="22" width="8" height="28" rx="2.5" fill="#fff"/><rect x="42" y="28" width="8" height="22" rx="2.5" fill="#fff" opacity=".92"/><path d="M15 27 L30 16 L38 21 L49 12" fill="none" stroke="#F1D27A" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="49" cy="12" r="4.2" fill="#B7912A" stroke="#fff" stroke-width="1.6"/></svg></div>
+    <div><b>Eksport Monitor</b><span>Buxoro viloyati · Eksport bo'limi ish maydoni</span></div></div>
+  <div class="srv"><span class="dot"></span><span>Server: <span class="mono" id="srv">…</span></span><span class="lock" id="net">ofis tarmog'i</span></div>
+  <div class="err" id="err"></div>
+  <label>Login<input type="text" id="login" name="username" autocapitalize="off" autocorrect="off" spellcheck="false" autofocus></label>
+  <label>Parol<input type="password" id="pwd" name="password"></label>
+  <label class="chk"><input type="checkbox" id="rem" checked>Bu kompyuterda eslab qol</label>
+  <button type="submit" id="btn">Kirish</button>
+  <div class="hint">Parolni unutdingizmi? Superadminga murojaat qiling — u panelda tiklaydi.<br>Har bir kirish jurnalga yoziladi.</div>
+</form>
+<div class="foot"><span id="ver">AppWin</span><span>·</span><span id="host"></span></div>
+<script>
+(async () => {
+  try { const r = await fetch('/api/auth/me'); const d = await r.json();
+    document.getElementById('srv').textContent = (d.server.ip || location.hostname) + ':' + d.server.port;
+    document.getElementById('ver').textContent = 'AppWin ' + d.server.version;
+    document.getElementById('host').textContent = d.server.host;
+    if (d.user) location.href = '/';
+  } catch (e) { document.getElementById('srv').textContent = location.host; }
+})();
+const f = document.getElementById('f'), err = document.getElementById('err'), btn = document.getElementById('btn');
+f.addEventListener('submit', async e => {
+  e.preventDefault(); if (f.dataset.pwd) return; err.classList.remove('show'); btn.disabled = true; btn.textContent = 'Tekshirilmoqda…';
+  try {
+    const r = await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ login: document.getElementById('login').value.trim(), password: document.getElementById('pwd').value,
+                             remember: document.getElementById('rem').checked, host: navigator.userAgentData ? navigator.userAgentData.platform : navigator.platform }) });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Xato');
+    if (d.user && d.user.must_change) { showPwd(); return; }
+    location.href = '/';
+  } catch (ex) { err.textContent = ex.message; err.classList.add('show'); btn.disabled = false; btn.textContent = 'Kirish'; document.getElementById('pwd').focus(); document.getElementById('pwd').select(); }
+});
+function showPwd() {
+  f.dataset.pwd = '1';
+  f.innerHTML = `<div class="brand"><div class="lg"><svg viewBox="0 0 64 64" aria-hidden="true" width="40" height="40"><defs><linearGradient id="awg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#149B8A"/><stop offset="1" stop-color="#0B564D"/></linearGradient></defs><rect x="2" y="2" width="60" height="60" rx="14" fill="url(#awg)"/><rect x="14" y="34" width="8" height="16" rx="2.5" fill="#fff"/><rect x="28" y="22" width="8" height="28" rx="2.5" fill="#fff"/><rect x="42" y="28" width="8" height="22" rx="2.5" fill="#fff" opacity=".92"/><path d="M15 27 L30 16 L38 21 L49 12" fill="none" stroke="#F1D27A" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="49" cy="12" r="4.2" fill="#B7912A" stroke="#fff" stroke-width="1.6"/></svg></div><div><b>Yangi parol o'rnating</b><span>Birinchi kirish yoki parol superadmin tomonidan tiklangan</span></div></div>
+    <div class="err" id="err2"></div>
+    <label>Yangi parol<input type="password" id="n1" autofocus></label><label>Yangi parol (takror)<input type="password" id="n2"></label>
+    <button type="submit" id="btn2">Saqlash va kirish</button><div class="hint">Kamida 6 belgi. Parolni faqat siz bilasiz.</div>`;
+  f.onsubmit = async e => {
+    e.preventDefault(); const er = document.getElementById('err2'); er.classList.remove('show');
+    const n1 = document.getElementById('n1').value, n2 = document.getElementById('n2').value;
+    if (n1 !== n2) { er.textContent = 'Parollar mos emas'; er.classList.add('show'); return; }
+    try { const r = await fetch('/api/auth/password', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ old: '', new: n1 }) });
+      const d = await r.json(); if (!r.ok) throw new Error(d.error || 'Xato'); location.href = '/'; }
+    catch (ex) { er.textContent = ex.message; er.classList.add('show'); }
+  };
+  setTimeout(() => document.getElementById('n1').focus(), 50);
+}
+</script>
+</body>
+</html>
