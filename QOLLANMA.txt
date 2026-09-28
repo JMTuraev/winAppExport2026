@@ -51,6 +51,24 @@ Yangilash (o'rnatishsiz)
   Xodim kompyuterlari (client rejimi): dastur har ochilganda o'zgargan fayllarni serverdan LAN orqali o'zi oladi
   va qayta ochiladi. Internet kerak emas. O'chirish: config.json -> "auto_update": false.
 
+O'rnatuvchi (Setup.exe)
+-----------------------
+  dist\EksportMonitor-Admin-Setup.exe — server (admin) kompyuteri: C:\EksportMonitor ga o'rnatadi, ma'lumotlar papkasini
+      so'raydi (mavjud bazangiz bo'lsa D:\2026 export\data ni ko'rsating), tashqi disk papkasi (ixtiyoriy), Firewall ruxsati,
+      ish stoli yorlig'i. Birinchi kirish: admin / data\ADMIN_PAROL.txt.
+  dist\EksportMonitor-Setup.exe — xodim kompyuteri: server manzilini so'raydi (http://<server IP>:8765), client rejimi,
+      yangilanishlarni serverdan o'zi oladi.
+  Qayta o'rnatish (yangilash) = shu Setup.exe ni yana ishga tushirish: config.json va data\ saqlanib qoladi.
+  O'chirish: Sozlamalar -> Dasturlar -> Eksport Monitor (data va config o'chmaydi).
+  Yig'ish (dasturchi): build\installer.nsi — NSIS 3: makensis -DVERSION=2.0.0 installer.nsi (+ -DCLIENT xodim uchun).
+
+Excel yuklash (Yuklamalar)
+--------------------------
+  Oynada «Excel» bosilsa «Saqlash» oynasi chiqmaydi — fayl to'g'ridan-to'g'ri D:\2026 export\Yuklamalar\ papkasiga tushadi
+  (AppWin yonidagi Yuklamalar). Yuklash tugagach o'ng pastda xabar: fayl nomi + «Papkani ochish» / «Faylni ochish».
+  Bir xil nom bo'lsa: fayl (2).xlsx, fayl (3).xlsx. Papkani o'zgartirish: config.json → "download_dir": "D:/boshqa/papka".
+  Menyu: Dastur → «Yuklamalar papkasi (Excel)». Yozib bo'lmasa (xodim PC, Program Files) → Downloads\Eksport Monitor.
+
 Xodimlar
 --------
   Superadmin → Foydalanuvchilar → «+ Foydalanuvchi qo'shish». Xodim: brauzerda http://<server IP>:8765/

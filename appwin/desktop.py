@@ -16,12 +16,69 @@ def log(*a):
     except Exception: pass
 
 def read_cfg() -> dict:
-    cfg = {"mode": "server", "server_url": "", "port": 8765, "host": "0.0.0.0", "backup_dir": "", "window": {}}
+    cfg = {"mode": "server", "server_url": "", "port": 8765, "host": "0.0.0.0", "backup_dir": "", "download_dir": "", "window": {}}
     p = APP_DIR / "config.json"
     if p.exists():
         try: cfg.update(json.loads(p.read_text(encoding="utf-8")))
         except Exception as e: log("config.json o'qilmadi:", e)
     return cfg
+
+def download_dir(cfg: dict) -> Path:
+    r"""Where Excel and other downloads land. config.json → download_dir; default ..\Yuklamalar (next to AppWin,
+    i.e. D:\2026 export\Yuklamalar). If that place cannot be written (Program Files on a staff PC) → Downloads\Eksport Monitor."""
+    d = str(cfg.get("download_dir") or "").strip()
+    p = Path(d) if d else APP_DIR.parent / "Yuklamalar"
+    if not p.is_absolute(): p = APP_DIR / p
+    try:
+        p.mkdir(parents=True, exist_ok=True)
+        t = p / ".yozish-tekshiruvi"; t.write_text("ok"); t.unlink()
+        return p
+    except Exception as e:
+        log("download_dir yozib bo'lmadi:", p, e)
+        fb = Path(os.environ.get("USERPROFILE", str(Path.home()))) / "Downloads" / "Eksport Monitor"
+        fb.mkdir(parents=True, exist_ok=True)
+        return fb
+
+def unique_path(folder: Path, name: str) -> Path:
+    name = os.path.basename(name).strip() or "fayl"
+    p = folder / name
+    if not p.exists(): return p
+    stem, ext = os.path.splitext(name)
+    i = 2
+    while (folder / f"{stem} ({i}){ext}").exists(): i += 1
+    return folder / f"{stem} ({i}){ext}"
+
+def setup_downloads(api: "Api", ddir: Path):
+    """WebView2 cancels downloads by default (pywebview ALLOW_DOWNLOADS=False) — so «Excel» did nothing in the window.
+    We take the DownloadStarting event ourselves: no Save-as dialog, the file goes straight to `ddir`, and when it is
+    finished the page shows a toast with «Papkani ochish» / «Faylni ochish»."""
+    import webview
+    webview.settings["ALLOW_DOWNLOADS"] = True
+    try:
+        from webview.platforms import edgechromium as ec
+    except Exception as e:
+        log("edgechromium import:", e); return
+    def on_download_starting(self, sender, args):
+        try:
+            ddir.mkdir(parents=True, exist_ok=True)
+            target = unique_path(ddir, str(args.ResultFilePath))
+            args.ResultFilePath = str(target)
+            args.Handled = True                                # hide WebView2's own download bubble
+            op = args.DownloadOperation
+            def state_changed(s, e):
+                try:
+                    st = str(op.State)
+                    if "Completed" in st:
+                        log("yuklandi:", target); api._download_done(target, True)
+                    elif "Interrupted" in st:
+                        log("yuklash uzildi:", target, op.InterruptReason); api._download_done(target, False, str(op.InterruptReason))
+                except Exception as ex: log("download state:", ex)
+            op.StateChanged += state_changed
+            api._downloads.append((op, state_changed))        # keep .NET delegates alive
+            log("yuklash boshlandi:", target)
+        except Exception as e:
+            log("download xato:", e)
+    ec.EdgeChrome.on_download_starting = on_download_starting
 
 def wait_http(url: str, seconds: float = 20) -> bool:
     t0 = time.time()
@@ -37,6 +94,35 @@ class Api:
     def __init__(self, mode: str, cfg: dict):
         self._mode = mode; self._cfg = cfg; self._window = None; self._srv = None; self._closing = False; self._url = ""
         self._last_close = 0.0
+        self._ddir: Path | None = None; self._downloads: list = []; self._js = None
+
+    # ---- downloads -------------------------------------------------------------------------------------------
+    def downloads_info(self) -> dict:
+        return {"dir": str(self._ddir or "")}
+
+    def open_downloads(self) -> dict:
+        """Open the downloads folder in Explorer."""
+        try:
+            if self._ddir: self._ddir.mkdir(parents=True, exist_ok=True); os.startfile(str(self._ddir))
+            return {"ok": True}
+        except Exception as e: return {"ok": False, "error": str(e)}
+
+    def open_download(self, path: str = "") -> dict:
+        """Open one downloaded file (Excel) — only files inside the downloads folder, nothing else on the disk."""
+        try:
+            p = Path(path).resolve()
+            if not self._ddir or self._ddir.resolve() not in p.parents: return {"ok": False, "error": "ruxsat yo'q"}
+            if not p.is_file(): return {"ok": False, "error": "fayl topilmadi"}
+            os.startfile(str(p)); return {"ok": True}
+        except Exception as e: return {"ok": False, "error": str(e)}
+
+    def _download_done(self, target: Path, ok: bool, err: str = ""):
+        """Called on the WebView2 UI thread → only schedule JS, never evaluate here."""
+        if self._js is None: return
+        try: rel = str(target.relative_to(self._ddir)) if self._ddir else target.name
+        except Exception: rel = target.name
+        payload = {"ok": ok, "name": target.name, "path": str(target), "rel": rel, "dir": str(self._ddir or ""), "error": err}
+        self._js(TOAST_JS + f"\nawToast({json.dumps(payload, ensure_ascii=False)});")
 
     def info(self) -> dict:
         try:
@@ -138,7 +224,12 @@ def main():
             r = api.backup_now("menyu")
             js(f"alert({json.dumps('Zaxira olindi: ' + r['name'] + ' · ' + str(r['mb']) + ' MB' if r.get('ok') else 'Zaxira xatosi: ' + str(r.get('error')), ensure_ascii=False)})")
         bg(run)
-    items = [wm.MenuAction("Sayt", lambda: nav("/")), wm.MenuAction("Superadmin panel", lambda: nav("/admin")), wm.MenuSeparator()]
+    api._js = js
+    api._ddir = download_dir(cfg)
+    setup_downloads(api, api._ddir)
+    log("yuklamalar papkasi:", api._ddir)
+    items = [wm.MenuAction("Sayt", lambda: nav("/")), wm.MenuAction("Superadmin panel", lambda: nav("/admin")), wm.MenuSeparator(),
+             wm.MenuAction("Yuklamalar papkasi (Excel)", lambda: bg(api.open_downloads)), wm.MenuSeparator()]
     if mode == "server": items += [wm.MenuAction("Tashqi diskka zaxira olish", do_backup), wm.MenuSeparator()]
     items += [wm.MenuAction("Brauzerda ochish", lambda: api.open_browser(url)), wm.MenuAction("Yangilash (F5)", lambda: js("location.reload()")),
               wm.MenuSeparator(), wm.MenuAction("Chiqish", lambda: ask_exit())]
@@ -200,6 +291,32 @@ EXIT_JS = r"""
   if (y) y.onclick = async function(){ y.disabled = true; y.textContent = 'Zaxiralanmoqda…'; var r = await api.exit(true, ''); if (r && !r.ok) { var e = document.getElementById('aw-err'); e.textContent = r.error || 'Zaxira xatosi'; e.style.display = 'block'; y.disabled = false; y.textContent = 'Qayta urinish'; } };
   bg.addEventListener('keydown', function(e){ if (e.key === 'Escape') bg.remove(); });
 })();
+"""
+
+TOAST_JS = r"""
+window.awToast = window.awToast || function(d){
+  var esc = function(s){ return String(s==null?'':s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); };
+  var api = window.pywebview && window.pywebview.api;
+  var host = document.getElementById('aw-toasts');
+  if (!host) { host = document.createElement('div'); host.id = 'aw-toasts';
+    host.style.cssText = 'position:fixed;right:18px;bottom:18px;z-index:99998;display:flex;flex-direction:column;gap:10px;font-family:"IBM Plex Sans",system-ui,Segoe UI,Arial,sans-serif;font-size:13px';
+    document.body.appendChild(host); }
+  var t = document.createElement('div');
+  t.style.cssText = 'width:380px;max-width:92vw;background:#fff;border-radius:10px;box-shadow:0 12px 36px rgba(0,0,0,.28);border-left:5px solid ' + (d.ok ? '#0F6E63' : '#B23A3A') + ';padding:12px 14px;color:#182029;animation:awIn .2s ease-out';
+  if (!document.getElementById('aw-toast-css')) { var st = document.createElement('style'); st.id = 'aw-toast-css'; st.textContent = '@keyframes awIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}} #aw-toasts button{height:32px;padding:0 12px;border-radius:7px;border:1px solid #DCE1DD;background:#fff;font:inherit;font-weight:500;cursor:pointer;color:#182029} #aw-toasts button.p{background:#0F6E63;color:#fff;border-color:#0F6E63;font-weight:600} #aw-toasts button:hover{filter:brightness(.96)}'; document.head.appendChild(st); }
+  t.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">' +
+    '<div style="min-width:0"><div style="font-weight:600;font-size:14px">' + (d.ok ? 'Fayl yuklandi' : 'Yuklash uzildi') + '</div>' +
+    '<div style="margin-top:3px;word-break:break-all">' + esc(d.name) + '</div>' +
+    '<div style="margin-top:2px;font-size:11px;color:#5A6470;word-break:break-all">' + (d.ok ? 'Papka: ' + esc(d.dir) : esc(d.error||'')) + '</div></div>' +
+    '<button class="x" title="Yopish" style="border:0;background:none;font-size:18px;line-height:1;cursor:pointer;color:#5A6470;padding:0 2px">&times;</button></div>' +
+    (d.ok ? '<div style="display:flex;gap:8px;margin-top:10px;justify-content:flex-end"><button class="f">Papkani ochish</button><button class="p o">Faylni ochish</button></div>' : '');
+  host.appendChild(t);
+  var kill = function(){ if (t.parentNode) t.parentNode.removeChild(t); };
+  t.querySelector('.x').onclick = kill;
+  var f = t.querySelector('.f'); if (f) f.onclick = function(){ if (api) api.open_downloads(); };
+  var o = t.querySelector('.o'); if (o) o.onclick = function(){ if (api) api.open_download(d.path); kill(); };
+  setTimeout(kill, d.ok ? 25000 : 60000);
+};
 """
 
 def _fatal(msg: str):

@@ -7,3 +7,7 @@ __pycache__/
 *.pyc
 *.tmp
 build/app.res
+
+build/out/
+build/payload/
+dist/

@@ -33,7 +33,7 @@ def backup_status_cached(max_age: float = 60) -> dict | None:
     return _BK_CACHE["v"]
 
 def load_config() -> dict:
-    """AppWin\config.json. data_dir default: ..\data (the shared D:\2026 export\data layout) if it exists, else AppWin\data."""
+    r"""AppWin\config.json. data_dir default: ..\data (the shared D:\2026 export\data layout) if it exists, else AppWin\data."""
     cfg = legacy.load_config()                 # same file (app.server.APP_DIR == AppWin); gives port/open_browser defaults
     cfg.setdefault("host", "0.0.0.0")
     own = json.loads(CONFIG.read_text(encoding="utf-8")) if CONFIG.exists() else {}
