@@ -1,8 +1,14 @@
 """Davlat bo'yicha tashqi savdo (eksport + import) — Экспорт географияси sahifasidagi Excel tugmasi, davlat tanlanganda.
-Eksport: geo.py bilan bir xil qoidalar (joriy davr — karantin qoidasi, o'tgan yil — bojxona bazasi), shuning uchun
-jamilar sahifadagi ro'yxat bilan teng. Import: bojxona bazasi (items regime='ИМ'), faqat Buxoro korxonalari
-(«Бухоро эмас» — yo'q, Buxoro davri hisobga olinadi), davlat — «страна отправления» (declarations.country)."""
+Davr — modal oynada: har yil (masalan 2024, 2025, 2026) uchun 1 yanvardan tanlangan kungacha (`ends`), standart — oxirgi yopilgan oy.
+Fayl boshida bojxona shaklidagi 2 jadval (ЭК/ИМ давлат-товар: соҳа → маҳсулот, har yil netto + qiymat, farq oxirgi 2 yil),
+keyin Умумий, Экспорт, Импорт, номма-ном, Соҳа × туман (oxirgi yil vs undan oldingi tanlangan yil).
+Eksport — «bojxona uslubi»: bojxona bazasi davri (items) — eksportyor bo'yicha (sanoat + meva-sabzavot, faqat Buxoro korxonalari),
+kunlik GTD davri — sanoat/meva_x eksportyor bo'yicha, meva — karantin qoidasi (Buxoroda yetishtirilgan, tuman — yetishtirilgan joy).
+Shu sababli bojxona 8 oylik jadvali bilan teng; «Экспорт географияси» sahifasidagi davlat qatoridan baza davri mevasi qadar farq qiladi.
+Import: bojxona bazasi (items regime='ИМ'), faqat Buxoro korxonalari («Бухоро эмас» — yo'q, Buxoro davri hisobga olinadi),
+davlat — «страна отправления» (declarations.country); kunlik GTD'da import yo'q — oxirgi baza sanasidan keyingi kunlar kesiladi."""
 from __future__ import annotations
+import calendar
 import datetime as dt
 from collections import defaultdict
 from . import db, report, geo
@@ -10,6 +16,42 @@ from . import db, report, geo
 OTHER = "Туман аниқланмаган"
 NOSECT = "Соҳа аниқланмаган"
 NOTARM = "Тармоқ белгиланмаган"
+MEVA = "Мева-сабзавот маҳсулотлари"      # meva-sabzavot qatorlari uchun yagona tarmoq nomi (korxonalar reyestridagi nom)
+MONTHS = ["январь", "февраль", "март", "апрель", "май", "июнь", "июль", "август", "сентябрь", "октябрь", "ноябрь", "декабрь"]
+
+
+def _is_meva_tarm(t) -> bool:
+    return (t or "").strip().startswith("Мева-сабзавот")
+
+
+def _md(y: int, md: str) -> str:
+    """y yilning md (MM-DD) kuni; 29-fevral kabisa bo'lmagan yilda 28 ga tushadi."""
+    m, d = int(md[:2]), int(md[3:5])
+    return f"{y}-{m:02d}-{min(d, calendar.monthrange(y, m)[1]):02d}"
+
+
+def _month_end(s: str) -> bool:
+    return int(s[8:10]) == calendar.monthrange(int(s[:4]), int(s[5:7]))[1]
+
+
+def _per_words(e: str) -> str:
+    """01.01 — e davri so'z bilan: «январь-август» (oy oxiri) yoki «1 январь — 28 сентябрь» (kunlik)."""
+    m = int(e[5:7])
+    if _month_end(e): return MONTHS[0] if m == 1 else f"{MONTHS[0]}-{MONTHS[m - 1]}"
+    return f"1 {MONTHS[0]} — {int(e[8:10])} {MONTHS[m - 1]}"
+
+
+def meta(con) -> dict:
+    """Modal uchun: oxirgi sana, import oxirgi sanasi, oxirgi yopilgan oy va yillar."""
+    last = report.last_data_date(con) or dt.date.today().isoformat()
+    imp_last = con.execute("SELECT max(rdate) FROM items WHERE regime='ИМ'").fetchone()[0] or ""
+    first = con.execute("SELECT min(rdate) FROM items").fetchone()[0] or ""
+    y, m = int(last[:4]), int(last[5:7])
+    if not _month_end(last):
+        m -= 1
+        if m == 0: y, m = y - 1, 12
+    return {"last_date": last, "imp_last": imp_last, "first_date": first, "closed_year": y, "closed_month": m,
+            "closed_end": f"{y}-{m:02d}-{calendar.monthrange(y, m)[1]:02d}", "years": [y - 2, y - 1, y]}
 
 
 # ------------------------------------------------------------------ records
@@ -39,24 +81,33 @@ def _rec(ctx, inn, name, dc, tarmoq, d, value, netto, hs10, tovar1, tovar2, pnam
             "pname": pname, "gtd": gtd, "excl": bool(excl)}
 
 
-def export_recs(ctx: _Ctx, f: str, t: str, karantin: bool) -> list:
-    """Eksport qatorlari (geo.rows/geo.country bilan bir xil filtr). karantin=True — joriy davr qoidasi (meva faqat GTD karantin);
-    False — o'tgan yil (bojxona bazasi, meva items dan). Alohida hisob (БНПЗ/SDK) qatorlari excl=True bilan qaytadi."""
+def export_recs(ctx: _Ctx, f: str, t: str) -> list:
+    """Eksport qatorlari — «bojxona uslubi» (modul izohiga qarang). Barcha yillar uchun bir xil qoida:
+    items (bojxona bazasi) — sanoat va meva-sabzavot eksportyor bo'yicha (Buxoro korxonasi, Buxoro davri);
+    gtd_rows (baza sanasidan keyingi kunlik GTD) — sanoat va meva_x eksportyor bo'yicha, meva — karantin qoidasi.
+    Alohida hisob (БНПЗ/SDK) qatorlari excl=True bilan qaytadi."""
     from .companies import country_uz, has_base_detail
     from . import dispute
     con, out = ctx.con, []
+    meva_filter = any(_is_meva_tarm(x) for x in ctx.tarmoqs)
 
     def kind_ok(k):
-        if k in ("bnpz", "memo"): return True                 # excl belgisi bilan, keyin with_memo bo'yicha ajratiladi
-        if k in ("meva", "meva_x"): return not karantin
-        return k == "sanoat"
+        return k in ("sanoat", "meva", "meva_x", "bnpz", "memo")      # bnpz/memo — excl belgisi bilan, keyin with_memo bo'yicha
 
-    def keep(c, d):
+    def keep(c, d, k):
         if not ctx.in_bukhara(c, d): return False
         if ctx.dists and c.get("district_code") not in ctx.dists: return False
-        if ctx.tarmoqs and (c.get("tarmoq") or "").strip() not in ctx.tarmoqs: return False
-        if ctx.kinds and c.get("kind") not in ctx.kinds: return False
+        is_meva = k in ("meva", "meva_x")
+        if ctx.tarmoqs and not ((c.get("tarmoq") or "").strip() in ctx.tarmoqs or (is_meva and meva_filter)): return False
+        if ctx.kinds:
+            if is_meva:
+                if "meva" not in ctx.kinds: return False
+            elif c.get("kind") not in ctx.kinds: return False
         return True
+
+    def tarm_of(c, k):
+        t = (c.get("tarmoq") or "").strip()
+        return MEVA if k in ("meva", "meva_x") or _is_meva_tarm(t) else t
 
     if has_base_detail(con):
         src = list(con.execute("""SELECT i.inn, i.rdate, i.gtd, d.country, i.value, i.netto, i.hs10, i.tovar1, i.tovar2, i.sprav1, i.kind
@@ -69,9 +120,9 @@ def export_recs(ctx: _Ctx, f: str, t: str, karantin: bool) -> list:
             cn = country_uz(r["country"]) if r["country"] else dispute.TPL_T1
             if cn not in ctx.targets: continue
             c = ctx.comp.get(r["inn"])
-            if not keep(c, r["rdate"]): continue
+            if not keep(c, r["rdate"], r["kind"]): continue
             excl = bool(c.get("excluded")) or r["kind"] in ("bnpz", "memo")
-            out.append(_rec(ctx, r["inn"], c.get("name"), c.get("district_code"), c.get("tarmoq"), r["rdate"], r["value"], r["netto"],
+            out.append(_rec(ctx, r["inn"], c.get("name"), c.get("district_code"), tarm_of(c, r["kind"]), r["rdate"], r["value"], r["netto"],
                             r["hs10"], r["tovar1"], r["tovar2"], r["sprav1"] or r["tovar2"] or r["tovar1"], r["gtd"], excl))
     th = ctx.through
     for r in con.execute("SELECT inn, exporter, district_code dc, report_date, gtd_no, country, stat_usd, netto, tnved, product, kind "
@@ -79,17 +130,17 @@ def export_recs(ctx: _Ctx, f: str, t: str, karantin: bool) -> list:
                          (f, t, *((th,) if th else ()))):
         if r["kind"] in geo.KIND_SKIP or country_uz(r["country"]) not in ctx.targets: continue
         h = ctx.hs.get(str(r["tnved"] or "")) or {}
-        if karantin and r["kind"] == "meva":           # karantin qoidasi: o'stirilgan tuman bo'yicha
+        if r["kind"] == "meva":           # karantin qoidasi: yetishtirilgan tuman bo'yicha, eksportyor reyestrda bo'lishi shart emas
             if ctx.kinds and "meva" not in ctx.kinds: continue
             if ctx.dists and (r["dc"] or "?") not in ctx.dists: continue
-            if ctx.tarmoqs and "Мева-сабзавот" not in ctx.tarmoqs: continue
+            if ctx.tarmoqs and not meva_filter: continue
             c = ctx.comp.get(r["inn"]) or {}
-            nm, dc, tarm, excl = c.get("name") or r["exporter"], r["dc"], "Мева-сабзавот", False
+            nm, dc, tarm, excl = c.get("name") or r["exporter"], r["dc"], MEVA, False
         else:
             if not kind_ok(r["kind"]): continue
             c = ctx.comp.get(r["inn"])
-            if not keep(c, r["report_date"]): continue
-            nm, dc, tarm = c.get("name"), c.get("district_code"), c.get("tarmoq")
+            if not keep(c, r["report_date"], r["kind"]): continue
+            nm, dc, tarm = c.get("name"), c.get("district_code"), tarm_of(c, r["kind"])
             excl = bool(c.get("excluded")) or r["kind"] in ("bnpz", "memo")
         out.append(_rec(ctx, r["inn"], nm, dc, tarm, r["report_date"], r["stat_usd"], (r["netto"] or 0) / 1000, str(r["tnved"] or ""),
                         h.get("tovar1"), h.get("tovar2"), h.get("sprav1") or h.get("tovar2") or (r["product"] or "")[:60] or None, r["gtd_no"], excl))
@@ -131,35 +182,61 @@ def _group(cur, prev, key):
 
 
 # ------------------------------------------------------------------ data
+def periods(con, q: dict) -> list:
+    """Tanlangan yillar davri: [(yil, 'YYYY-01-01', oxirgi kun)], yil bo'yicha tartiblangan.
+    q['ends'] = '2024-08-31,2025-08-31,2026-08-31' (modal); bo'lmasa — 'to' (yoki oxirgi sana) kuni bo'yicha 3 yil (eski chaqiruv)."""
+    ends = {}
+    for s in str(q.get("ends") or "").split(","):
+        s = s.strip()
+        if not s: continue
+        try: d = dt.date.fromisoformat(s[:10])
+        except ValueError: raise ValueError(f"Нотўғри сана: {s}")
+        ends[d.year] = d.isoformat()
+    if not ends:
+        _, t = geo._period(con, q); y = int(t[:4])
+        ends = {yy: _md(yy, t[5:10]) for yy in (y - 2, y - 1, y)}
+    if len(ends) > 6: raise ValueError("Кўпи билан 6 та йил танланади")
+    return [(y, f"{y}-01-01", ends[y]) for y in sorted(ends)]
+
+
 def build(con, q: dict) -> dict:
     ctx = _Ctx(con, q)
     if not ctx.targets: raise ValueError("Давлат танланмаган")
-    f, t = geo._period(con, q)
-    y = int(t[:4])
-
-    def back(d, n=1):
-        s = f"{int(d[:4]) - n}{d[4:]}"
-        return s[:-2] + "28" if s.endswith("02-29") else s
-    pf, pt = back(f), back(t)
-    # import ma'lumoti faqat bojxona bazasi sanasigacha — solishtirish ham shu kungacha
+    P = periods(con, q)
+    # import ma'lumoti faqat bojxona bazasi sanasigacha: oxirgi yil davri undan o'tsa — shu kunlik davrdagi yillar ham baza kuniga kesiladi
     imp_last = con.execute("SELECT max(rdate) FROM items WHERE regime='ИМ'").fetchone()[0] or ""
-    it = min(t, imp_last) if imp_last else t
-    ipt = back(it) if it >= f else pt
+    last_end = P[-1][2]
+    cut = bool(imp_last) and last_end > imp_last
+    cache = {}
 
-    ex_c, ex_cx = _split(ctx, export_recs(ctx, f, t, True))
-    ex_p, ex_px = _split(ctx, export_recs(ctx, pf, pt, False))
-    im_c, im_cx = _split(ctx, import_recs(ctx, f, it) if it >= f else [])
-    im_p, im_px = _split(ctx, import_recs(ctx, pf, ipt) if it >= f else [])
+    def ex(f, t):
+        if ("e", f, t) not in cache: cache[("e", f, t)] = _split(ctx, export_recs(ctx, f, t))
+        return cache[("e", f, t)]
 
-    # yillar dinamikasi va oylar (joriy yil: 01.01 — t, o'tgan yillar butun)
+    def im(f, t):
+        if t < f: return [], []
+        if ("i", f, t) not in cache: cache[("i", f, t)] = _split(ctx, import_recs(ctx, f, t))
+        return cache[("i", f, t)]
+
+    Y = []
+    for y, f, e in P:
+        ie = e
+        if cut and e[5:] == last_end[5:]: ie = _md(y, imp_last[5:10])
+        if imp_last: ie = min(ie, imp_last)
+        (e_c, e_x), (i_c, i_x) = ex(f, e), im(f, ie)
+        Y.append({"year": y, "f": f, "t": e, "it": ie, "ex": e_c, "exx": e_x, "im": i_c, "imx": i_x})
+    cur = Y[-1]
+    prv = Y[-2] if len(Y) > 1 else {"year": None, "f": None, "t": None, "it": None, "ex": [], "exx": [], "im": [], "imx": []}
+
+    # yillar dinamikasi va oylar (oxirgi yil: 01.01 — tanlangan kun, oldingi 2 yil butun)
     years = []
-    for yy in (y - 2, y - 1, y):
-        a, b = f"{yy}-01-01", (t if yy == y else f"{yy}-12-31")
-        e, _ = _split(ctx, export_recs(ctx, a, b, yy == y))
-        i_, _ = _split(ctx, import_recs(ctx, a, min(b, imp_last) if imp_last else b))
-        years.append({"year": yy, "to": b, "exp": e, "imp": i_})
-    return {"ctx": ctx, "f": f, "t": t, "pf": pf, "pt": pt, "it": it, "ipt": ipt, "imp_last": imp_last,
-            "ex_c": ex_c, "ex_p": ex_p, "im_c": im_c, "im_p": im_p, "ex_cx": ex_cx, "ex_px": ex_px, "im_cx": im_cx, "im_px": im_px,
+    for yy in (cur["year"] - 2, cur["year"] - 1, cur["year"]):
+        a, b = f"{yy}-01-01", (cur["t"] if yy == cur["year"] else f"{yy}-12-31")
+        years.append({"year": yy, "to": b, "exp": ex(a, b)[0], "imp": im(a, min(b, imp_last) if imp_last else b)[0]})
+    return {"ctx": ctx, "Y": Y, "f": cur["f"], "t": cur["t"], "pf": prv["f"], "pt": prv["t"], "it": cur["it"], "ipt": prv["it"],
+            "cy": cur["year"], "py": prv["year"], "imp_last": imp_last, "cut": cut,
+            "ex_c": cur["ex"], "ex_p": prv["ex"], "im_c": cur["im"], "im_p": prv["im"],
+            "ex_cx": cur["exx"], "ex_px": prv["exx"], "im_cx": cur["imx"], "im_px": prv["imx"],
             "years": years, "title": ", ".join(sorted(ctx.targets))}
 
 
@@ -175,17 +252,129 @@ def export_xlsx(con, q: dict, out) -> object:
     TF, DF, SF = PatternFill("solid", fgColor="D6E9E4"), PatternFill("solid", fgColor="EEF5F3"), PatternFill("solid", fgColor="F7F9F8")
     NUM, PCT, INT = '#,##0.0;[Red]-#,##0.0;"–"', '0.0%;[Red]-0.0%;"–"', '#,##0;-#,##0;"–"'
     WRAP = Alignment(wrap_text=True, vertical="center")
-    per_cur, per_prev = f"{dmy(D['f'])} — {dmy(D['t'])}", f"{dmy(D['pf'])} — {dmy(D['pt'])}"
-    iper_cur, iper_prev = f"{dmy(D['f'])} — {dmy(D['it'])}", f"{dmy(D['pf'])} — {dmy(D['ipt'])}"
+    per_cur = f"{dmy(D['f'])} — {dmy(D['t'])}"
+    per_prev = f"{dmy(D['pf'])} — {dmy(D['pt'])}" if D["pf"] else "—"
+    iper_cur = f"{dmy(D['f'])} — {dmy(D['it'])}"
+    iper_prev = f"{dmy(D['pf'])} — {dmy(D['ipt'])}" if D["pf"] else "—"
     if D["it"] < D["f"]:
         iper_cur = iper_prev = f"маълумот йўқ (божхона базаси {dmy(D['imp_last'])} гача)"
+    CY, PY = f"{D['cy']} йил", (f"{D['py']} йил" if D["py"] else "—")
     filt = []
     if ctx.dists: filt.append("туман: " + ", ".join(ctx.dn.get(x, x) for x in sorted(ctx.dists)))
     if ctx.tarmoqs: filt.append("тармоқ: " + ", ".join(sorted(ctx.tarmoqs)) + " (фақат экспорт)")
     if ctx.kinds: filt.append("тур: " + ", ".join({"sanoat": "саноат", "meva": "мева-сабзавот"}.get(k, k) for k in sorted(ctx.kinds)) + " (фақат экспорт)")
+    filt_extra = list(filt)
     filt.append("алоҳида ҳисоб (БНПЗ, SDK): " + ("киритилган" if ctx.with_memo else "киритилмаган"))
 
     wb = openpyxl.Workbook()
+
+    # ---------------- 0. Божхона шаклидаги 2 жадвал: ЭК / ИМ давлат-товар (соҳа → маҳсулот, ҳар йил нетто + қиймат)
+    def goods(ws, is_exp):
+        Yl, n = D["Y"], len(D["Y"])
+        rk, ek = ("ex", "t") if is_exp else ("im", "it")
+        BLK = Side(style="thin", color="FF000000"); BB = Border(BLK, BLK, BLK, BLK)
+        RED, GREEN = "FFFF0000", "FF00B050"
+        CEN = Alignment(horizontal="center", vertical="center", wrap_text=True)
+        g1 = defaultdict(lambda: [[0.0, 0.0] for _ in range(n)])
+        g2 = defaultdict(lambda: [[0.0, 0.0] for _ in range(n)])
+        tot = [[0.0, 0.0] for _ in range(n)]
+        for i, Yi in enumerate(Yl):
+            for x in Yi[rk]:
+                k1 = x["tovar1"] or NOSECT
+                k2 = x["tovar2"] if x["tovar2"] and x["tovar2"] != "—" else "Бошқалар"
+                for acc in (g1[k1][i], g2[(k1, k2)][i], tot[i]):
+                    acc[0] += x["netto"] or 0; acc[1] += x["value"] or 0
+        sk = lambda a: tuple(-a[i][1] for i in range(n - 1, -1, -1)) + tuple(-a[i][0] for i in range(n - 1, -1, -1))
+        yrs, ends = [Yi["year"] for Yi in Yl], [Yi[ek] for Yi in Yl]
+        same = len({e[5:] for e in ends}) == 1
+        if n == 1: ylab = f"{yrs[0]} йил"
+        elif yrs == list(range(yrs[0], yrs[-1] + 1)): ylab = f"{yrs[0]}-{yrs[-1]} йиллар"
+        else: ylab = ", ".join(map(str, yrs[:-1])) + f" ва {yrs[-1]} йиллар"
+        sub = f"({ylab} {_per_words(ends[0])})" if same else "(" + ", ".join(f"{y} йил {_per_words(e)}" for y, e in zip(yrs, ends)) + ")"
+        many = len(ctx.targets) > 1
+        what = (f"давлат{'лар' if many else ''}ига қилинган экспорт" if is_exp else f"давлат{'лар' if many else ''}идан импорт қилинган")
+        last = 1 + 2 * n + (2 if n >= 2 else 0)
+        widths = [62] + [15, 15] * n + ([14, 11] if n >= 2 else [])
+        for i, w in enumerate(widths, 1): ws.column_dimensions[L(i)].width = w
+        c = ws.cell(1, 1, f"{D['title']} {what} товарлар бўйича\nМАЪЛУМОТ")
+        c.font = Font(name="Arial", size=14, bold=True); c.alignment = CEN
+        ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=last); ws.row_dimensions[1].height = 48
+        c = ws.cell(2, 1, sub); c.font = Font(name="Arial", size=12, bold=True, color=RED)
+        c = ws.cell(2, last, "минг долл."); c.font = Font(name="Arial", size=11, italic=True); c.alignment = Alignment(horizontal="right")
+        ws.row_dimensions[2].height = 18
+        hf = Font(name="Arial", size=12, bold=True)
+
+        def hcell(r, col, v):
+            c = ws.cell(r, col, v); c.font = hf; c.alignment = CEN; c.border = BB
+        hcell(3, 1, "Давлат/Товар"); hcell(4, 1, None); ws.merge_cells(start_row=3, start_column=1, end_row=4, end_column=1)
+        for i, (y, e) in enumerate(zip(yrs, ends)):
+            col = 2 + 2 * i
+            hcell(3, col, f"{y} йил" + ("" if same else f"\n({_per_words(e)})")); hcell(3, col + 1, None)
+            ws.merge_cells(start_row=3, start_column=col, end_row=3, end_column=col + 1)
+            hcell(4, col, "Нетто вазни, тн"); hcell(4, col + 1, "Қиймати, \nминг $")
+        if n >= 2:
+            fc = 2 + 2 * n
+            hcell(3, fc, "Қийматдаги фарқи" + (f"\n({yrs[-1]}/{yrs[-2]})" if n > 2 else "")); hcell(3, fc + 1, None)
+            ws.merge_cells(start_row=3, start_column=fc, end_row=3, end_column=fc + 1)
+            hcell(4, fc, "(+/-)"); hcell(4, fc + 1, "%")
+        ws.row_dimensions[3].height = 22 if same and n <= 2 else 36
+        ws.row_dimensions[4].height = 32
+
+        def put(r, label, arr, color, bold, indent):
+            f_ = Font(name="Arial", size=12, bold=bold, color=color)
+            c = ws.cell(r, 1, label); c.font = f_; c.border = BB
+            c.alignment = CEN if indent is None else Alignment(horizontal="left", vertical="center", indent=indent, wrap_text=True)
+            for i in range(n):
+                for j in range(2):
+                    v = arr[i][j]
+                    c = ws.cell(r, 2 + 2 * i + j, round(v, 6) if abs(v) > 1e-9 else None)
+                    c.number_format = "#,##0.00"; c.font = f_; c.border = BB; c.alignment = CEN
+            if n >= 2:
+                fc = 2 + 2 * n; cv, pv = L(3 + 2 * (n - 1)), L(3 + 2 * (n - 2))
+                both0 = abs(arr[n - 1][1]) <= 1e-9 and abs(arr[n - 2][1]) <= 1e-9
+                c = ws.cell(r, fc, None if both0 else f"=+{cv}{r}-{pv}{r}"); c.number_format = "#,##0.0"
+                c.font = f_; c.border = BB; c.alignment = CEN
+                c = ws.cell(r, fc + 1, None if both0 else f'=IF({pv}{r}=0,IF({cv}{r}=0,"",1),{L(fc)}{r}/{pv}{r})')
+                c.number_format = "0%"; c.font = f_; c.border = BB; c.alignment = CEN
+
+        r = 5
+        put(r, "Жами", tot, RED, True, None); r += 1
+        for k1 in sorted(g1, key=lambda k: (sk(g1[k]), k)):
+            put(r, k1, g1[k1], GREEN, True, 1); r += 1
+            for k in sorted((k for k in g2 if k[0] == k1), key=lambda k: (sk(g2[k]), k[1])):
+                put(r, k[1], g2[k], None, False, 2); r += 1
+        if not g1:
+            c = ws.cell(r, 1, "маълумот йўқ"); c.font = Font(name="Arial", size=12, italic=True); r += 1
+        last_row = r - 1
+        notes = []
+        if is_exp and ctx.through and any(Yi["t"] > ctx.through for Yi in Yl):
+            notes.append(f"{dmy(ctx.through)} гача — божхона базаси, кейинги кунлар — кунлик ГТД (мева-сабзавот — карантин қоидаси бўйича).")
+        if not is_exp and D["cut"]:
+            notes.append(f"Импорт — божхона базасидан, {dmy(D['imp_last'])} гача (кунлик ГТД да импорт йўқ); "
+                         f"шу сабаб импорт даври {_per_words(ends[-1])} билан чекланган.")
+        if filt_extra: notes.append("Филтр: " + "; ".join(filt_extra) + ".")
+        xs = sum(len(Yi[rk + "x"]) for Yi in Yl)
+        if xs and not ctx.with_memo: notes.append("Алоҳида ҳисобдаги корхоналар (БНПЗ, SDK) киритилмаган.")
+        for k, t_ in enumerate(notes):
+            rr = r + 1 + k
+            c = ws.cell(rr, 1, ("Изоҳ: " if k == 0 else "") + t_); c.font = Font(name="Arial", size=10, italic=True)
+            c.alignment = Alignment(wrap_text=True, vertical="top")
+            ws.merge_cells(start_row=rr, start_column=1, end_row=rr, end_column=last); ws.row_dimensions[rr].height = 28
+        if notes: last_row = r + len(notes)
+        ws.freeze_panes = "B5"
+        ws.print_title_rows = "3:4"
+        ws.print_area = f"A1:{L(last)}{last_row}"
+        ws.page_setup.orientation = "landscape"; ws.page_setup.paperSize = ws.PAPERSIZE_A4
+        ws.page_setup.fitToWidth, ws.page_setup.fitToHeight = 1, 0
+        ws.sheet_properties.pageSetUpPr.fitToPage = True
+        ws.print_options.horizontalCentered = True
+        ws.page_margins.left = ws.page_margins.right = 0.4
+        ws.page_margins.top, ws.page_margins.bottom = 0.45, 0.5
+        ws.oddFooter.center.text = "&P / &N"; ws.oddFooter.center.size = 9
+        return ws
+
+    goods(wb.active, True); wb.active.title = "ЭК давлат-товар"
+    goods(wb.create_sheet("ИМ давлат-товар"), False)
 
     def setup(ws, widths, landscape=True):
         for i, w in enumerate(widths, 1): ws.column_dimensions[L(i)].width = w
@@ -223,14 +412,14 @@ def export_xlsx(con, q: dict, out) -> object:
     gr = lambda cur, prev: (cur / prev - 1) if prev else None
 
     # ---------------- 1. Умумий
-    ws = wb.active; ws.title = "Умумий"
+    ws = wb.create_sheet("Умумий")
     setup(ws, [46, 16, 16, 15, 12], landscape=False)
     title(ws, f"Бухоро вилояти — {D['title']} билан ташқи савдо", "минг АҚШ доллари · манба: божхона базаси ва кунлик ГТД", 5)
     r = 4
-    ws.cell(r, 1, "Давр:").font = Font(bold=True); ws.cell(r, 2, f"экспорт {per_cur}; импорт {iper_cur}"); r += 1
-    ws.cell(r, 1, "Ўтган йил шу давр:").font = Font(bold=True); ws.cell(r, 2, f"экспорт {per_prev}; импорт {iper_prev}"); r += 1
+    ws.cell(r, 1, f"Давр ({CY}):").font = Font(bold=True); ws.cell(r, 2, f"экспорт {per_cur}; импорт {iper_cur}"); r += 1
+    ws.cell(r, 1, f"Солиштириш ({PY}):").font = Font(bold=True); ws.cell(r, 2, f"экспорт {per_prev}; импорт {iper_prev}"); r += 1
     ws.cell(r, 1, "Филтрлар:").font = Font(bold=True); ws.cell(r, 2, "; ".join(filt)); r += 2
-    head(ws, r, ["Кўрсаткич", "Жорий давр", "Ўтган йил шу давр", "Фарқи", "Ўсиш, %"]); r += 1
+    head(ws, r, ["Кўрсаткич", CY, PY, "Фарқи", "Ўсиш, %"]); r += 1
     E, Ep, I, Ip = _sum(D["ex_c"]), _sum(D["ex_p"]), _sum(D["im_c"]), _sum(D["im_p"])
     for lbl, a, b, bold in [("Товар айланмаси (экспорт + импорт)", E + I, Ep + Ip, True), ("  Экспорт", E, Ep, False),
                             ("  Импорт", I, Ip, False), ("Савдо сальдоси (экспорт − импорт)", E - I, Ep - Ip, True)]:
@@ -274,11 +463,12 @@ def export_xlsx(con, q: dict, out) -> object:
     row(ws, r, ["Жами"] + [sum(m[j]) for j in range(4)], [None, NUM, NUM, NUM, NUM], fill=TF, bold=True); r += 2
     notes = [
         "Изоҳлар:",
-        "• Экспорт — сайтдаги «Экспорт географияси» саҳифаси қоидалари бўйича (жамилар саҳифадаги давлат қатори билан тенг). "
-        "Мева-сабзавот жорий даврда фақат карантин қоидаси бўйича (ГТД); божхона базаси давридаги карантин мевасида давлат кесими йўқ — бу ерга кирмайди.",
+        f"• Экспорт — божхона базаси ({dmy(ctx.through)} гача) ва ундан кейинги кунлик ГТД. Мева-сабзавот: божхона базаси даврида — "
+        "Бухоро экспортёрлари бўйича (божхона маълумоти билан бир хил), кунлик ГТД даврида — карантин қоидаси (Бухорода етиштирилган, "
+        "туман — етиштирилган жой). Шу сабаб «Экспорт географияси» саҳифасидаги давлат қаторидан база давридаги мева-сабзавот қадар фарқ қилиши мумкин.",
         f"• Импорт — божхона базасидан (охирги сана {dmy(D['imp_last'])}); кунлик ГТД фақат экспорт. Давлат — жўнатувчи давлат (ГТД 15-устун).",
-        "• Ўтган йил шу давр — божхона базаси (давлат кесимида Созламалардаги натижалар йўқ).",
-        "• Фақат Бухоро корхоналари: «Бухоро эмас» белгиланганлар ҳисобга олинмайди, Бухорода ҳисобга олиш даври инобатга олинади.",
+        f"• Солиштириш ({PY}) — божхона базаси, модалда танланган давр (давлат кесимида Созламалардаги натижалар йўқ).",
+        "• Фақат Бухоро корхоналари: «Бухоро эмас» белгиланганлар ва ИНН кўрсатилмаган қаторлар ҳисобга олинмайди, Бухорода ҳисобга олиш даври инобатга олинади.",
     ]
     for n in notes:
         c = ws.cell(r, 1, n); c.alignment = Alignment(wrap_text=True, vertical="top")
@@ -297,9 +487,9 @@ def export_xlsx(con, q: dict, out) -> object:
         setup(ws, [6, 52, 15, 15, 14, 11, 10, 12, 10, 12])
         word = "экспорти" if is_exp else "импорти"
         title(ws, f"Бухоро вилоятининг {D['title']} билан {word}",
-              f"{per} · ўтган йил: {pper} · минг АҚШ доллари", 10)
+              f"{CY}: {per} · {PY}: {pper} · минг АҚШ доллари", 10)
         tot, ptot = _sum(cur), _sum(prev)
-        cols = ["№", "", "Жорий давр", "Ўтган йил шу давр", "Фарқи", "Ўсиш, %", "Улуши, %", "Корхоналар", "ГТД", "Нетто, т"]
+        cols = ["№", "", CY, PY, "Фарқи", "Ўсиш, %", "Улуши, %", "Корхоналар", "ГТД", "Нетто, т"]
         fm = [INT, None, NUM, NUM, NUM, PCT, PCT, INT, INT, NUM]
         r = 4
 
@@ -340,7 +530,7 @@ def export_xlsx(con, q: dict, out) -> object:
         g4 = _group(cur, prev, lambda x: x["hs4"] or "—")
         o4 = sorted(g4, key=lambda k: (-g4[k]["cur"], -g4[k]["prev"]))
         r = section(ws, r, f"{4 if is_exp else 3}. Маҳсулотлар (ТН ВЭД 4 белги)", 10)
-        head(ws, r, ["№", "Маҳсулот", "Жорий давр", "Ўтган йил шу давр", "Фарқи", "Ўсиш, %", "Улуши, %", "Корхоналар", "ТН ВЭД", "Нетто, т"]); r += 1
+        head(ws, r, ["№", "Маҳсулот", CY, PY, "Фарқи", "Ўсиш, %", "Улуши, %", "Корхоналар", "ТН ВЭД", "Нетто, т"]); r += 1
         for n, k in enumerate(o4, 1):
             o = g4[k]
             row(ws, r, [n, nm.get(k) or "—", o["cur"], o["prev"], o["cur"] - o["prev"], gr(o["cur"], o["prev"]),
@@ -353,25 +543,26 @@ def export_xlsx(con, q: dict, out) -> object:
     # ---------------- 3. Номма-ном
     def nomma(name, cur, prev, per, pper, is_exp):
         ws = wb.create_sheet(name)
-        cols = ["№", "№ туман", "ИНН", "Корхона номи", "Тармоқ" if is_exp else "Асосий соҳа", "Асосий маҳсулот", "Жорий давр",
-                "Ўтган йил шу давр", "Фарқи", "Ўсиш, %", "Туман ичида, %", "ГТД", "Нетто, т", "Охирги сана"]
+        cols = ["№", "№ туман", "ИНН", "Корхона номи", "Тармоқ" if is_exp else "Асосий соҳа", "Асосий маҳсулот", CY,
+                PY, "Фарқи", "Ўсиш, %", "Туман ичида, %", "ГТД", "Нетто, т", "Охирги сана"]
         setup(ws, [6, 7, 16, 40, 22, 34, 14, 14, 13, 10, 11, 8, 11, 12])
         word = "экспортёр" if is_exp else "импортёр"
-        title(ws, f"{D['title']} — {word} корхоналар номма-ном", f"{per} · ўтган йил: {pper} · минг АҚШ доллари", len(cols))
+        title(ws, f"{D['title']} — {word} корхоналар номма-ном", f"{CY}: {per} · {PY}: {pper} · минг АҚШ доллари", len(cols))
         r = 4; head(ws, r, cols); r += 1
         g = defaultdict(lambda: {"cur": 0.0, "prev": 0.0, "gtd": set(), "netto": 0.0, "last": None, "name": None, "dc": None,
                                  "tarmoq": None, "p": defaultdict(float), "s": defaultdict(float)})
+        # kalit (ИНН, туман): karantin mevasi yetishtirilgan tuman bo'yicha — bitta eksportyor bir necha tumanda turishi mumkin
         for x in cur:
-            o = g[x["inn"]]; o["cur"] += x["value"]; o["gtd"].add(x["gtd"]); o["netto"] += x["netto"]
+            o = g[(x["inn"], x["dc"] or "")]; o["cur"] += x["value"]; o["gtd"].add(x["gtd"]); o["netto"] += x["netto"]
             o["last"] = max(filter(None, [o["last"], x["date"]])); o["p"][x["pname"] or "—"] += x["value"]; o["s"][x["tovar1"]] += x["value"]
             o["name"] = o["name"] or x["name"]; o["dc"] = o["dc"] or x["dc"]; o["tarmoq"] = o["tarmoq"] or x["tarmoq"]
         for x in prev:
-            o = g[x["inn"]]; o["prev"] += x["value"]
+            o = g[(x["inn"], x["dc"] or "")]; o["prev"] += x["value"]
             o["name"] = o["name"] or x["name"]; o["dc"] = o["dc"] or x["dc"]; o["tarmoq"] = o["tarmoq"] or x["tarmoq"]
             o.setdefault("pp", defaultdict(float))[x["pname"] or "—"] += x["value"]
             o.setdefault("ps", defaultdict(float))[x["tovar1"]] += x["value"]
         by_d = defaultdict(list)
-        for inn, o in g.items(): by_d[o["dc"] or ""].append((inn, o))
+        for (inn, dc_), o in g.items(): by_d[dc_].append((inn, o))
         n = 0; tot, ptot = _sum(cur), _sum(prev)
         for dc in dsort(by_d):
             lst = sorted(by_d[dc], key=lambda z: (-z[1]["cur"], -z[1]["prev"], z[1]["name"] or ""))
@@ -393,7 +584,7 @@ def export_xlsx(con, q: dict, out) -> object:
                     [INT, INT, "@", None, None, None, NUM, NUM, NUM, PCT, PCT, INT, NUM, None])
                 ws.cell(r, 4).alignment = WRAP; ws.cell(r, 6).alignment = WRAP
                 r += 1
-        row(ws, r, [None, None, None, f"Жами: {len([1 for o in g.values() if o['cur']])} та корхона", None, None, tot, ptot, tot - ptot,
+        row(ws, r, [None, None, None, f"Жами: {len({k[0] for k, o in g.items() if o['cur']})} та корхона", None, None, tot, ptot, tot - ptot,
                     gr(tot, ptot), 1 if tot else None, len({x["gtd"] for x in cur}), sum(x["netto"] for x in cur), None],
             [None] * 6 + [NUM, NUM, NUM, PCT, PCT, INT, NUM, None], fill=TF, bold=True)
         ws.freeze_panes = "E5"; ws.auto_filter.ref = f"A4:{L(len(cols))}{r - 1}"
@@ -425,7 +616,7 @@ def export_xlsx(con, q: dict, out) -> object:
     nomma("Импорт номма-ном", D["im_c"], D["im_p"], iper_cur, iper_prev, False)
     ws = wb.create_sheet("Соҳа × туман")
     setup(ws, [5, 38, 13] + [11] * 14)
-    title(ws, f"{D['title']} — соҳалар ва туманлар кесими", "жорий давр · минг АҚШ доллари", 12)
+    title(ws, f"{D['title']} — соҳалар ва туманлар кесими", f"{CY} · минг АҚШ доллари", 12)
     r = matrix(ws, 4, f"Экспорт ({per_cur})", D["ex_c"])
     matrix(ws, r, f"Импорт ({iper_cur})", D["im_c"])
     wb.save(out); return out

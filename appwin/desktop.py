@@ -228,7 +228,7 @@ def main():
     api._ddir = download_dir(cfg)
     setup_downloads(api, api._ddir)
     log("yuklamalar papkasi:", api._ddir)
-    items = [wm.MenuAction("Sayt", lambda: nav("/")), wm.MenuAction("Superadmin panel", lambda: nav("/admin")), wm.MenuSeparator(),
+    items = [wm.MenuAction("Sayt", lambda: nav("/")), wm.MenuAction("Chat", lambda: js("window.EMChat ? EMChat.open() : (location.href = '/chat')")), wm.MenuAction("Superadmin panel", lambda: nav("/admin")), wm.MenuSeparator(),
              wm.MenuAction("Yuklamalar papkasi (Excel)", lambda: bg(api.open_downloads)), wm.MenuSeparator()]
     if mode == "server": items += [wm.MenuAction("Tashqi diskka zaxira olish", do_backup), wm.MenuSeparator()]
     items += [wm.MenuAction("Brauzerda ochish", lambda: api.open_browser(url)), wm.MenuAction("Yangilash (F5)", lambda: js("location.reload()")),

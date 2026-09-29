@@ -11,3 +11,17 @@ build/app.res
 build/out/
 build/payload/
 dist/
+
+# ofis serverdagi lokal fayllar (git add -A ularni qo'shmasin)
+data/
+Uninstall.exe
+git-ulash.bat
+git-ulash.log
+holat.bat
+config-*.json
+Claude outputs/
+python/DLLs/_ctypes_test.pyd
+python/DLLs/_msi.pyd
+python/DLLs/winsound.pyd
+python/Lib/venv/
+vendor/*.dist-info/

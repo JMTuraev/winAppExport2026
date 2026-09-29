@@ -274,9 +274,14 @@ class Handler(BaseHTTPRequestHandler):
                     res = catalog.http_get(con, u.path, q)
                     if isinstance(res, tuple): return self.send_file(res[1], download_name=res[2])
                     return self.send_json(res)
-                if u.path == "/api/dashboard": return self.send_json(report.dashboard(con, q.get("date")))
+                if u.path == "/api/dashboard": return self.send_json(report.dashboard(con, q.get("date"), report.plan_param(q.get("plan")), report.fset_param(q.get("fs"))))
+                if u.path == "/api/selectors":   # Dashboard/Свод: режа ва «амалда» тўплами танлови (29.09.2026)
+                    D = q.get("date") or report.last_data_date(con) or dt.date.today().isoformat()
+                    return self.send_json({"date": D, "plans": plans.choices(con, D), "prev_year": int(D[:4]) - 1,
+                                           "sets": periods.year_sets(con, int(D[:4]) - 1)})
                 if u.path == "/api/geo": return self.send_json(geo.rows(con, q))
                 if u.path == "/api/geo/country": return self.send_json(geo.country(con, q))
+                if u.path == "/api/geo/trade_meta": return self.send_json(trade.meta(con))   # давлат Excel модали: йиллар, охирги ёпилган ой
                 if u.path == "/api/companies/list": return self.send_json(companies.list_companies(con, q))
                 if u.path == "/api/company": return self.send_json(companies.profile(con, q["inn"], int(q["year"]) if q.get("year") else None))
                 if u.path == "/api/companies/names": return self.send_json(companies.names(con))
@@ -299,7 +304,7 @@ class Handler(BaseHTTPRequestHandler):
                 if u.path == "/api/plans":
                     last = report.last_data_date(con) or dt.date.today().isoformat()
                     eff = plans.effective_version(con, last)
-                    return self.send_json({"versions": plans.versions(con), "effective": eff, "last_date": last, "year": int(db.get_setting(con, "year") or last[:4]),
+                    return self.send_json({"versions": plans.versions(con), "cards": plans.cards(con), "effective": eff, "last_date": last, "year": int(db.get_setting(con, "year") or last[:4]),
                                            "workbook_plan": bool(con.execute("SELECT 1 FROM prognoz LIMIT 1").fetchone()),
                                            "sign": {"position": db.get_setting(con, "report_sign_pos", "Бошқарма бошлиғи"), "name": db.get_setting(con, "report_sign_name", "")}})
                 if u.path == "/api/plans/grid": return self.send_json(plans.grid(con, int(q["id"])))
@@ -308,12 +313,16 @@ class Handler(BaseHTTPRequestHandler):
                     return self.send_json({"periods": periods.list_periods(con), "year": int(db.get_setting(con, "year") or last[:4]), "last_date": last,
                                            "max_year": periods.max_year(con), "prev_source": periods.prev_info(con, last)})
                 if u.path == "/api/periods/grid":
-                    return self.send_json(periods.grid(con, int(q["year"]), int(q["months"])))
+                    return self.send_json(periods.grid(con, int(q.get("year") or 0), int(q["months"]), q.get("set") or None))
+                if u.path == "/api/fact_sets":   # «Амалда» тўпламлари (29.09.2026)
+                    last = report.last_data_date(con) or dt.date.today().isoformat()
+                    return self.send_json({"sets": periods.sets(con), "max_year": periods.max_year(con), "last_date": last,
+                                           "year": int(db.get_setting(con, "year") or last[:4]), "prev_source": periods.prev_info(con, last)})
                 if u.path == "/api/periods/template":
                     out_dir = db.BASE / "exports"; out_dir.mkdir(parents=True, exist_ok=True)
                     y, m = int(q.get("year") or periods.max_year(con)), int(q.get("months") or 12)
                     name = periods.file_name(y, m)
-                    return self.send_file(periods.template_xlsx(con, y, m, out_dir / name), download_name=name)
+                    return self.send_file(periods.template_xlsx(con, y, m, out_dir / name, q.get("set") or None), download_name=name)
                 if u.path == "/api/prev_year": return self.send_json(prev_year_get(con, int(q.get("year") or db.get_setting(con, "year") or dt.date.today().year)))
                 if u.path == "/api/disputes":
                     return self.send_json({"base_month": dispute.base_month(con), "template": db.get_setting(con, "template_label"), "rows": dispute.disputes(con)})
@@ -367,9 +376,11 @@ class Handler(BaseHTTPRequestHandler):
                     out_dir = db.BASE / "exports"; out_dir.mkdir(parents=True, exist_ok=True)
                     name = f"Номма-ном {dt.date.today():%d.%m.%Y}.xlsx"
                     return self.send_file(report.export_nomma(con, q, out_dir / name), download_name=name)
-                if u.path == "/api/export/svod_options":   # юклашдан олдинги модал: ўтган йил даври, мева-сабзавот қоидаси, Sozlamalar
+                if u.path == "/api/export/svod_options":   # юклашдан олдинги модал: ўтган йил даври, мева-сабзавот қоидаси, Sozlamalar, режа
                     from . import svodx
-                    return self.send_json(svodx.options(con, q.get("date")))
+                    o = svodx.options(con, q.get("date"))
+                    o["plans"] = plans.choices(con, q.get("date") or report.last_data_date(con) or dt.date.today().isoformat())
+                    return self.send_json(o)
                 if u.path == "/api/export/svod_nomma":   # 1-варақ СВОД (карантин) + ҳар туман номма-ном
                     out_dir = db.BASE / "exports"; out_dir.mkdir(parents=True, exist_ok=True)
                     D = q.get("date") or report.last_data_date(con); nd = dt.date.fromisoformat(D) + dt.timedelta(days=1)
@@ -521,10 +532,30 @@ class Handler(BaseHTTPRequestHandler):
                 n = int(self.headers.get("Content-Length") or 0)
                 if n <= 0 or n > 20 * 1024 * 1024: raise ValueError("Fayl bo'sh yoki juda katta")
                 raw = self.rfile.read(n)
-                tmp = db.BASE / "incoming" / f"plan_{secrets.token_hex(4)}.xlsx"; tmp.parent.mkdir(parents=True, exist_ok=True); tmp.write_bytes(raw)
+                ext = Path(urllib.parse.unquote(self.headers.get("X-Filename") or "a.xlsx")).suffix.lower() or ".xlsx"
+                if ext not in (".xlsx", ".xls"): raise ValueError("Faqat Excel fayl (.xlsx yoki .xls)")
+                tmp = db.BASE / "incoming" / f"plan_{secrets.token_hex(4)}{ext}"; tmp.parent.mkdir(parents=True, exist_ok=True); tmp.write_bytes(raw)
                 with WRITE_LOCK:
                     con = conn()
                     try: return self.send_json(plans.import_xlsx(con, int(self.headers.get("X-Id") or 0), tmp))
+                    finally:
+                        con.close(); tmp.unlink(missing_ok=True)
+            if u.path == "/api/plans/import_svod":   # ҳар қандай режа Excel (универсал шаблон / вазирлик / СВОД) → янги режа, ойлар авто
+                self.require_write()
+                n = int(self.headers.get("Content-Length") or 0)
+                if n <= 0 or n > 20 * 1024 * 1024: raise ValueError("Fayl bo'sh yoki juda katta")
+                raw = self.rfile.read(n)
+                ext = Path(urllib.parse.unquote(self.headers.get("X-Filename") or "a.xlsx")).suffix.lower() or ".xlsx"
+                if ext not in (".xlsx", ".xls"): raise ValueError("Faqat Excel fayl (.xlsx yoki .xls)")
+                tmp = db.BASE / "incoming" / f"plansvod_{secrets.token_hex(4)}{ext}"; tmp.parent.mkdir(parents=True, exist_ok=True); tmp.write_bytes(raw)
+                with WRITE_LOCK:
+                    con = conn()
+                    try:
+                        db.backup_if_stale("plan")
+                        return self.send_json(plans.import_svod(con, tmp, int(self.headers.get("X-Year") or 0), self.headers.get("X-From") or "",
+                                                                urllib.parse.unquote(self.headers.get("X-Title") or ""),
+                                                                " · ".join(x for x in (urllib.parse.unquote(self.headers.get("X-Note") or "").strip(),
+                                                                                       "Манба: " + urllib.parse.unquote(self.headers.get("X-Filename") or "")) if x)))
                     finally:
                         con.close(); tmp.unlink(missing_ok=True)
             if u.path == "/api/periods/import":
@@ -536,7 +567,7 @@ class Handler(BaseHTTPRequestHandler):
                 tmp = db.BASE / "incoming" / f"period_{secrets.token_hex(4)}{ext}"; tmp.parent.mkdir(parents=True, exist_ok=True); tmp.write_bytes(raw)
                 with WRITE_LOCK:
                     con = conn()
-                    try: return self.send_json(periods.import_xlsx(con, int(self.headers.get("X-Year") or 0), int(self.headers.get("X-Months") or 0), tmp))
+                    try: return self.send_json(periods.import_xlsx(con, int(self.headers.get("X-Year") or 0), int(self.headers.get("X-Months") or 0), tmp, self.headers.get("X-Set") or None))
                     finally:
                         con.close(); tmp.unlink(missing_ok=True)
             if u.path == "/api/contacts/import":
@@ -727,18 +758,26 @@ class Handler(BaseHTTPRequestHandler):
                         return self.send_json({"ok": True, "id": vid})
                     if u.path == "/api/plans/save":
                         return self.send_json(plans.save_grid(con, int(body["id"]), body.get("rows") or [], body.get("meta")))
+                    if u.path == "/api/plans/main":
+                        plans.set_main(con, int(body["id"])); return self.send_json({"ok": True})
                     if u.path == "/api/plans/delete":
                         plans.delete_version(con, int(body["id"])); return self.send_json({"ok": True})
                     if u.path == "/api/prev_year":
                         return self.send_json(prev_year_save(con, body))
                     if u.path == "/api/periods/save":
-                        return self.send_json(periods.save(con, int(body["year"]), int(body["months"]), body.get("rows") or []))
+                        return self.send_json(periods.save(con, int(body.get("year") or 0), int(body["months"]), body.get("rows") or [], body.get("set_id") or None))
                     if u.path == "/api/analysis/mahsulot/set/save":
                         return self.send_json(mahsulot.save_set(con, body))
                     if u.path == "/api/analysis/mahsulot/set/delete":
                         return self.send_json(mahsulot.delete_set(con, str(body.get("id") or "")))
                     if u.path == "/api/periods/delete":
-                        return self.send_json(periods.delete(con, int(body["year"]), int(body["months"])))
+                        return self.send_json(periods.delete(con, int(body.get("year") or 0), int(body["months"]), body.get("set_id") or None))
+                    if u.path == "/api/fact_sets/create":
+                        return self.send_json(periods.create_set(con, int(body.get("year") or 0), body.get("title") or "", body.get("note") or "", body.get("copy_from") or None))
+                    if u.path == "/api/fact_sets/update":
+                        return self.send_json(periods.update_set(con, int(body["id"]), body.get("title"), body.get("note"), bool(body.get("main"))))
+                    if u.path == "/api/fact_sets/delete":
+                        return self.send_json(periods.delete_set(con, int(body["id"])))
                     if u.path == "/api/settings":
                         allowed = {"prev_year_day_offset", "report_sign_pos", "report_sign_name"}
                         with con:

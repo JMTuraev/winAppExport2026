@@ -54,7 +54,35 @@ $('#side-tg').onclick = () => { $('#app').classList.toggle('collapsed'); try { l
 })();
 
 // ---------------------------------------------------------------- state & nav
-const S = { status: null, districts: [], dash: null, date: null };
+const S = { status: null, districts: [], dash: null, date: null, sel: { plan: '', fs: '', year: null }, selOpts: null };
+// Dashboard/Свод: танланган режа ва «амалда» тўплами (29.09.2026) — '' = стандарт (сана бўйича амалдаги режа, асосий тўплам)
+const dashURL = D => { const y = String(D || '').slice(0, 4);
+  if (S.sel.year && S.sel.year !== y) { S.sel.plan = ''; S.sel.fs = ''; S.selOpts = null; }   // бошқа йил — танлов стандартга
+  S.sel.year = y;
+  return '/api/dashboard?date=' + D + (S.sel.plan ? '&plan=' + encodeURIComponent(S.sel.plan) : '') + (S.sel.fs ? '&fs=' + encodeURIComponent(S.sel.fs) : ''); };
+async function renderPickers(box, reload) {
+  const el = $(box); if (!el) return;
+  const D = S.dash && S.dash.date; if (!D) { el.innerHTML = ''; return; }
+  if (!S.selOpts || S.selOpts.date !== D) S.selOpts = await api('/api/selectors?date=' + D);
+  const o = S.selOpts, P = o.plans || { items: [] }, sets = o.sets || [];
+  const pv = ['', ...P.items.map(v => String(v.id)), ...(P.table ? ['table'] : [])];
+  if (!pv.includes(String(S.sel.plan)) || P.items.some(v => String(v.id) === String(S.sel.plan) && v.covers === false)) S.sel.plan = '';
+  if (S.sel.fs && !sets.some(s => String(s.id) === String(S.sel.fs) && !s.main)) S.sel.fs = '';
+  const effT = P.effective === 'table' ? 'жадвал прогнози' : ((P.items.find(v => String(v.id) === String(P.effective)) || {}).title || '');
+  const mainS = sets.find(s => s.main);
+  const hasPlans = P.items.length || P.table, others = sets.filter(s => !s.main);
+  el.innerHTML = (hasPlans ? `<label title="Жадвалдаги прогноз (режа) қайси режадан олинсин">Режа <select class="sel${S.sel.plan ? ' alt' : ''}" data-ps="plan">
+      <option value="">${effT ? '★ ' + esc(effT) : 'Стандарт'}</option>
+      ${P.items.filter(v => String(v.id) !== String(P.effective)).map(v => `<option value="${v.id}"${String(S.sel.plan) === String(v.id) ? ' selected' : ''}${v.covers === false ? ' disabled' : ''}>${esc(v.title || 'Режа #' + v.id)}${v.covers === false ? ` (${esc(v.block)} блок — мос эмас)` : ''}</option>`).join('')}
+      ${P.table ? `<option value="table"${S.sel.plan === 'table' ? ' selected' : ''}>Жадвал (шаблон СВОДи) прогнози</option>` : ''}</select></label>` : '') +
+    (sets.length ? `<label title="«Ўтган йил шу даврга» устуни қайси «амалда» тўпламидан олинсин">${o.prev_year} амалда <select class="sel${S.sel.fs ? ' alt' : ''}" data-ps="fs"${others.length ? '' : ' disabled'}>
+      <option value="">${mainS ? '★ ' + esc(mainS.title) : 'Стандарт'}</option>
+      ${others.map(s => `<option value="${s.id}"${String(S.sel.fs) === String(s.id) ? ' selected' : ''}>${esc(s.title)}</option>`).join('')}</select></label>` : '');
+  el.querySelectorAll('select[data-ps]').forEach(sel => sel.onchange = async () => {
+    S.sel[sel.dataset.ps] = sel.value; S.dash = null;
+    try { await reload(); } catch (e) { toast(e.message, true); }
+  });
+}
 const CH = {};
 const loaders = {};
 $$('.nav').forEach(b => b.addEventListener('click', () => go(b.dataset.p)));
@@ -124,9 +152,10 @@ async function loadDash(date) {
   $('#dash-body').hidden = empty;
   if (empty) { S.dash = null; return; }
   const D = date || st.last_date;
-  S.dash = await api('/api/dashboard?date=' + D);
+  S.dash = await api(dashURL(D));
   const d = S.dash;
   if (d.empty) { $('#dash-body').hidden = true; return; }
+  renderPickers('#dash-psel', () => loadDash(D)).catch(e => toast(e.message, true));
   $('#dash-date').value = d.date; if (d.opening_date) $('#dash-date').min = d.opening_date; else $('#dash-date').removeAttribute('min');
   const m1 = $('#f-m1'), m2 = $('#f-m2'); m1.innerHTML = ''; m2.innerHTML = '';
   for (let i = 0; i < d.month; i++) { m1.add(new Option(MSHORT[i], i)); m2.add(new Option(MSHORT[i], i)); }
@@ -182,7 +211,7 @@ function renderDash() {
     $('#k3l').textContent = 'Ўтган йил шу даврга';
     $('#k3').innerHTML = fmt(pct(ytd, pPrev)) + '<small>%</small>';
     const dlt = ytd - pPrev;
-    $('#k3d').innerHTML = `ўтган йил: ${fmt0(pPrev)} · <b style="color:${dlt >= 0 ? 'var(--ok)' : 'var(--bad)'}">${dlt >= 0 ? '▲ +' : '▼ '}${fmt0(dlt)}</b> · ${d.prev_year_days} кун${d.prev_year_source && d.prev_year_source.mode === 'exact' ? ' · расмий давр якуни' : (d.prev_year_source && d.prev_year_source.mode !== 'none' ? ' · даврий натижалар' : '')}`;
+    $('#k3d').innerHTML = `ўтган йил: ${fmt0(pPrev)} · <b style="color:${dlt >= 0 ? 'var(--ok)' : 'var(--bad)'}">${dlt >= 0 ? '▲ +' : '▼ '}${fmt0(dlt)}</b> · ${d.prev_year_days} кун${d.prev_year_source && d.prev_year_source.mode !== 'none' && d.prev_year_source.set ? ` · амалда «${esc(d.prev_year_source.set.title)}»` : ''}${d.prev_year_source && d.prev_year_source.mode === 'exact' ? ' · расмий давр якуни' : ''}`;
   }
   const monFact = comps.reduce((s, c) => s + (c.m[cm] || 0), 0) * (useS ? 1 : 0) + mevMon;
   $('#k4l').textContent = MONTHS[cm] + ' (жорий ой)';
@@ -434,7 +463,7 @@ const emptyGuard = (sel) => { if (!S.status.last_date) { $(sel).innerHTML = '<tr
 loaders.nom = async () => {
   if (emptyGuard('#t-nom tbody')) return;
   if (!S.districts.length) S.districts = await api('/api/districts');
-  if (!S.dash) S.dash = await api('/api/dashboard?date=' + S.status.last_date);
+  if (!S.dash) S.dash = await api(dashURL(S.status.last_date));
   const sel = $('#nom-d'); if (sel.options.length <= 1) S.districts.forEach(d => sel.add(new Option(d.name_uz, d.code)));
   renderNom();
 };
@@ -483,8 +512,9 @@ $('#p-nom .tw').addEventListener('scroll', () => requestAnimationFrame(nomSticky
 loaders.svod = async () => {
   if (emptyGuard('#t-svod tbody')) return;
   if (!S.districts.length) S.districts = await api('/api/districts');
-  if (!S.dash) S.dash = await api('/api/dashboard?date=' + S.status.last_date);
+  if (!S.dash) S.dash = await api(dashURL(S.status.last_date));
   const d = S.dash, cm = d.month - 1;
+  renderPickers('#svod-psel', () => loaders.svod()).catch(e => toast(e.message, true));
   $('#svod-sub').textContent = `${dmy(d.date)} ҳолатига · минг АҚШ долл.`;
   $('#svod-prev').textContent = (d.prev_year_source && d.prev_year_source.text) ? d.prev_year_source.text : ((d.prev_year_label || '') + `, ${d.prev_year_days} кунга мутаносиб`);
   $('#svod-xl').onclick = () => download('/api/export/cumulative?date=' + d.date, `${dmy(isoNext(d.date))} йил экспорт.xlsx`);
@@ -692,7 +722,7 @@ async function showProfile(inn, yr) {
       <div class="kpi"><div class="l">Давлатлар</div><div class="v">${fmt0(k.countries)}</div><div class="d">маҳсулот турлари (ТН ВЭД 4): ${fmt0(k.products)}</div></div>
       <div class="kpi ${open.length ? 'gold' : ''}"><div class="l">Очиқ муаммо ва вазифалар</div><div class="v">${open.length}</div><div class="d">${over ? `<span class="t-bad">муддати ўтган: ${over}</span>` : 'муддати ўтгани йўқ'}</div></div>
     </div>
-    <div class="seg" id="pf-tabs" style="margin-bottom:14px">${[['exp', 'Экспорт таҳлили'], ['tree', 'Маҳсулот дарахти'], ['lgs', 'Логистика ва нарх'], ['iss', `Муаммо ва вазифалар (${open.length})`], ['info', 'Алоқа ва маълумотлар'], ['docs', `Ҳужжатлар (${p.docs.length})`], ['log', 'Тарих']]
+    <div class="seg" id="pf-tabs" style="margin-bottom:14px">${[['exp', 'Экспорт таҳлили'], ['tree', 'Маҳсулот дарахти'], ['lgs', 'Логистика ва нарх'], ['iss', `Муаммо ва вазифалар (${open.length})`], ['info', 'Алоқа ва маълумотлар'], ['docs', `Ҳужжатлар (${p.docs.length})`], ['xat', 'Хатлар'], ['log', 'Тарих']]
       .map(([v, t]) => `<button data-v="${v}" class="${R.tab === v ? 'on' : ''}">${t}</button>`).join('')}</div>
     <div id="pf-body"></div>`;
   $('#pf-back').onclick = () => { R.inn = null; $('#reg-prof').hidden = true; $('#reg-list').hidden = false; loadRegList().catch(e => toast(e.message, true)); window.scrollTo(0, 0); };
@@ -700,13 +730,15 @@ async function showProfile(inn, yr) {
   $$('#pf-tabs button').forEach(bt => bt.onclick = () => { R.tab = bt.dataset.v; $$('#pf-tabs button').forEach(x => x.classList.toggle('on', x === bt)); renderProfTab(); });
   $$('#pf-years button').forEach(bt => bt.onclick = () => showProfile(inn, +bt.dataset.y).catch(e => toast(e.message, true)));
   renderProfTab();
+  if (window.XAT) XAT.tabCount(inn);      // «Хатлар (N)» — xatlar.js
 }
 const reloadProfile = () => showProfile(R.inn).then(() => loadStatus()).catch(e => toast(e.message, true));
 
 function renderProfTab() {
   const p = R.prof, body = $('#pf-body');
   if (CH.pf) { CH.pf.destroy(); CH.pf = null; }
-  ({ exp: tabExport, tree: tabTree, lgs: tabLogistics, iss: tabIssues, info: tabInfo, docs: tabDocs, log: tabLog })[R.tab](p, body);
+  ({ exp: tabExport, tree: tabTree, lgs: tabLogistics, iss: tabIssues, info: tabInfo, docs: tabDocs, log: tabLog,
+     xat: (pp, bb) => window.XAT ? XAT.profileTab(pp, bb).catch(e => toast(e.message, true)) : (bb.innerHTML = '<div class="empty">Хатлар модули юкланмади</div>') })[R.tab](p, body);
 }
 
 // ---- Маҳсулот дарахти (korxona ichida): tarmoq → soha → mahsulot → ТН ВЭД
@@ -1638,7 +1670,7 @@ $('#bk-create').onclick = async () => { try { const r = await api('/api/backups/
 
 // ---------------------------------------------------------------- SOZLAMALAR
 loaders.set = async () => {
-  const s = await api('/api/settings'); const st = S.status;
+  const s = await api('/api/settings'); const st = S.status; S._setCfg = s;
   $('#set-paths').innerHTML = `<div class="check"><div class="ic ok">✓</div><div><b>Ma'lumotlar papkasi</b><span class="mono">${esc(st.data_dir)}</span></div></div>
     <div class="check"><div class="ic ok">✓</div><div><b>Baza fayli</b><span class="mono">${esc(st.db_path)}</span></div></div>
     <div class="check"><div class="ic ${st.opening_date ? 'ok' : 'warn'}">${st.opening_date ? '✓' : '–'}</div><div><b>Boshlang'ich qoldiq</b><span>${st.opening_date ? dmy(st.opening_date) + (st.opening_source === 'customs' ? " gacha — sanoat bojxona oylik bazasidan, meva-sabzavot kunlik jadvaldan" : " gacha — kunlik jadvaldan") : "yuklanmagan — summa faqat ilovaga kiritilgan GTD lardan"}</span></div></div>
@@ -1800,10 +1832,69 @@ loaders.geo = async () => {
   }
   await loadGeo();
 };
-function geoTradeXl(cs) {
-  const q = geoQuery(); q.set('country', cs.join(','));
+// Давлат(лар) бўйича экспорт + импорт Excel — аввал модал: ҳар йил (масалан 2024, 2025, 2026) учун давр 1 январдан.
+// Стандарт — охирги ёпилган ой (учала йилга). Ойлик даврлар мустақил; кунлик сана танланса — бошқа йиллар ҳам шу кунга ўтади.
+async function geoTradeXl(cs) {
+  let M;
+  try { M = await api('/api/geo/trade_meta'); } catch (e) { return toast(e.message, true); }
   const nm = cs.length <= 3 ? cs.join(', ') : cs.slice(0, 3).join(', ') + ' ва б.';
-  return download('/api/export/geo_trade?' + q.toString(), `${nm} — экспорт ва импорт ${dmy(todayISO())}.xlsx`);
+  const last = M.last_date, pad = n => String(n).padStart(2, '0');
+  const mEnd = (y, m) => `${y}-${pad(m)}-${pad(new Date(y, m, 0).getDate())}`;
+  const clampDay = (y, md) => { const m = +md.slice(0, 2), d = Math.min(+md.slice(3, 5), new Date(y, m, 0).getDate()); return `${y}-${pad(m)}-${pad(d)}`; };
+  const maxD = y => (`${y}-12-31` < last ? `${y}-12-31` : last);
+  const st = {};
+  M.years.forEach(y => { st[y] = { on: true, mode: 'm', m: M.closed_month, d: clampDay(y, M.closed_end.slice(5)) }; });
+  const endOf = y => { const r = st[y]; return r.mode === 'm' ? mEnd(y, r.m) : r.d; };
+  const monthsFor = y => { const a = []; for (let m = 1; m <= 12; m++) if (mEnd(y, m) <= last) a.push(m); return a; };
+  const syncDay = (src) => {            // кунлик: бошқа йиллар ҳам шу кун-ойга (келажак бўлса — охирги санагача)
+    const md = st[src].d.slice(5);
+    M.years.forEach(y => { if (y === src) return; let d = clampDay(y, md); if (d > maxD(y)) d = maxD(y); st[y].mode = 'd'; st[y].d = d; });
+  };
+  const words = e => { const m = +e.slice(5, 7), full = e === mEnd(+e.slice(0, 4), m);
+    return full ? (m === 1 ? 'январь' : `январь–${MONTHS[m - 1].toLowerCase()}`) : `1 январь — ${+e.slice(8, 10)} ${MONTHS[m - 1].toLowerCase()}`; };
+  const draw = () => {
+    const on = M.years.filter(y => st[y].on);
+    const cutImp = on.length && M.imp_last && endOf(on[on.length - 1]) > M.imp_last;
+    $('#gtx-body').innerHTML = `<button class="x" id="gtx-x">×</button><div class="svn">
+      <h2 id="gtx-title">${esc(nm)} — экспорт ва импорт (Excel)</h2>
+      <p class="lead">Файл бошида божхона шаклидаги 2 жадвал — экспорт ва импорт товарлар бўйича (ҳар йил нетто ва қиймат, фарқ — охирги икки йил), кейин умумий, туманлар, соҳалар ва номма-ном варақлари. Туман, тармоқ, тур ва «алоҳида ҳисоб» — саҳифадаги филтрлардан.</p>
+      <div class="svn-sec"><h4>Даврлар · 1 январдан</h4>
+        ${M.years.map(y => { const r = st[y], ms = monthsFor(y);
+          return `<div class="gtx-row${r.on ? ' on' : ' off'}${r.mode === 'm' ? ' m' : ''}" data-y="${y}">
+            <label class="gy"><input type="checkbox" data-k="on"${r.on ? ' checked' : ''}> ${y} йил</label>
+            <select class="sel" data-k="sel">${ms.map(m => `<option value="${m}"${r.mode === 'm' && r.m === m ? ' selected' : ''}>${m === 1 ? 'Январь' : 'Январь–' + MONTHS[m - 1].toLowerCase()} (${m} ой)</option>`).join('')}
+              <option value="d"${r.mode === 'd' ? ' selected' : ''}>Кунлик — сана бўйича</option></select>
+            <input type="date" class="gd" data-k="d" min="${y}-01-01" max="${maxD(y)}" value="${r.d}"${r.mode === 'd' ? '' : ' hidden'}>
+            <div class="gp">${dmy(`${y}-01-01`)} — ${dmy(endOf(y))} · ${words(endOf(y))}</div></div>`; }).join('')}
+        <div class="n" style="font-size:11.5px;color:var(--ink3);margin-top:4px">Стандарт — охирги ёпилган ой (${MONTHS[M.closed_month - 1].toLowerCase()}). Кунлик сана танланса — бошқа йиллар ҳам шу кунга ўтади. Маълумот ${dmy(last)} гача; импорт — божхона базасидан, ${dmy(M.imp_last)} гача.</div>
+      </div>
+      <div class="svn-sum">${on.length ? `Жадваллар: <b>${on.join(' · ')}</b> йил${on.length > 1 ? `; фарқ — <b>${on[on.length - 1]}/${on[on.length - 2]}</b>` : ' (фарқ устуни йўқ)'}${cutImp ? `; импорт ${dmy(M.imp_last).slice(0, 5)} гача кесилади (кунлик ГТД да импорт йўқ)` : ''}.` : '<span class="t-bad">Камида битта йилни белгиланг.</span>'}</div>
+      <div class="form-row" style="justify-content:flex-end"><button class="btn" id="gtx-cancel">Бекор</button><button class="btn primary" id="gtx-go"${on.length ? '' : ' disabled'}>📗 Excel юклаб олиш</button></div></div>`;
+    $('#gtx-x').onclick = $('#gtx-cancel').onclick = () => { $('#gtx-modal').hidden = true; };
+    $$('#gtx-body .gtx-row').forEach(row => {
+      const y = +row.dataset.y, r = st[y];
+      row.querySelector('[data-k=on]').onchange = e => { r.on = e.target.checked; draw(); };
+      row.querySelector('[data-k=sel]').onchange = e => {
+        if (e.target.value === 'd') {                  // стандарт кунлик сана — охирги маълумот куни (шу кун-ой)
+          r.mode = 'd'; r.d = clampDay(y, last.slice(5)); if (r.d > maxD(y)) r.d = maxD(y);
+          syncDay(y);
+        } else { r.mode = 'm'; r.m = +e.target.value; }
+        draw();
+      };
+      row.querySelector('[data-k=d]').onchange = e => {
+        const v = e.target.value; if (!v || v.slice(0, 4) !== String(y)) return draw();
+        r.mode = 'd'; r.d = v > maxD(y) ? maxD(y) : v; syncDay(y); draw();
+      };
+    });
+    $('#gtx-go').onclick = () => {
+      const ys = M.years.filter(y => st[y].on); if (!ys.length) return;
+      const q = geoQuery(); q.set('country', cs.join(',')); q.delete('from'); q.delete('to');
+      q.set('ends', ys.map(endOf).join(','));
+      $('#gtx-modal').hidden = true;
+      download('/api/export/geo_trade?' + q.toString(), `${nm} — экспорт ва импорт (${words(endOf(ys[ys.length - 1]))}) ${dmy(todayISO())}.xlsx`);
+    };
+  };
+  draw(); $('#gtx-modal').hidden = false;
 }
 function geoXlLabel() {
   const cs = G.ms.c && G.ms.c.value ? G.ms.c.value.split(',').filter(Boolean) : [];
@@ -2082,79 +2173,261 @@ function renderDyn() {
       scales: { y: { beginAtZero: true, grid: { color: C.grid }, ticks: { callback: v => fmt0(v) } }, x: { grid: { display: false } } } } });
 }
 
-/* ---------------------------------------------------------------- Режа (прогноз) — Sozlamalar */
-const PL = { data: null, grid: null, vid: null };
-async function loadPlans(keep) {
-  const d = await api('/api/plans'); PL.data = d;
-  const sel = $('#pl-ver');
-  sel.innerHTML = d.versions.map(v => `<option value="${v.id}">${v.year} · ${dmy(v.effective_from)} дан · ${esc(v.title || '')} · ${fmt(v.total / 1000)} млн$${d.effective && d.effective.id === v.id ? ' · амалда' : ''}</option>`).join('') || '<option value="">версия йўқ — «Яратиш» билан бошланг</option>';
-  if (keep && d.versions.some(v => v.id === PL.vid)) sel.value = PL.vid; else PL.vid = d.versions.length ? (d.effective ? d.effective.id : d.versions[0].id) : null;
-  if (PL.vid) sel.value = PL.vid;
-  if (!$('#pl-ny').value) { $('#pl-ny').value = d.year; $('#pl-nfrom').value = `${d.year}-01-01`; }
-  $('#pl-nsrc').querySelector('[value="workbook"]').disabled = !d.workbook_plan;
-  $('#pl-nsrc').querySelector('[value="copy"]').disabled = !d.versions.length;
-  if (!d.versions.length) $('#pl-nsrc').value = d.workbook_plan ? 'workbook' : 'empty';
+/* ---------------------------------------------------------------- Созламалар: cardlar → Режалар / Амалда (29.09.2026) */
+// Ҳар режа — ўз номи ва йили билан (асосийси ★); ўтган йиллар режаси ҳам. «Амалда» — тугаган йиллар натижалари
+// номли тўпламларда (бир йилга бир нечта вариант, ★ асосийси стандарт). Dashboard/Свод ва Excel модалида танланади.
+const SV = { view: 'home', planId: null, setId: null, inited: false };
+const PSRC = { xlsx: ['Excel', 'info'], svod_xlsx: ['СВОД Excel', 'info'], workbook: ['Шаблон СВОДи', 'info'], copy: ['Нусха', 'gold'], manual: ['Қўлда', 'warn'] };
+const dmyT = s => s ? `${s.slice(8, 10)}.${s.slice(5, 7)}.${s.slice(0, 4)}${s.length > 10 ? ' ' + s.slice(11, 16) : ''}` : '';
+const jpost = (url, body) => api(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+function setShow(v) {
+  SV.view = v;
+  $$('#p-set .setv').forEach(x => x.hidden = x.id !== 'set-v-' + v);
+  window.scrollTo(0, 0);
+}
+function setDirty() {   // сақланмаган таҳрир: режа тўри ёки «амалда» тўри/номи
+  return (SV.view === 'plan' && PL.dirty) || (SV.view === 'fset' && FS.dirty);
+}
+async function setOpen(v, arg) {
+  if (v === 'plan') { SV.planId = arg ?? SV.planId; setShow('plan'); return loadPlanEditor(); }
+  if (v === 'fset') { SV.setId = arg ?? SV.setId; setShow('fset'); return loadFsetEditor(); }
+  setShow(v);
+  if (v === 'home') return loadSetHome();
+  if (v === 'plans') return loadPlanCards();
+  if (v === 'facts') return loadFactCards();
+  if (v === 'prev') return loadPrevYear();
+  if (v === 'disp') return loadDisputes();
+}
+function initSetNav() {
+  if (SV.inited) return; SV.inited = true;
+  $$('#p-set [data-sopen]').forEach(b => b.onclick = () => setOpen(b.dataset.sopen).catch(e => toast(e.message, true)));
+  $$('#p-set [data-sback]').forEach(b => b.onclick = () => {
+    if (setDirty() && !confirm('Сақланмаган ўзгаришлар бор. Сақламасдан чиқилсинми?')) return;
+    PL.dirty = false; FS.dirty = false;
+    setOpen(b.dataset.sback).catch(e => toast(e.message, true));
+  });
+  // менюдаги «Sozlamalar» — ҳар доим бош саҳифа (cardlar)
+  const nav = $('.nav[data-p="set"]'); if (nav) nav.addEventListener('click', () => { if (!setDirty()) SV.view = 'home'; }, true);
+}
+async function loadSetHome() {
+  const [p, f] = await Promise.all([api('/api/plans'), api('/api/fact_sets')]);
+  PL.data = p; FS.data = f;
+  const st = S.status || {};
+  const cy = +(String(st.last_date || '').slice(0, 4)) || p.year;
+  const effP = p.cards.find(c => c.main && c.year === cy);
+  const years = [...new Set(p.cards.map(c => c.year))];
+  $('#sc-plans').innerHTML = p.cards.length
+    ? `<div class="sc-stat"><b>${p.cards.length}</b><i>та режа · ${years.length} йил</i></div>` +
+      (effP ? `<div class="sc-stat"><b>${fmt0(effP.all)}</b><i>${cy}: ★ «${esc(effP.title)}»</i></div>` : `<div class="sc-stat"><b>—</b><i>${cy}: шаблон (СВОД) прогнози</i></div>`)
+    : `<div class="sc-stat"><b>0</b><i>режа йўқ — шаблон (СВОД) прогнози ишлаяпти</i></div>`;
+  const py = cy - 1, pys = f.sets.filter(s => s.year === py), mainS = pys.find(s => s.main);
+  $('#sc-facts').innerHTML = f.sets.length
+    ? `<div class="sc-stat"><b>${f.sets.length}</b><i>та тўплам · ${f.sets.reduce((a, s) => a + s.periods.length, 0)} давр</i></div>` +
+      (pys.length ? `<div class="sc-stat"><b>${pys.length}</b><i>${py}: ${esc(pys.map(s => (s.main ? '★ ' : '') + s.title).join(', '))}</i></div>` : '')
+    : `<div class="sc-stat"><b>0</b><i>тўплам йўқ</i></div>`;
+  $('#sc-prev').textContent = S._setCfg && S._setCfg.prev_year_base_label ? S._setCfg.prev_year_base_label : 'киритилмаган';
+  $('#sc-init').textContent = st.opening_date ? `қолдиқ ${dmy(st.opening_date)} гача · ${fmt0(st.companies)} INN` : 'юкланмаган';
+  $('#sc-paths').textContent = st.data_dir || '';
+  $('#sc-disp').textContent = '…';
+  api('/api/disputes').then(d => { $('#sc-disp').textContent = d.rows.length ? `${d.rows.length} та корхона` : 'баҳсли корхона йўқ'; }).catch(() => { $('#sc-disp').textContent = ''; });
+}
+
+/* ---- Режалар: карталар */
+const PL = { data: null, grid: null, vid: null, dirty: false, year: 'all' };
+async function loadPlanCards() {
+  PL.data = await api('/api/plans');
+  renderPlanCards();
+}
+const BLK = b => b > 1 ? `январь–${MGEN[b - 1]}` : MGEN[0];   // ўтган давр блоки (битта жами)
+function planCard(c) {
+  const mx = Math.max(...c.months.map(v => Math.abs(v)), 1);
+  const ld = (S.status && S.status.last_date) || '';
+  const curM = +ld.slice(0, 4) === c.year ? +ld.slice(5, 7) - 1 : -1;
+  const src = PSRC[c.source] || PSRC.manual;
+  const foot = c.filled < c.cells ? `${c.filled}/${c.cells} қатор тўлдирилган` : ('янгиланган ' + dmyT(c.updated_at || c.created_at));
+  return `<button class="plc${c.main ? ' eff' : ''}" data-plan="${c.id}">
+    <div class="top"><span class="yr">${c.year}</span>${c.main ? '<span class="pill ok" title="жадвал тортишда танланмаса — шу режа олинади">★ асосий</span>' : ''}<span class="pill ${src[1]}">${src[0]}</span>${c.region_adj ? '<span class="pill gr" title="расмий вилоят рақами туманлар йиғиндисидан фарқ қилади">расмий тузатма</span>' : ''}${c.block_to ? `<span class="pill gr" title="ўтган давр битта жами — ойларга бўлинмаган; бу давр ичидаги саналарга мос эмас">${BLK(c.block_to)} жами</span>` : ''}</div>
+    <h3>${esc(c.title || 'Номсиз режа')}</h3>
+    <div class="big">${fmt(c.all)}<small>минг $ · йиллик</small></div>
+    <div class="split">саноат ${fmt(c.sanoat)} · <span class="mv">мева-сабзавот ${fmt(c.meva)}</span></div>
+    <div class="bars">${c.months.map((v, i) => `<i class="${i === curM ? 'cur' : (i < c.block_to ? 'blk' : '')}" style="height:${Math.max(3, Math.round(Math.abs(v) / mx * 100))}%" title="${MSHORT[i]}: ${fmt(v)} минг $"></i>`).join('')}</div>
+    <div class="ml">${MSHORT.map(m => `<span>${m[0]}</span>`).join('')}</div>
+    ${c.note ? `<div class="nt" title="${esc(c.note)}">${esc(c.note)}</div>` : ''}
+    <div class="ft"><span>${esc(foot)}</span><span class="go">Очиш →</span></div>
+  </button>`;
+}
+function renderPlanCards() {
+  const cards = PL.data.cards, years = [...new Set(cards.map(c => c.year))].sort((a, b) => b - a);
+  if (PL.year !== 'all' && !years.includes(+PL.year)) PL.year = 'all';
+  $('#pl-years').innerHTML = cards.length ? `<button data-y="all" class="${PL.year === 'all' ? 'on' : ''}">Ҳаммаси<b>${cards.length}</b></button>` +
+    years.map(y => `<button data-y="${y}" class="${String(PL.year) === String(y) ? 'on' : ''}">${y} йил<b>${cards.filter(c => c.year === y).length}</b></button>`).join('') : '';
+  $$('#pl-years button').forEach(b => b.onclick = () => { PL.year = b.dataset.y === 'all' ? 'all' : +b.dataset.y; renderPlanCards(); });
+  const addCard = y => `<button class="plc add" data-add="${y || ''}"><span class="pl">＋</span><b>${y ? y + ' йил учун янги режа' : 'Янги режа'}</b><span class="hint">Excel (шаблон ёки вазирлик шакли) ёки бўш</span></button>`;
+  let html = '';
+  if (!cards.length) {
+    html = `<div class="plgrid">${addCard(PL.data.year)}<div class="plc add" style="cursor:default;text-align:center;padding:24px"><b>Ҳали режа йўқ</b><span class="hint">Ҳозир ҳисоботлар ўз жадвалингиз (шаблон СВОДи) прогнозидан олинади. Режа қўшсангиз — ҳар бирига ном берилади (масалан «Вазирлик режаси», «Қайта тақсимланган 28.09») ва жадвал тортишда кераклиси танланади.</span></div></div>`;
+  } else {
+    for (const y of years) {
+      if (PL.year !== 'all' && +PL.year !== y) continue;
+      const cs = cards.filter(c => c.year === y).sort((a, b) => (b.main - a.main) || b.id - a.id);
+      html += `<div class="ygrp"><h3>${y} йил · ${cs.length} та режа</h3><div class="plgrid">${cs.map(planCard).join('')}${addCard(y)}</div></div>`;
+    }
+  }
+  $('#pl-cards').innerHTML = html;
+  $$('#pl-cards [data-plan]').forEach(b => b.onclick = () => setOpen('plan', +b.dataset.plan).catch(e => toast(e.message, true)));
+  $$('#pl-cards [data-add]').forEach(b => b.onclick = () => openPlanModal({ year: +b.dataset.add || undefined }));
+}
+
+/* ---- Режа: таҳрир (туманлар × ойлар) */
+async function loadPlanEditor() {
+  PL.vid = SV.planId; PL.dirty = false;
+  if (!PL.data) PL.data = await api('/api/plans');
   await loadPlanGrid();
+}
+function planKpis(tot, adj, g) {
+  const sum = a => a.reduce((x, y) => x + y, 0);
+  const s = sum(tot.sanoat) + (adj.sanoat || 0), m = sum(tot.meva) + (adj.meva || 0);
+  const ld = (S.status && S.status.last_date) || '', y = g.version.year;
+  const cm = +ld.slice(0, 4) === y ? +ld.slice(5, 7) : 0;
+  const am = g.region_adj_months || { sanoat: [], meva: [] }, mon = i => tot.sanoat[i] + tot.meva[i] + (am.sanoat[i] || 0) + (am.meva[i] || 0);
+  let per = null; if (cm) { per = 0; for (let i = 0; i < cm; i++) per += mon(i); }
+  $('#pe-kpis').innerHTML = `<div class="kpi accent"><div class="l">Йиллик режа</div><div class="v">${fmt(s + m)}<small>минг $</small></div><div class="d">вилоят жами${(adj.sanoat || adj.meva) ? ' · расмий тузатма билан' : ''}</div></div>
+    <div class="kpi"><div class="l">Саноат</div><div class="v">${fmt(s)}</div><div class="d">${s + m ? fmt(s / (s + m) * 100) + '%' : '—'}</div></div>
+    <div class="kpi gold"><div class="l">Мева-сабзавот</div><div class="v">${fmt(m)}</div><div class="d">${s + m ? fmt(m / (s + m) * 100) + '%' : '—'}</div></div>
+    ${cm ? `<div class="kpi"><div class="l">Январь–${MSHORT[cm - 1].toLowerCase()}</div><div class="v">${fmt(per)}</div><div class="d">${MSHORT[cm - 1].toLowerCase()} ойи ${fmt(mon(cm - 1))}</div></div>` : ''}`;
 }
 async function loadPlanGrid() {
   const th = $('#t-plan thead'), tb = $('#t-plan tbody');
-  if (!PL.vid) { th.innerHTML = ''; tb.innerHTML = '<tr><td class="muted">Режа версияси йўқ. Йил, сана ва манбани танлаб «Яратиш» ни босинг — жадвал (СВОД) прогнозидан ёки бўш.</td></tr>'; $('#pl-from').value = ''; $('#pl-title').value = ''; return; }
   const g = await api('/api/plans/grid?id=' + PL.vid); PL.grid = g;
-  $('#pl-from').value = g.version.effective_from; $('#pl-title').value = g.version.title || '';
-  th.innerHTML = `<tr><th>Туман</th><th>Тур</th>${MSHORT.map(m => `<th class="num">${m}</th>`).join('')}<th class="num">Йил жами</th></tr>`;
+  const v = g.version, card = (PL.data.cards || []).find(c => c.id === v.id) || {};
+  $('#set-v-plan-h').textContent = v.title || 'Номсиз режа';
+  const src = PSRC[v.source] || PSRC.manual;
+  $('#set-v-plan-sub').innerHTML = `${v.year} йил · <span class="pill ${src[1]}">${src[0]}</span>${v.main ? ' <span class="pill ok">★ асосий</span>' : ''}`;
+  $('#pe-main').hidden = !!v.main;
+  $('#pe-title').value = v.title || ''; $('#pe-note').value = v.note || '';
+  const adj = g.region_adj || {}; $('#pl-adj').textContent = (Math.abs(adj.sanoat || 0) > 0.0005 || Math.abs(adj.meva || 0) > 0.0005)
+    ? `Бу режада расмий вилоят рақами туманлар йиғиндисидан фарқ қилади (саноат ${fmt(adj.sanoat || 0)}, мева ${fmt(adj.meva || 0)} минг $) — ҳисоботда вилоят қатори расмий рақам билан чиқади.` : '';
+  const bt = +v.block_to || 0; PL.bt = bt;
+  // ўтган давр блоки: битта катак (январь–N жами), қолган ойлар алоҳида
+  const cols = (bt ? [{ i: bt - 1, h: BLK(bt) + ' (жами)', blk: true }] : []).concat(MSHORT.map((m, i) => ({ i, h: m })).slice(bt));
+  const cv = (arr, c) => c.blk ? arr.slice(0, bt).reduce((a, b) => a + b, 0) : arr[c.i];
+  th.innerHTML = `<tr><th>Туман</th><th>Тур</th>${cols.map(c => `<th class="num${c.blk ? ' blk' : ''}"${c.blk ? ' title="ўтган давр — битта жами, ойларга бўлинмаган"' : ''}>${c.h}</th>`).join('')}<th class="num">Йил жами</th></tr>`;
   let html = '', last = null;
   for (const r of g.rows) {
-    html += `<tr class="${r.kind}" data-d="${r.district_code}" data-k="${r.kind}"><td>${r.district !== last ? esc(r.district) : ''}</td><td class="kd">${r.kind === 'sanoat' ? 'саноат' : 'мева-сабзавот'}</td>${r.months.map((v, i) => `<td class="num"><input data-m="${i}" value="${v ? fmt(v) : ''}"></td>`).join('')}<td class="num"><input class="y" value="${fmt(r.year)}"></td></tr>`;
+    html += `<tr class="${r.kind}" data-d="${r.district_code}" data-k="${r.kind}"><td>${r.district !== last ? esc(r.district) : ''}</td><td class="kd">${r.kind === 'sanoat' ? 'саноат' : 'мева-сабзавот'}</td>${cols.map(c => { const x = cv(r.months, c); return `<td class="num${c.blk ? ' blk' : ''}"><input data-m="${c.i}" value="${x ? fmt(x) : ''}"></td>`; }).join('')}<td class="num"><input class="y" value="${fmt(r.year)}"></td></tr>`;
     last = r.district;
   }
-  html += `<tr class="sum"><td>Вилоят жами</td><td class="kd">саноат</td>${g.totals.sanoat.map(v => `<td class="num" data-t="s">${fmt(v)}</td>`).join('')}<td class="num" data-t="sy">${fmt(g.totals.sanoat.reduce((a, b) => a + b, 0))}</td></tr>`;
-  html += `<tr class="sum"><td></td><td class="kd">мева-сабзавот</td>${g.totals.meva.map(v => `<td class="num" data-t="m">${fmt(v)}</td>`).join('')}<td class="num" data-t="my">${fmt(g.totals.meva.reduce((a, b) => a + b, 0))}</td></tr>`;
+  html += `<tr class="sum"><td>Вилоят жами</td><td class="kd">саноат</td>${cols.map(c => `<td class="num" data-t="s" data-i="${c.i}">${fmt(cv(g.totals.sanoat, c))}</td>`).join('')}<td class="num" data-t="sy">${fmt(g.totals.sanoat.reduce((a, b) => a + b, 0))}</td></tr>`;
+  html += `<tr class="sum"><td></td><td class="kd">мева-сабзавот</td>${cols.map(c => `<td class="num" data-t="m" data-i="${c.i}">${fmt(cv(g.totals.meva, c))}</td>`).join('')}<td class="num" data-t="my">${fmt(g.totals.meva.reduce((a, b) => a + b, 0))}</td></tr>`;
   tb.innerHTML = html;
-  const num = s => { const v = parseFloat(String(s).replace(/\s/g, '').replace(',', '.')); return isNaN(v) ? 0 : v; };
-  const recalc = () => {
-    const tot = { sanoat: new Array(12).fill(0), meva: new Array(12).fill(0) };
-    $$('#t-plan tbody tr[data-d]').forEach(tr => {
-      const ins = [...tr.querySelectorAll('input[data-m]')]; let s = 0;
-      ins.forEach((inp, i) => { const v = num(inp.value); s += v; tot[tr.dataset.k][i] += v; });
-      tr.querySelector('input.y').value = fmt(s);
-    });
-    const cells = k => $$(`#t-plan tbody td[data-t="${k}"]`);
-    cells('s').forEach((td, i) => td.textContent = fmt(tot.sanoat[i])); cells('m').forEach((td, i) => td.textContent = fmt(tot.meva[i]));
-    $('#t-plan td[data-t="sy"]').textContent = fmt(tot.sanoat.reduce((a, b) => a + b, 0)); $('#t-plan td[data-t="my"]').textContent = fmt(tot.meva.reduce((a, b) => a + b, 0));
-  };
-  tb.addEventListener('change', e => {
-    const inp = e.target; if (inp.tagName !== 'INPUT') return;
-    if (inp.classList.contains('y')) {   // yillik → 12 oyga teng
-      const v = num(inp.value); inp.closest('tr').querySelectorAll('input[data-m]').forEach(i => i.value = fmt(v / 12));
-    }
-    recalc();
+  planKpis(g.totals, adj, g);
+}
+const plNum = s => { const v = parseFloat(String(s).replace(/[\s ]/g, '').replace(',', '.')); return isNaN(v) ? 0 : v; };
+function planRecalc() {
+  const tot = { sanoat: new Array(12).fill(0), meva: new Array(12).fill(0) };
+  $$('#t-plan tbody tr[data-d]').forEach(tr => {
+    const ins = [...tr.querySelectorAll('input[data-m]')]; let s = 0;
+    ins.forEach(inp => { const v = plNum(inp.value); s += v; tot[tr.dataset.k][+inp.dataset.m] += v; });
+    tr.querySelector('input.y').value = fmt(s);
   });
+  const cells = k => $$(`#t-plan tbody td[data-t="${k}"]`);
+  cells('s').forEach(td => td.textContent = fmt(tot.sanoat[+td.dataset.i])); cells('m').forEach(td => td.textContent = fmt(tot.meva[+td.dataset.i]));
+  $('#t-plan td[data-t="sy"]').textContent = fmt(tot.sanoat.reduce((a, b) => a + b, 0)); $('#t-plan td[data-t="my"]').textContent = fmt(tot.meva.reduce((a, b) => a + b, 0));
+  if (PL.grid) planKpis(tot, PL.grid.region_adj || {}, PL.grid);
 }
 function planRows() {
-  return $$('#t-plan tbody tr[data-d]').map(tr => ({ district_code: tr.dataset.d, kind: tr.dataset.k, months: [...tr.querySelectorAll('input[data-m]')].map(i => i.value.replace(/\s/g, '').replace(',', '.')) }));
+  return $$('#t-plan tbody tr[data-d]').map(tr => { const m = new Array(12).fill('0'); tr.querySelectorAll('input[data-m]').forEach(i => m[+i.dataset.m] = i.value.replace(/[\s\u00a0]/g, '').replace(',', '.')); return { district_code: tr.dataset.d, kind: tr.dataset.k, months: m }; });
 }
 function initPlans() {
   if (PL.inited) return; PL.inited = true;
-  $('#pl-ver').onchange = () => { PL.vid = +$('#pl-ver').value || null; loadPlanGrid().catch(e => toast(e.message, true)); };
-  $('#pl-save').onclick = async () => {
-    if (!PL.vid) return toast('Аввал версия яратинг', true);
-    try { await api('/api/plans/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: PL.vid, rows: planRows(), meta: { effective_from: $('#pl-from').value, title: $('#pl-title').value } }) }); toast('Режа сақланди'); S.dash = null; await loadPlans(true); } catch (e) { toast(e.message, true); }
+  $('#t-plan tbody').addEventListener('change', e => {
+    const inp = e.target; if (inp.tagName !== 'INPUT') return;
+    if (inp.classList.contains('y')) {   // йиллик → 12 ойга тенг
+      const v = plNum(inp.value), bt = PL.bt || 0; inp.closest('tr').querySelectorAll('input[data-m]').forEach(i => i.value = fmt(+i.dataset.m === bt - 1 && bt ? v * bt / 12 : v / 12));
+    }
+    PL.dirty = true; planRecalc();
+  });
+  ['#pe-title', '#pe-note'].forEach(s => $(s).addEventListener('input', () => { PL.dirty = true; }));
+  $('#pl-add').onclick = () => openPlanModal({});
+  $('#pe-save').onclick = async () => {
+    const title = $('#pe-title').value.trim();
+    if (!title) return toast('Режа номини киритинг', true);
+    try { await jpost('/api/plans/save', { id: PL.vid, rows: planRows(), meta: { title, note: $('#pe-note').value.trim() } });
+      PL.dirty = false; S.dash = null; S.selOpts = null; toast('Режа сақланди'); PL.data = await api('/api/plans'); await loadPlanGrid(); } catch (e) { toast(e.message, true); }
   };
-  $('#pl-del').onclick = async () => {
-    if (!PL.vid || !confirm('Бу режа версияси ўчирилсинми?')) return;
-    try { await api('/api/plans/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: PL.vid }) }); PL.vid = null; S.dash = null; await loadPlans(); } catch (e) { toast(e.message, true); }
+  $('#pe-del').onclick = async () => {
+    if (!confirm(`«${PL.grid.version.title}» режаси ўчирилсинми? (олдин захира олинади)`)) return;
+    try { await jpost('/api/plans/delete', { id: PL.vid }); PL.dirty = false; S.dash = null; S.selOpts = null; if (S.sel && String(S.sel.plan) === String(PL.vid)) S.sel.plan = '';
+      toast('Режа ўчирилди'); await setOpen('plans'); } catch (e) { toast(e.message, true); }
   };
-  $('#pl-new').onclick = async () => {
-    const src = $('#pl-nsrc').value;
-    try { const r = await api('/api/plans/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ year: +$('#pl-ny').value, effective_from: $('#pl-nfrom').value, copy_from: src === 'copy' ? PL.vid : null, from_workbook: src === 'workbook' }) });
-      PL.vid = r.id; S.dash = null; await loadPlans(true); toast('Янги версия яратилди — ойларни тўлдириб «Сақлаш» ни босинг'); } catch (e) { toast(e.message, true); }
+  $('#pe-copy').onclick = () => { const v = PL.grid.version; openPlanModal({ copy: v.id, year: v.year, title: v.title + ' (нусха)' }); };
+  $('#pe-main').onclick = async () => {
+    try { await jpost('/api/plans/main', { id: PL.vid }); S.dash = null; S.selOpts = null; toast('Асосий режа қилинди — жадвалларда танланмаса шу олинади');
+      PL.data = await api('/api/plans'); await loadPlanGrid(); } catch (e) { toast(e.message, true); }
   };
-  $('#pl-tpl').onclick = () => download('/api/plans/template?' + new URLSearchParams({ id: PL.vid || '', year: $('#pl-ny').value || '' }), `Режа шаблони.xlsx`);
-  $('#pl-imp').onchange = async e => {
-    const f = e.target.files[0]; if (!f) return; if (!PL.vid) return toast('Аввал версия яратинг', true);
-    try { const r = await api('/api/plans/import', { method: 'POST', body: f, headers: { 'X-Id': String(PL.vid) } }); toast(`Юкланди: ${r.rows} қатор`); S.dash = null; await loadPlans(true); } catch (err) { toast(err.message, true); }
-    e.target.value = '';
+  $('#pe-tpl').onclick = () => download('/api/plans/template?' + new URLSearchParams({ id: PL.vid, year: PL.grid.version.year }), `Режа шаблони — ${PL.grid.version.title || PL.grid.version.year}.xlsx`);
+  $('#pe-imp').onchange = async e => {
+    const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+    if (PL.dirty && !confirm('Экрандаги сақланмаган ўзгаришлар файл билан алмашади. Давом этилсинми?')) return;
+    try { const r = await api('/api/plans/import', { method: 'POST', body: f, headers: { 'X-Id': String(PL.vid), 'X-Filename': encodeURIComponent(f.name) } }); toast(`Юкланди: ${r.rows} қатор · йиллик ${fmt(r.total.all)} минг $` + (r.missing.length ? ` · ${r.missing.length} та қатор файлда йўқ (0)` : ''));
+      PL.dirty = false; S.dash = null; S.selOpts = null; PL.data = await api('/api/plans'); await loadPlanGrid(); } catch (err) { toast(err.message, true); }
   };
+}
+
+/* ---- «Янги режа» модали — битта универсал йўл (29.09.2026): ном · йил · сана · изоҳ · Excel (ихтиёрий).
+   Excel — ўз шаблонимиз ҳам, вазирлик шакли («январь–август» + ойлар) ҳам, кунлик ҳисобот СВОДи ҳам; устунлар ўзи танилади.
+   Файл танланмаса — бўш режа (муҳаррирда тўлдирилади). Нусха — муҳаррирдаги «Нусха» тугмасидан. */
+function openPlanModal(pre) {
+  const d = PL.data || { cards: [], year: new Date().getFullYear() };
+  const src = pre.copy ? (d.cards || []).find(c => c.id === +pre.copy) : null;
+  const st = { year: pre.year || d.year, title: pre.title || '', note: pre.note || '', file: null };
+  $('#sx-body').innerHTML = `<button class="x" id="sx-x">×</button><div class="sx">
+    <h2 id="sx-title">${src ? 'Режадан нусха' : 'Янги режа'}</h2>
+    <p class="lead">Ҳар режага ном беринг — жадвал тортишда (Dashboard, Свод, кунлик ҳисобот Excel) шу ном билан танланади.</p>
+    <div class="ff">
+      <label class="w">Номи<input type="text" id="sx-t" value="${esc(st.title)}" placeholder="масалан: Вазирлик режаси · Ҳокимият режаси" maxlength="120"></label>
+      <label>Йил<input type="number" id="sx-y" value="${st.year}" min="2000" max="2100"></label>
+      <label>Изоҳ (ихтиёрий)<input type="text" id="sx-n" value="${esc(st.note)}" placeholder="масалан: вазирлик хати №…, 28.09.2026"></label>
+    </div>
+    ${src ? `<h4>Манба</h4><div class="svn-opt on" style="cursor:default"><div style="flex:1"><div class="t">«${esc(src.title)}» дан нусха</div><div class="n">${src.year} йил · ${fmt(src.all)} минг $ — рақамлар нусхаланади, кейин таҳрирлайсиз</div></div></div>`
+    : `<h4>Excel файл <span style="font-weight:400;text-transform:none;letter-spacing:0">(ихтиёрий)</span></h4>
+    <label class="pl-drop" id="sx-drop"><input type="file" id="sx-file" accept=".xlsx,.xls" hidden>
+      <b id="sx-fname">Файлни танланг ёки шу ерга ташланг</b>
+      <span class="n">Ҳар қандай шакл: <b>режа шаблони</b>, <b>вазирлик шакли</b> («январь–август» + ойлар) ёки кунлик ҳисобот <b>СВОДи</b> — устунлар ўзи танилади.
+      Бўш ойлар йиллик режа қолдиғидан тенг бўлинади. Файлсиз — бўш режа яратилади.</span></label>
+    <div class="n" style="margin-top:6px"><a href="#" id="sx-tpl">⬇ Бўш шаблонни юклаб олиш</a></div>`}
+    <div class="acts"><button class="btn" id="sx-cancel">Бекор</button><button class="btn primary" id="sx-go">Яратиш</button></div></div>`;
+  $('#sx-x').onclick = $('#sx-cancel').onclick = closeModals;
+  const setFile = f => { st.file = f || null; const n = $('#sx-fname'); if (n) n.textContent = f ? '📄 ' + f.name : 'Файлни танланг ёки шу ерга ташланг'; $('#sx-drop') && $('#sx-drop').classList.toggle('on', !!f); };
+  const fi = $('#sx-file'); if (fi) fi.onchange = () => setFile(fi.files[0]);
+  const dr = $('#sx-drop');
+  if (dr) {
+    dr.ondragover = e => { e.preventDefault(); dr.classList.add('hov'); };
+    dr.ondragleave = () => dr.classList.remove('hov');
+    dr.ondrop = e => { e.preventDefault(); dr.classList.remove('hov'); const f = e.dataTransfer.files[0]; if (f) setFile(f); };
+  }
+  const tl = $('#sx-tpl'); if (tl) tl.onclick = e => { e.preventDefault(); const y = +$('#sx-y').value || st.year; download('/api/plans/template?' + new URLSearchParams({ year: y }), `Режа шаблони ${y}.xlsx`); };
+  $('#sx-go').onclick = async () => {
+    const title = $('#sx-t').value.trim(), y = +$('#sx-y').value, note = $('#sx-n').value.trim();
+    if (!title) { toast('Режа номини киритинг', true); $('#sx-t').focus(); return; }
+    if (!y) return toast('Йилни киритинг', true);
+    const btn = $('#sx-go'); btn.disabled = true;
+    try {
+      let id;
+      if (st.file) {
+        const r = await api('/api/plans/import_svod', { method: 'POST', body: st.file, headers: { 'X-Year': String(y),
+          'X-Title': encodeURIComponent(title), 'X-Note': encodeURIComponent(note), 'X-Filename': encodeURIComponent(st.file.name) } });
+        id = r.id;
+        toast(`Режа қўшилди: ${r.rows} қатор · йиллик ${fmt(r.total.all)} минг $` + (r.block ? ` · ${r.block} — битта жами` : '') + (r.missing.length ? ` · ${r.missing.length} та қатор файлда йўқ (0)` : '')
+          + (r.year_hint && r.year_hint !== y ? ` · диққат: файлда ${r.year_hint} йил` : '') + (r.warn.length ? ` · ${r.warn.length} та қаторда йиллик ≠ ойлар` : ''));
+      } else {
+        const r = await jpost('/api/plans/create', { year: y, title, note, copy_from: src ? src.id : null });
+        id = r.id; toast(src ? 'Нусха яратилди' : 'Бўш режа яратилди — ойларни тўлдириб «Сақлаш» ни босинг ёки «Excel юклаш»');
+      }
+      closeModals(); S.dash = null; S.selOpts = null; PL.data = await api('/api/plans'); PL.dirty = false; await setOpen('plan', id);
+    } catch (e) { btn.disabled = false; toast(e.message, true); }
+  };
+  $('#sx-modal').hidden = false; setTimeout(() => { const t = $('#sx-t'); if (t) t.focus(); }, 30);
 }
 /* ---------------------------------------------------------------- Ўтган йил базаси — Sozlamalar (prognoz.prev_year_base, қўлда) */
 const PY = { data: null, inited: false };
@@ -2193,40 +2466,79 @@ function initPrevYear() {
     } catch (e) { toast(e.message, true); }
   };
 }
-/* ---------------------------------------------------------------- Тугаган йиллар натижалари (N ойлик) — Sozlamalar (/api/periods) */
-const PRD = { data: null, grid: null, inited: false };
+/* ---- Амалда: тугаган йиллар натижалари — номли тўпламлар (/api/fact_sets, /api/periods?set=) */
+const FS = { data: null, grid: null, sid: null, m: null, dirty: false, inited: false };
 const MGEN = ['январь', 'февраль', 'март', 'апрель', 'май', 'июнь', 'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь'];
 const prLabel = (y, m) => m >= 12 ? `${y} йил якуни (12 ойлик)` : `${y} йил ${m} ойлик (январь–${MGEN[m - 1]})`;
-const prY = () => +$('#pr-ny').value || 0;
-const prM = () => +$('#pr-nm').value || 0;
+async function loadFactCards() {
+  FS.data = await api('/api/fact_sets');
+  renderFactCards();
+}
+function fsCard(s) {
+  const have = {}; s.periods.forEach(p => { have[p.months] = p; });
+  const last = s.periods.filter(p => p.filled).sort((a, b) => b.months - a.months)[0];
+  const upd = s.periods.map(p => p.updated_at).filter(Boolean).sort().pop() || s.updated_at || s.created_at;
+  return `<button class="plc fs${s.main ? ' main' : ''}" data-fset="${s.id}">
+    <div class="top"><span class="yr">${s.year}</span>${s.main ? '<span class="pill gold">★ асосий</span>' : ''}<span class="pill gr">${s.periods.length} давр</span></div>
+    <h3>${esc(s.title)}</h3>
+    <div class="from">${s.main ? 'ҳамма жойда стандарт шу тўплам' : 'Dashboard, Свод ва Excel модалида танланади'}</div>
+    ${last ? `<div class="big">${fmt(last.all)}<small>минг $ · ${last.months} ойлик</small></div><div class="split">саноат ${fmt(last.sanoat)} · <span class="mv">мева-сабзавот ${fmt(last.meva)}</span></div>`
+           : '<div class="big" style="color:var(--ink3)">—<small>рақам киритилмаган</small></div><div class="split">&nbsp;</div>'}
+    <div class="mstrip">${MSHORT.map((m, i) => { const p = have[i + 1]; return `<span class="${p ? (p.filled >= p.cells ? 'full' : 'on') : ''}" title="${p ? esc(p.label) + ': ' + fmt(p.all) + ' минг $' + (p.filled < p.cells ? ` (${p.filled}/${p.cells})` : '') : (i + 1) + ' ойлик — киритилмаган'}">${i + 1}</span>`; }).join('')}</div>
+    ${s.note ? `<div class="nt" title="${esc(s.note)}">${esc(s.note)}</div>` : ''}
+    <div class="ft"><span>${upd ? 'янгиланган ' + esc(dmyT(upd)) : ''}</span><span class="go">Очиш →</span></div>
+  </button>`;
+}
+function renderFactCards() {
+  const d = FS.data, sets = d.sets, years = [...new Set(sets.map(s => s.year))].sort((a, b) => b - a);
+  $('#fs-src').textContent = d.prev_source && d.prev_source.text ? `Ҳозир (${dmy(d.last_date)}): ${d.prev_source.text}.` : `Ҳозир (${dmy(d.last_date)}): ${d.max_year} йил натижаси киритилмаган — «Ўтган йил базаси» (кунга мутаносиб) ишлаяпти.`;
+  const addCard = y => `<button class="plc add" data-add="${y || ''}"><span class="pl">＋</span><b>${y ? y + ' йил учун янги тўплам' : 'Янги тўплам'}</b><span class="hint">масалан: Вазирлик, Ҳокимият, Статистика</span></button>`;
+  let html = '';
+  if (!years.includes(d.max_year)) html += `<div class="ygrp"><h3>${d.max_year} йил · тўплам йўқ</h3><div class="plgrid">${addCard(d.max_year)}</div></div>`;
+  for (const y of years) {
+    const ss = sets.filter(s => s.year === y);
+    html += `<div class="ygrp"><h3>${y} йил · ${ss.length} та тўплам</h3><div class="plgrid">${ss.map(fsCard).join('')}${addCard(y)}</div></div>`;
+  }
+  $('#fs-cards').innerHTML = html;
+  $$('#fs-cards [data-fset]').forEach(b => b.onclick = () => { FS.m = null; setOpen('fset', +b.dataset.fset).catch(e => toast(e.message, true)); });
+  $$('#fs-cards [data-add]').forEach(b => b.onclick = () => openFsetModal({ year: +b.dataset.add || undefined }));
+}
 
-async function loadPeriods(keep) {
-  const d = await api('/api/periods'); PRD.data = d;
-  const my = d.max_year || (d.year - 1), ysel = $('#pr-ny'), keepY = keep ? +ysel.value : 0;
-  const years = []; for (let y = my; y >= my - 9; y--) years.push(y);
-  ysel.innerHTML = years.map(y => `<option value="${y}">${y} йил</option>`).join('');
-  ysel.value = String(years.includes(keepY) ? keepY : my);
-  prFillMonths(keep);
-  $('#pr-src').textContent = d.prev_source && d.prev_source.text
-    ? `Ҳозир (${dmy(d.last_date)}): ${d.prev_source.text}.`
-    : `Ҳозир (${dmy(d.last_date)}): тугаган йил натижаси киритилмаган — «Ўтган йил базаси» (кунга мутаносиб) ишлаяпти.`;
+/* ---- Тўплам: таҳрир */
+async function loadFsetEditor() {
+  FS.sid = SV.setId; FS.dirty = false;
+  FS.data = await api('/api/fact_sets');
+  const s = FS.data.sets.find(x => x.id === FS.sid);
+  if (!s) { toast('Тўплам топилмади (ўчирилган бўлиши мумкин)', true); return setOpen('facts'); }
+  FS.set = s;
+  $('#set-v-fset-h').textContent = s.title;
+  $('#set-v-fset-sub').innerHTML = `${s.year} йил · ${s.main ? '<span class="pill gold">★ асосий</span> ҳамма жойда стандарт' : 'қўшимча тўплам — Dashboard/Свод ва Excel\'да танланади'}`;
+  $('#fe-main').hidden = !!s.main;
+  $('#fe-title').value = s.title; $('#fe-note').value = s.note || '';
+  if (!FS.m) {
+    const last = s.periods.slice().sort((a, b) => b.months - a.months)[0];
+    const lastM = parseInt(String(FS.data.last_date || '').slice(5, 7)) || 12;
+    FS.m = last ? last.months : Math.max(1, lastM - 1);
+  }
+  renderMonthPick();
   await loadPeriodGrid();
 }
-function prFillMonths(keep) {
-  const y = prY(), sel = $('#pr-nm'), keepM = keep ? +sel.value : 0;
-  const have = {}; (PRD.data ? PRD.data.periods : []).filter(p => p.year === y).forEach(p => { have[p.months] = p; });
-  sel.innerHTML = Array.from({ length: 12 }, (_, i) => {
-    const m = i + 1, p = have[m];
-    return `<option value="${m}">${m} ойлик (январь–${MGEN[i]})${p ? ` · ✓ ${fmt(p.totals.fact / 1000)} млн$` : ''}</option>`;
-  }).join('');
-  const lastM = parseInt((PRD.data && PRD.data.last_date || '').slice(5, 7)) || 1;
-  sel.value = String(keepM >= 1 && keepM <= 12 ? keepM : Math.max(1, lastM - 1));
+function renderMonthPick() {
+  const s = FS.set, have = {}; s.periods.forEach(p => { have[p.months] = p; });
+  $('#fe-months').innerHTML = MSHORT.map((m, i) => { const p = have[i + 1];
+    return `<button data-m="${i + 1}" class="${p ? 'has' : ''}${FS.m === i + 1 ? ' on' : ''}" title="${esc(prLabel(s.year, i + 1))}"><b>${i + 1}</b><span>${i ? 'янв–' + m.toLowerCase() : 'январь'}</span><i>${p ? '✓ ' + fmt0(p.all) : '&nbsp;'}</i></button>`; }).join('');
+  $$('#fe-months button').forEach(b => b.onclick = async () => {
+    if (FS.gdirty && !confirm('Бу даврдаги сақланмаган рақамлар йўқолади. Давом этилсинми?')) return;
+    FS.m = +b.dataset.m; renderMonthPick(); await loadPeriodGrid().catch(e => toast(e.message, true));
+  });
 }
 async function loadPeriodGrid() {
-  const y = prY(), m = prM(), th = $('#t-per thead'), tb = $('#t-per tbody');
-  if (!y || !m) { th.innerHTML = ''; tb.innerHTML = ''; return; }
-  const g = await api(`/api/periods/grid?year=${y}&months=${m}`); PRD.grid = g;
-  th.innerHTML = `<tr><th>Туман</th><th>Тур</th><th class="num">${prLabel(y, m)} — амалда, минг $</th><th class="num">Улуши %</th></tr>`;
+  const s = FS.set, m = FS.m, th = $('#t-per thead'), tb = $('#t-per tbody');
+  const g = await api(`/api/periods/grid?set=${s.id}&months=${m}`); FS.grid = g; FS.gdirty = false;
+  const srcTxt = v => !v ? 'киритилган' : v.startsWith('excel:') ? `Excel («${v.slice(6)}» варағи)` : v.startsWith('copy:') ? 'нусха' : v === 'manual' ? 'қўлда' : v === 'migrate' ? 'кўчирилган' : v;
+  $('#fe-gh').innerHTML = `${esc(prLabel(s.year, m))} <span class="hint">«${esc(s.title)}» · ${g.period.id ? 'манба: ' + esc(srcTxt(g.period.source)) + (g.period.updated_at ? ' · ' + esc(dmyT(g.period.updated_at)) : '') : 'ҳали киритилмаган — рақамларни ёзиб «Сақлаш» ёки Excel юкланг'}</span>`;
+  $('#fe-pdel').hidden = !g.period.id;
+  th.innerHTML = `<tr><th>Туман</th><th>Тур</th><th class="num">${prLabel(s.year, m)} — амалда, минг $</th><th class="num">Улуши %</th></tr>`;
   let html = '', last = null;
   for (const r of g.rows) {
     html += `<tr class="${r.kind}" data-d="${r.district_code}" data-k="${r.kind}"><td>${r.district !== last ? esc(r.district) : ''}</td>`
@@ -2255,37 +2567,90 @@ function prRecalc() {
   }
 }
 function periodRows() {
-  const clean = v => v.replace(/[\s ]/g, '').replace(',', '.');
+  const clean = v => v.replace(/[\s ]/g, '').replace(',', '.');
   return $$('#t-per tbody tr[data-d]').map(tr => ({ district_code: tr.dataset.d, kind: tr.dataset.k, fact: clean(tr.querySelector('[data-f="fact"]').value) }));
 }
-function initPeriods() {
-  if (PRD.inited) return; PRD.inited = true;
-  $('#t-per tbody').addEventListener('input', e => { if (e.target.tagName === 'INPUT') prRecalc(); });
-  $('#pr-ny').onchange = () => { prFillMonths(false); loadPeriodGrid().catch(e => toast(e.message, true)); };
-  $('#pr-nm').onchange = () => loadPeriodGrid().catch(e => toast(e.message, true));
-  $('#pr-save').onclick = async () => {
+function initFacts() {
+  if (FS.inited) return; FS.inited = true;
+  $('#t-per tbody').addEventListener('input', e => { if (e.target.tagName === 'INPUT') { FS.dirty = true; FS.gdirty = true; prRecalc(); } });
+  ['#fe-title', '#fe-note'].forEach(s => $(s).addEventListener('input', () => { FS.dirty = true; }));
+  $('#fs-add').onclick = () => openFsetModal({});
+  $('#fe-save').onclick = async () => {
+    const s = FS.set, title = $('#fe-title').value.trim(), note = $('#fe-note').value.trim();
+    if (!title) return toast('Тўплам номини киритинг', true);
     try {
-      await api('/api/periods/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ year: prY(), months: prM(), rows: periodRows() }) });
-      toast(`Сақланди: ${prLabel(prY(), prM())}`); S.dash = null; await loadPeriods(true);
+      if (title !== s.title || note !== (s.note || '')) await jpost('/api/fact_sets/update', { id: s.id, title, note });
+      const rows = periodRows();
+      if (FS.grid.period.id || rows.some(r => r.fact !== '')) await jpost('/api/periods/save', { set_id: s.id, months: FS.m, rows });
+      FS.dirty = false; FS.gdirty = false; S.dash = null; S.selOpts = null;
+      toast(`Сақланди: «${title}» · ${prLabel(s.year, FS.m)}`); await loadFsetEditor();
     } catch (e) { toast(e.message, true); }
   };
-  $('#pr-del').onclick = async () => {
-    if (!confirm(`«${prLabel(prY(), prM())}» ўчирилсинми?`)) return;
-    try {
-      await api('/api/periods/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ year: prY(), months: prM() }) });
-      S.dash = null; await loadPeriods(true);
-    } catch (e) { toast(e.message, true); }
+  $('#fe-pdel').onclick = async () => {
+    const s = FS.set; if (!confirm(`«${s.title}» · ${prLabel(s.year, FS.m)} ўчирилсинми?`)) return;
+    try { await jpost('/api/periods/delete', { set_id: s.id, months: FS.m }); FS.dirty = false; S.dash = null; S.selOpts = null; toast('Давр ўчирилди'); await loadFsetEditor(); } catch (e) { toast(e.message, true); }
   };
-  $('#pr-tpl').onclick = () => download(`/api/periods/template?year=${prY()}&months=${prM()}`, `${prY()} йил ${prM()} ойлик экспорт якуни.xlsx`);
-  $('#pr-imp').onchange = async e => {
-    const f = e.target.files[0]; if (!f) return;
+  $('#fe-main').onclick = async () => {
+    const s = FS.set; if (!confirm(`«${s.title}» ${s.year} йилнинг асосий тўплами бўлсинми? Ҳамма жойда (Dashboard, Свод, ҳисоботлар) стандарт шу рақамлар олинади.`)) return;
+    try { await jpost('/api/fact_sets/update', { id: s.id, main: true }); S.dash = null; S.selOpts = null; if (S.sel) S.sel.fs = ''; toast(`«${s.title}» — асосий`); await loadFsetEditor(); } catch (e) { toast(e.message, true); }
+  };
+  $('#fe-copy').onclick = () => { const s = FS.set; openFsetModal({ year: s.year, copy: s.id, title: s.title + ' (нусха)' }); };
+  $('#fe-del').onclick = async () => {
+    const s = FS.set;
+    if (!confirm(`«${s.title}» (${s.year}) тўплами ва унинг ${s.periods.length} та даври ўчирилсинми? (олдин захира олинади)${s.main ? '\nБу — асосий тўплам: шу йилнинг бошқа тўплами асосий бўлади.' : ''}`)) return;
+    try { await jpost('/api/fact_sets/delete', { id: s.id }); FS.dirty = false; S.dash = null; S.selOpts = null; if (S.sel && String(S.sel.fs) === String(s.id)) S.sel.fs = ''; toast('Тўплам ўчирилди'); await setOpen('facts'); } catch (e) { toast(e.message, true); }
+  };
+  $('#fe-tpl').onclick = () => { const s = FS.set; download(`/api/periods/template?set=${s.id}&year=${s.year}&months=${FS.m}`, `${s.year} йил ${FS.m} ойлик экспорт якуни — ${s.title}.xlsx`); };
+  $('#fe-imp').onchange = async e => {
+    const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+    const s = FS.set;
     try {
-      const r = await api('/api/periods/import', { method: 'POST', body: f, headers: { 'X-Year': String(prY()), 'X-Months': String(prM()), 'X-Filename': encodeURIComponent(f.name) } });
+      const r = await api('/api/periods/import', { method: 'POST', body: f, headers: { 'X-Set': String(s.id), 'X-Year': String(s.year), 'X-Months': String(FS.m), 'X-Filename': encodeURIComponent(f.name) } });
       toast(`Юкланди: ${r.rows} қатор («${r.sheet}» варағи · «${r.column}» устуни)` + (r.unknown && r.unknown.length ? ` · танилмаган: ${r.unknown.join(', ')}` : ''));
-      S.dash = null; await loadPeriods(true);
+      FS.dirty = false; S.dash = null; S.selOpts = null; await loadFsetEditor();
     } catch (err) { toast(err.message, true); }
-    e.target.value = '';
   };
+}
+
+/* ---- «Янги тўплам» модали */
+function openFsetModal(pre) {
+  const d = FS.data || { sets: [], max_year: new Date().getFullYear() - 1 };
+  const years = []; for (let y = d.max_year; y >= d.max_year - 9; y--) years.push(y);
+  const st = { year: pre.year || d.max_year, title: pre.title || '', note: '', src: pre.copy ? 'copy' : 'empty', copy: pre.copy || '' };
+  const read = () => { st.title = $('#sx-t').value; st.note = $('#sx-n').value; st.year = +$('#sx-y').value; const c = $('#sx-copy'); if (c) st.copy = +c.value; };
+  const draw = () => {
+    const ys = d.sets.filter(s => s.year === st.year);
+    if (st.src === 'copy' && !ys.some(s => s.id === +st.copy)) st.copy = (ys[0] || {}).id || '';
+    const opt = (val, title, body, dis) => `<label class="svn-opt${st.src === val ? ' on' : ''}${dis ? ' dis' : ''}"><input type="radio" name="sx-src" value="${val}"${st.src === val ? ' checked' : ''}${dis ? ' disabled' : ''}><div style="flex:1;min-width:0"><div class="t">${title}</div>${body}</div></label>`;
+    $('#sx-body').innerHTML = `<button class="x" id="sx-x">×</button><div class="sx">
+      <h2 id="sx-title">${pre.copy ? 'Тўпламдан нусха' : 'Янги «амалда» тўплами'}</h2>
+      <p class="lead">Тугаган йил натижалари (N ойлик якунлар) шу ном остида сақланади. Бир йил учун бир нечта тўплам бўлиши мумкин — ким сўрашига қараб (вазирлик, ҳокимият…). ${ys.length ? '' : '<b>Бу йилнинг биринчи тўплами — асосий бўлади.</b>'}</p>
+      <div class="ff">
+        <label class="w">Номи<input type="text" id="sx-t" value="${esc(st.title)}" placeholder="масалан: Вазирлик · Ҳокимият · Статистика" maxlength="80"></label>
+        <label>Йил<select class="sel" id="sx-y">${years.map(y => `<option value="${y}"${y === st.year ? ' selected' : ''}>${y} йил${d.sets.some(s => s.year === y) ? ' · ' + d.sets.filter(s => s.year === y).length + ' тўплам' : ''}</option>`).join('')}</select></label>
+        <label>Изоҳ (ихтиёрий)<input type="text" id="sx-n" value="${esc(st.note)}" placeholder="манба, хат рақами…"></label>
+      </div>
+      <h4>Манба</h4>
+      ${opt('empty', 'Бўш', '<div class="n">даврларни (N ойлик) Excel шаблон орқали ёки қўлда киритасиз</div>')}
+      ${opt('copy', 'Шу йилдаги тўпламдан нусха', ys.length ? `<div class="n">ҳамма даврлар ва рақамлар нусхаланади — кейин фарқли жойларини тузатасиз</div>${st.src === 'copy' ? `<div class="ex"><select class="sel" id="sx-copy">${ys.map(s => `<option value="${s.id}"${+st.copy === s.id ? ' selected' : ''}>${s.main ? '★ ' : ''}${esc(s.title)} · ${s.periods.length} давр</option>`).join('')}</select></div>` : ''}` : `<div class="n">${st.year} йилда ҳали тўплам йўқ</div>`, !ys.length)}
+      <div class="acts"><button class="btn" id="sx-cancel">Бекор</button><button class="btn primary" id="sx-go">Яратиш</button></div></div>`;
+    $('#sx-x').onclick = $('#sx-cancel').onclick = closeModals;
+    $$('#sx-body input[name=sx-src]').forEach(i => i.onchange = () => { read(); st.src = i.value; draw(); });
+    $('#sx-y').onchange = () => { read(); if (!d.sets.some(s => s.year === st.year)) st.src = 'empty'; draw(); };
+    $('#sx-go').onclick = async () => {
+      read();
+      const title = st.title.trim();
+      if (!title) { toast('Тўплам номини киритинг', true); $('#sx-t').focus(); return; }
+      const btn = $('#sx-go'); btn.disabled = true;
+      try {
+        const r = await jpost('/api/fact_sets/create', { year: st.year, title, note: st.note.trim(), copy_from: st.src === 'copy' ? +st.copy : null });
+        closeModals(); S.dash = null; S.selOpts = null; FS.m = null;
+        toast(`«${title}» яратилди${r.main ? ' — асосий' : ''}${r.periods ? ` · ${r.periods} давр нусхаланди` : ''}`);
+        await setOpen('fset', r.id);
+      } catch (e) { btn.disabled = false; toast(e.message, true); }
+    };
+  };
+  draw(); $('#sx-modal').hidden = false; setTimeout(() => { const t = $('#sx-t'); if (t) t.focus(); }, 30);
 }
 /* ---------------------------------------------------------------- Баҳсли корхоналар — Sozlamalar (/api/disputes) */
 const DISP_DEC = { template: ['Шаблон (қўлда)', 'info', 'Excel катаклари ўзгармайди — сайт шаблонни олди'],
@@ -2304,10 +2669,10 @@ async function loadDisputes() {
       `<td class="num">${fmt(r.template_total, 2)}</td><td class="num">${fmt(r.base_total, 2)}</td><td class="num"><b class="${r.diff >= 0 ? 't-ok' : 't-bad'}">${r.diff > 0 ? '+' : ''}${fmt(r.diff, 2)}</b></td>` +
       `<td class="hint">${esc(md)}</td><td><span class="pill ${dc[1]}">${dc[0]}</span></td><td class="hint">${dc[2]}</td></tr>`; }).join('');
   tb.querySelectorAll('a[data-inn]').forEach(a => a.onclick = e => { e.preventDefault(); openCompany(a.dataset.inn); });
-  const n = $('#disp-panel h2 .hint'); if (n) n.textContent = `${d.rows.length} та · шаблон ${d.template || ''} · база ${mn[d.base_month - 1] || ''} гача · қарор — корхона профилида`;
+  const n = $('#set-v-disp-sub'); if (n) n.textContent = `${d.rows.length} та · шаблон ${d.template || ''} · база ${mn[d.base_month - 1] || ''} гача · қарор — корхона профилида`;
 }
 const _loadSet = loaders.set;
-loaders.set = async () => { await _loadSet(); initPlans(); initPeriods(); initPrevYear(); await loadPlans(true).catch(e => toast(e.message, true)); await loadPeriods(true).catch(e => toast(e.message, true)); await loadPrevYear().catch(e => toast(e.message, true)); await loadDisputes().catch(e => toast(e.message, true)); };
+loaders.set = async () => { await _loadSet(); initSetNav(); initPlans(); initFacts(); initPrevYear(); await setOpen(SV.view).catch(e => toast(e.message, true)); };
 
 /* ---------------------------------------------------------------- Ҳисоботлар: cardlar → Тармоқлар таҳлили */
 const TA = { meta: null, data: null, ms: null, view: 'prod', open: new Set(), grp: null, seq: 0 };
@@ -2651,14 +3016,30 @@ async function openSvnModal(D) {
   let st = { prev: 'same_day', meva: 'karantin', settings: false, sp: null };
   try { Object.assign(st, JSON.parse(localStorage.getItem('svnOpts') || '{}')); } catch (_) {}
   if (!o.settings.available) st.settings = false;
-  const SP = o.settings.periods || [];                 // Sozlamalar → Тугаган йиллар натижалари (ўтган йил, N ойлик)
-  if (st.sp !== 'auto' && !SP.find(p => p.months == st.sp)) st.sp = SP.length ? o.settings.default_months : 'auto';
-  const spSel = () => SP.find(p => p.months == st.sp);
+  // Sozlamalar → Амалда (ўтган йил, N ойлик) — тўпламлар бўйича (29.09.2026): калит «тўплам:ой»
+  const SP = (o.settings.periods || []).map(p => ({ ...p, key: `${p.set_id}:${p.months}` }));
+  if (/^\d+$/.test(String(st.sp ?? ''))) st.sp = `${o.settings.default_set}:${st.sp}`;      // эски сақланган танлов (фақат ой)
+  if (S.sel && S.sel.fs && SP.some(p => String(p.set_id) === String(S.sel.fs))) {           // Dashboard'да танланган тўплам
+    const c = SP.filter(p => String(p.set_id) === String(S.sel.fs)), m = +String(D).slice(5, 7);
+    st.settings = true; st.sp = (c.filter(p => p.months <= m).pop() || c[0]).key;
+  }
+  if (st.sp !== 'auto' && !SP.find(p => p.key === st.sp)) st.sp = SP.length ? ((SP.find(p => p.key === `${o.settings.default_set}:${o.settings.default_months}`) || SP[0]).key) : 'auto';
+  const spSel = () => SP.find(p => p.key === st.sp);
+  const spName = p => `Амалда «${p.set_title}» — ${p.label}`;
   const sv = () => { const p = spSel(); return p ? { sanoat: p.sanoat, meva: p.meva } : { sanoat: o.settings.sanoat, meva: o.settings.meva }; };
   const per = o.periods;
   if (!per.find(p => p.mode === st.prev && !p.disabled)) st.prev = (per.find(p => !p.disabled) || {}).mode || 'same_day';
   const asof = dmy(o.as_of);
   const pm = p => st.meva === 'exporter' ? p.meva.exporter : p.meva.karantin;
+  // 4-қисм: режа (прогноз) — Sozlamalar → Режа версиялари ёки жадвал (шаблон СВОДи) прогнози; стандарт — сана бўйича амалдаги
+  const PLS = o.plans || { items: [], effective: null, table: null };
+  const planOpts = [...PLS.items.map(v => ({ val: String(v.id), title: v.title || ('Режа #' + v.id), sub: v.covers === false ? `${v.block} блок — бу санага мос эмас` : (v.main ? '★ асосий' : 'режа'), total: v.total, off: v.covers === false })),
+    ...(PLS.table ? [{ val: 'table', title: 'Жадвал (шаблон СВОДи) прогнози', sub: PLS.table_label ? `шаблон ${dmy(PLS.table_label)}` : 'шаблон', total: PLS.table }] : [])];
+  let plan = S.sel && S.sel.plan && planOpts.some(p => p.val === String(S.sel.plan) && !p.off) ? String(S.sel.plan)   // Dashboard'да танланган режа
+    : (PLS.effective != null ? String(PLS.effective) : ((planOpts.find(p => !p.off) || {}).val || ''));
+  const noPlan = planOpts.length > 0 && !planOpts.some(p => !p.off);   // Созламалардаги режалардан ҳеч бири бу санага мос эмас
+  const planSel = () => planOpts.find(p => p.val === plan);
+  const monS = MSHORT[+String(D).slice(5, 7) - 1];
   const draw = () => {
     const P = per.find(p => p.mode === st.prev) || {};
     const meva = st.settings ? 'karantin' : st.meva;
@@ -2666,7 +3047,7 @@ async function openSvnModal(D) {
     const opt = (name, val, on, dis, title, body) => `<label class="svn-opt${on ? ' on' : ''}${dis ? ' dis' : ''}"><input type="radio" name="${name}" value="${val}"${on ? ' checked' : ''}${dis ? ' disabled' : ''}><div><div class="t">${title}</div>${body}</div></label>`;
     const S = sv();
     const prevLine = st.settings
-      ? `ўтган йил: <b>Sozlamalar${spSel() ? ' — ' + esc(spSel().label) : ''}</b> — саноат ${fmt(S.sanoat)}, мева-сабзавот ${fmt(S.meva)}, жами ${fmt(S.sanoat + S.meva)} минг $`
+      ? `ўтган йил: <b>Sozlamalar${spSel() ? ' — ' + esc(spName(spSel())) : ''}</b> — саноат ${fmt(S.sanoat)}, мева-сабзавот ${fmt(S.meva)}, жами ${fmt(S.sanoat + S.meva)} минг $`
       : `ўтган йил: <b>${esc(P.label || '—')}</b> — саноат ${fmt(P.sanoat)}, мева-сабзавот ${fmt(P.meva ? pm(P) : null)}, жами ${fmt((P.sanoat || 0) + (P.meva ? pm(P) : 0))} минг $`;
     $('#svn-body').innerHTML = `<button class="x" id="svn-x">×</button><div class="svn">
       <h2 id="svn-title">«${asof}» свод + туманлар номма-ном — Excel</h2>
@@ -2685,22 +3066,33 @@ async function openSvnModal(D) {
       <div class="svn-sec"><h4>3 · «Sozlamalar»да киритилган ўтган йил кўрсаткичи</h4>
         <label class="svn-opt${st.settings ? ' on' : ''}${o.settings.available ? '' : ' dis'}"><input type="checkbox" id="svn-set"${st.settings ? ' checked' : ''}${o.settings.available ? '' : ' disabled'}><div>
           <div class="t">Ўтган йилни «Sozlamalar»даги рақамдан олиш</div>
-          ${o.settings.available ? `<div class="v">саноат <b>${fmt(S.sanoat)}</b> · мева-сабзавот <b>${fmt(S.meva)}</b> · жами <b>${fmt(S.sanoat + S.meva)}</b> минг $</div><div class="n">${spSel() ? 'Тугаган йиллар натижалари: «' + esc(spSel().label) + '» — аниқ рақам, туман ва тур кесимида, интерполяциясиз' : esc(o.settings.text)}. Белгиланса 1 ва 2 қисм ўчади, мева-сабзавот — карантин рўйхати.</div>` : '<div class="n">«Sozlamalar»да ўтган йил натижаси киритилмаган.</div>'}</div></label>
-        ${st.settings && SP.length ? `<div class="form-row" style="margin-top:8px;align-items:center;gap:8px"><span class="n">Давр:</span><select id="svn-sp">${SP.map(p => `<option value="${p.months}"${p.months == st.sp ? ' selected' : ''}>${esc(p.label)} — саноат ${fmt(p.sanoat)} · мева ${fmt(p.meva)} · жами ${fmt(p.sanoat + p.meva)}</option>`).join('')}<option value="auto"${st.sp === 'auto' ? ' selected' : ''}>Шу кунга мутаносиб (интерполяция) — саноат ${fmt(o.settings.sanoat)} · мева ${fmt(o.settings.meva)}</option></select></div>` : ''}
+          ${o.settings.available ? `<div class="v">саноат <b>${fmt(S.sanoat)}</b> · мева-сабзавот <b>${fmt(S.meva)}</b> · жами <b>${fmt(S.sanoat + S.meva)}</b> минг $</div><div class="n">${spSel() ? esc(spName(spSel())) + ' — аниқ рақам, туман ва тур кесимида, интерполяциясиз' : esc(o.settings.text)}. Белгиланса 1 ва 2 қисм ўчади, мева-сабзавот — карантин рўйхати.</div>` : '<div class="n">«Sozlamalar»да ўтган йил натижаси киритилмаган.</div>'}</div></label>
+        ${st.settings && SP.length ? `<div class="form-row" style="margin-top:8px;align-items:center;gap:8px"><span class="n">Тўплам ва давр:</span><select id="svn-sp" style="flex:1;min-width:0">${[...new Map(SP.map(p => [p.set_id, p])).values()].map(g => `<optgroup label="${g.main ? '★ ' : ''}${esc(g.set_title)}${g.main ? ' (асосий)' : ''}">${SP.filter(p => p.set_id === g.set_id).map(p => `<option value="${p.key}"${p.key === st.sp ? ' selected' : ''}>${esc(p.label)} — саноат ${fmt(p.sanoat)} · мева ${fmt(p.meva)} · жами ${fmt(p.sanoat + p.meva)}</option>`).join('')}</optgroup>`).join('')}<option value="auto"${st.sp === 'auto' ? ' selected' : ''}>Шу кунга мутаносиб (асосий тўплам, интерполяция) — саноат ${fmt(o.settings.sanoat)} · мева ${fmt(o.settings.meva)}</option></select></div>` : ''}
       </div>
-      <div class="svn-sum">${prevLine}; мева-сабзавот — <b>${meva === 'exporter' ? 'Бухоро корхоналари экспорти' : 'карантин рўйхати'}</b>.</div>
-      <div class="form-row" style="justify-content:flex-end"><button class="btn" id="svn-cancel">Бекор</button><button class="btn primary" id="svn-go">📗 Excel юклаб олиш</button></div></div>`;
+      <div class="svn-sec"><h4>4 · Режа (прогноз)</h4>
+        <div class="svn-plan">${planOpts.length ? `<select class="sel" id="svn-plan">${noPlan ? '<option value="" selected>— мос режа йўқ —</option>' : ''}${planOpts.map(p => `<option value="${p.val}"${p.val === plan ? ' selected' : ''}${p.off ? ' disabled' : ''}>${esc(p.title)} · ${esc(p.sub)}</option>`).join('')}</select>
+        ${noPlan ? `<div class="svn-warn">⚠ <b>${dmy(D)} санаси учун мос режа йўқ</b> — Созламалардаги режаларда бу давр (${esc(PLS.items.map(v => v.block).filter(Boolean).filter((x, i, a) => a.indexOf(x) === i).join(', '))}) битта жами сифатида берилган, ойлик режа йўқ. Excel юклаб бўлмайди: Созламалар → Режалар'да бу давр учун режа қўшинг.</div>` : ''}
+        ${(() => { const P4 = planSel(); const t = P4 && P4.total && P4.total.all; return t ? `<div class="v">вилоят: йиллик <b>${fmt(t.year)}</b> · январь–${monS.toLowerCase()} <b>${fmt(t.period)}</b> · ${monS.toLowerCase()} ойи <b>${fmt(t.month)}</b> минг $</div>` : ''; })()}
+        <div class="n">Туманлар бўйича тақсимот танланган режадан олинади. Режалар — Созламалар → Режалар. Ўтган давр битта жами (масалан «январь–август») бўлган режа шу давр ичидаги саналарга мос эмас.</div>`
+        : '<div class="n">Режа йўқ: Созламалар → Режалар бўлимида режа қўшинг.</div>'}</div>
+      </div>
+      <div class="svn-sum">${prevLine}; мева-сабзавот — <b>${meva === 'exporter' ? 'Бухоро корхоналари экспорти' : 'карантин рўйхати'}</b>${planSel() ? `; режа — <b>${esc(planSel().title)}</b>` : ''}.</div>
+      <div class="form-row" style="justify-content:flex-end"><button class="btn" id="svn-cancel">Бекор</button><button class="btn primary" id="svn-go"${noPlan ? ' disabled title="мос режа йўқ"' : ''}>📗 Excel юклаб олиш</button></div></div>`;
     $('#svn-x').onclick = $('#svn-cancel').onclick = closeModals;
     $$('#svn-body input[name=svn-prev]').forEach(i => i.onchange = () => { st.prev = i.value; draw(); });
     $$('#svn-body input[name=svn-meva]').forEach(i => i.onchange = () => { st.meva = i.value; draw(); });
     const cb = $('#svn-set'); if (cb) cb.onchange = () => { st.settings = cb.checked; draw(); };
-    const sps = $('#svn-sp'); if (sps) sps.onchange = () => { st.sp = sps.value === 'auto' ? 'auto' : Number(sps.value); draw(); };
+    const sps = $('#svn-sp'); if (sps) sps.onchange = () => { st.sp = sps.value; draw(); };
+    const pls = $('#svn-plan'); if (pls) pls.onchange = () => { plan = pls.value; draw(); };
     $('#svn-go').onclick = () => {
+      if (noPlan) return toast(`${dmy(D)} санаси учун мос режа йўқ — Созламалар → Режалар'да режа қўшинг`, true);
       try { localStorage.setItem('svnOpts', JSON.stringify(st)); } catch (_) {}
       const prev = st.settings ? 'settings' : st.prev, mv = st.settings ? 'karantin' : st.meva;
       closeModals();
-      const sp = st.settings && st.sp && st.sp !== 'auto' ? `&sp=${st.sp}` : '';
-      download(`/api/export/svod_nomma?date=${D}&prev=${prev}&meva=${mv}${sp}`, `${dmy(isoNext(D))} свод ва туманлар номма-ном.xlsx`);
+      const spp = st.settings && st.sp && st.sp !== 'auto' ? spSel() : null;
+      const sp = spp ? `&sp=${spp.months}&fs=${spp.set_id}` : '';
+      const pl = plan ? `&plan=${encodeURIComponent(plan)}` : '';
+      download(`/api/export/svod_nomma?date=${D}&prev=${prev}&meva=${mv}${sp}${pl}`, `${dmy(isoNext(D))} свод ва туманлар номма-ном.xlsx`);
     };
   };
   draw(); $('#svn-modal').hidden = false;

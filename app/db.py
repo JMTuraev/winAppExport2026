@@ -290,6 +290,7 @@ def _migrate(con):
         con.execute("ALTER TABLE companies ADD COLUMN opening_source TEXT NOT NULL DEFAULT 'customs'")
     _migrate_items(con)
     from . import plans, periods, catalog; plans.ensure(con); periods.ensure(con); catalog.ensure(con)
+    plans.seed_once(con)
     _repair_null_names(con)
     _migrate_board(con)
     con.commit()

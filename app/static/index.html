@@ -131,6 +131,100 @@ tr.subrow td:first-child{padding-left:24px}
 .rcard .go{margin-top:auto;color:var(--accent);font-size:12.5px;font-weight:600}
 .rcard.soon{cursor:default;border-style:dashed;background:transparent;min-height:150px;justify-content:center;align-items:center;color:var(--ink3)}
 .rcard.soon:hover{border-color:var(--line);box-shadow:none}
+/* Созламалар — cardlar, Режалар ва Амалда тўпламлари (29.09.2026) */
+.scards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.scard{display:flex;flex-direction:column;gap:9px;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 18px 16px;cursor:pointer;font:inherit;color:var(--ink);transition:border-color .12s,box-shadow .12s,transform .12s;min-height:150px}
+.scard:hover{border-color:var(--accent);box-shadow:0 6px 18px rgba(15,110,99,.12);transform:translateY(-1px)}
+.scard:active{transform:translateY(0)}
+.scard .ico{width:40px;height:40px;border-radius:10px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center}
+.scard .ico svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.scard b{font-size:15px;font-weight:600}
+.scard>span{color:var(--ink2);font-size:12.5px;line-height:1.45}
+.scard .go{margin-top:auto;color:var(--accent);font-size:12.5px;font-weight:600}
+.scard .sc-line{margin-top:auto;font-size:12px;color:var(--ink3);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.scard.hero{grid-column:span 2;min-height:210px;padding:22px 22px 18px;background:linear-gradient(150deg,var(--accent-soft) 0%,var(--panel) 58%);border-color:#bcd9d3}
+.scard.hero b{font-size:18px}
+.scard.hero .ico{width:46px;height:46px;background:var(--accent);color:#fff}
+.scard.hero.gold{background:linear-gradient(150deg,var(--gold-soft) 0%,var(--panel) 58%);border-color:#e6d6a8}
+.scard.hero.gold .ico{background:var(--gold)}.scard.hero.gold .go{color:var(--gold)}.scard.hero.gold:hover{border-color:var(--gold);box-shadow:0 6px 18px rgba(183,145,42,.14)}
+@media (max-width:760px){.scard.hero{grid-column:auto}.plc.add{min-height:110px}}
+.pill.gr{background:var(--panel2);color:var(--ink2)}
+.sc-stats{display:flex;gap:10px;flex-wrap:wrap;margin-top:2px}
+.sc-stat{background:rgba(255,255,255,.75);border:1px solid var(--line);border-radius:9px;padding:6px 11px;min-width:0;max-width:100%}
+.sc-stat b{display:block;font-family:"IBM Plex Mono",monospace;font-size:17px;font-weight:500;line-height:1.2}
+.sc-stat i{font-style:normal;display:block;font-size:11.5px;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:320px}
+.ybar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.ybar button{border:1px solid var(--line);background:var(--panel);border-radius:18px;padding:5px 13px;font:inherit;font-size:12.5px;cursor:pointer;color:var(--ink2)}
+.ybar button b{font-weight:500;margin-left:6px;font-family:"IBM Plex Mono",monospace;font-size:11px;opacity:.75}
+.ybar button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.ygrp{margin-bottom:22px}
+.ygrp>h3{display:flex;align-items:center;gap:10px;margin:0 0 10px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2);font-weight:600}
+.ygrp>h3:after{content:"";flex:1;height:1px;background:var(--line)}
+.plgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.plc{position:relative;display:flex;flex-direction:column;gap:7px;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:15px 16px 11px;cursor:pointer;font:inherit;color:var(--ink);transition:border-color .12s,box-shadow .12s,transform .12s;min-height:236px}
+.plc:hover{border-color:var(--accent);box-shadow:0 6px 18px rgba(15,110,99,.12);transform:translateY(-1px)}
+.plc.eff{border-color:var(--accent);box-shadow:inset 0 3px 0 var(--accent)}
+.plc.eff:hover{box-shadow:inset 0 3px 0 var(--accent),0 6px 18px rgba(15,110,99,.12)}
+.plc .top{display:flex;gap:6px;align-items:center;flex-wrap:wrap;min-height:22px}
+.plc .yr{font-family:"IBM Plex Mono",monospace;font-size:11.5px;background:var(--panel2);padding:2px 8px;border-radius:10px;color:var(--ink2)}
+.plc h3{margin:0;font-size:15.5px;font-weight:600;line-height:1.3;word-break:break-word}
+.plc .from{font-size:12px;color:var(--ink2)}
+.plc .big{font-family:"IBM Plex Mono",monospace;font-size:22px;font-weight:500;font-variant-numeric:tabular-nums;line-height:1.15}
+.plc .big small{font-size:11.5px;color:var(--ink2);font-family:"IBM Plex Sans",sans-serif;margin-left:4px}
+.plc .split{font-size:12px;color:var(--ink2);font-variant-numeric:tabular-nums}
+.plc .split .mv{color:var(--gold)}
+#t-per input{width:150px;font:inherit;font-size:12.5px;padding:3px 6px;border:1px solid var(--line);border-radius:4px;text-align:right;font-family:"IBM Plex Mono",monospace}#t-per td.kd{color:var(--ink2)}#t-per tr.meva td.kd{color:var(--gold)}#t-per tr.sum td{background:var(--panel2);font-weight:600}
+.plc .bars{display:flex;align-items:flex-end;gap:3px;height:38px;margin-top:2px}
+.plc .bars i{flex:1;background:var(--accent);opacity:.72;border-radius:2px 2px 0 0;min-height:2px}
+.plc .bars i.cur{opacity:1;background:var(--gold)}
+.plc .bars i.blk{opacity:.3}
+#t-plan th.blk,#t-plan td.blk{background:var(--panel2)}#t-plan td.blk input{font-weight:600;min-width:96px}
+.svn-warn{margin-top:8px;padding:9px 11px;border-radius:8px;border:1px solid #E3B4AE;background:#FBEDEB;color:#8A2A1F;font-size:12.5px;line-height:1.45}
+.plc .ml{display:flex;gap:3px;font-size:9px;color:var(--ink3);margin-top:-3px}.plc .ml span{flex:1;text-align:center}
+.plc .nt{font-size:12px;color:var(--ink2);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.plc .ft{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11.5px;color:var(--ink3);border-top:1px solid var(--line);padding-top:8px;margin-top:auto}
+.plc .ft .go{color:var(--accent);font-weight:600;font-size:12.5px;white-space:nowrap}
+.plc.fs:hover{border-color:var(--gold);box-shadow:0 6px 18px rgba(183,145,42,.14)}
+.plc.fs.main{border-color:var(--gold);box-shadow:inset 0 3px 0 var(--gold)}
+.plc.fs .ft .go{color:var(--gold)}
+.plc.add{border:1.5px dashed var(--line);background:transparent;align-items:center;justify-content:center;color:var(--ink2);gap:6px;min-height:236px;box-shadow:none}
+.plc.add:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-soft);transform:none}
+.plc.add .pl{font-size:28px;line-height:1;font-weight:300}
+.mstrip{display:grid;grid-template-columns:repeat(12,1fr);gap:3px;margin:2px 0}
+.mstrip span{height:26px;border-radius:5px;background:var(--panel2);font-size:10px;display:grid;place-items:center;color:var(--ink3);font-family:"IBM Plex Mono",monospace}
+.mstrip span.on{background:var(--gold-soft);color:var(--gold);font-weight:600}
+.mstrip span.full{background:var(--gold);color:#fff;font-weight:600}
+.fs-last{font-size:12px;color:var(--ink2);font-variant-numeric:tabular-nums}
+.mpick{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:6px}
+.mpick button{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:7px 4px 6px;font:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:1px;color:var(--ink2);min-width:0}
+.mpick button b{font-family:"IBM Plex Mono",monospace;font-size:15px;font-weight:500;color:var(--ink)}
+.mpick button span{font-size:10.5px}
+.mpick button i{font-style:normal;font-size:10px;color:var(--gold);font-family:"IBM Plex Mono",monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.mpick button.has{background:var(--gold-soft);border-color:#e6d6a8}
+.mpick button.on{background:var(--accent);border-color:var(--accent);color:#fff}.mpick button.on b,.mpick button.on i{color:#fff}
+@media (max-width:900px){.mpick{grid-template-columns:repeat(6,minmax(0,1fr))}}
+.sinfo{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:8px;padding:9px 14px;font-size:12.5px;color:var(--ink2);margin-bottom:16px}
+.sinfo:empty{display:none}
+.sx{padding:24px 26px 20px}
+.sx h2{margin:0 0 4px;font-size:18px}
+.sx .lead{margin:0 0 14px;font-size:12.5px;color:var(--ink2)}
+.sx .ff{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.sx .ff .w{grid-column:1/-1}
+.sx .ff label{display:flex;flex-direction:column;gap:5px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2)}
+.sx .ff input,.sx .ff select{width:100%;min-width:0;text-transform:none;letter-spacing:0;font-size:14px}
+.sx h4{margin:4px 0 8px;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2);font-weight:600}
+.sx .pl-drop{display:flex;flex-direction:column;gap:6px;align-items:center;text-align:center;padding:18px 16px;border:1.5px dashed var(--line);border-radius:10px;cursor:pointer;background:var(--bg)}
+.sx .pl-drop:hover,.sx .pl-drop.hov{border-color:var(--accent);background:var(--accent-soft)}
+.sx .pl-drop.on{border-style:solid;border-color:var(--accent);background:var(--accent-soft)}
+.sx .pl-drop b{font-size:14px}.sx .pl-drop .n{font-size:12px;color:var(--ink2);line-height:1.45}.sx .pl-drop .n b{font-size:12px;color:var(--ink)}
+.sx .svn-opt .ex{margin-top:7px}
+.sx .svn-opt .ex select,.sx .svn-opt .ex input[type=file]{width:100%;min-width:0}
+.sx .acts{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+/* Dashboard / Свод: режа ва ўтган йил танлови */
+.psel{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.psel label{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink2)}
+.psel select{max-width:250px;padding:6px 8px;font-size:12.5px}
+.psel select.alt{border-color:var(--gold);background:var(--gold-soft);color:var(--ink);font-weight:500}
 .mp-pick{border:1px solid var(--line);border-radius:8px;background:var(--panel)}
 .mp-pick-top{display:flex;gap:12px;align-items:center;padding:8px 10px;border-bottom:1px solid var(--line)}
 .mp-pick-top input[type=text]{flex:1;min-width:220px}
@@ -422,7 +516,22 @@ a.btn{text-decoration:none}
 .svn-opt .v{font-size:12.5px;color:var(--ink2);margin-top:2px;font-variant-numeric:tabular-nums}
 .svn-opt .v b{color:var(--ink)}
 .svn-opt .n{font-size:11.5px;color:var(--ink3);margin-top:2px}
+.svn-plan select{width:100%;min-width:0}
+.svn-plan .v{font-size:12.5px;color:var(--ink2);margin-top:7px;font-variant-numeric:tabular-nums}
+.svn-plan .v b{color:var(--ink)}
+.svn-plan .n{font-size:11.5px;color:var(--ink3);margin-top:3px}
 .svn-sum{font-size:12.5px;color:var(--ink2);background:var(--panel2);border-radius:8px;padding:9px 12px;margin:4px 0 12px}
+#gtx-modal{z-index:70}
+.gtx-row{display:grid;grid-template-columns:104px minmax(0,1fr) 150px;gap:8px 10px;align-items:center;padding:7px 10px;border:1px solid var(--line);border-radius:8px;margin-bottom:6px;background:var(--bg)}
+.gtx-row.on{border-color:var(--accent);background:var(--accent-soft)}
+.gtx-row .gy{display:flex;gap:8px;align-items:center;font-weight:600;font-size:13.5px;cursor:pointer}
+.gtx-row .gy input{accent-color:var(--accent)}
+.gtx-row select,.gtx-row input[type=date]{width:100%;min-width:0}
+.gtx-row .gp{grid-column:2 / 4;font-size:12px;color:var(--ink2);font-variant-numeric:tabular-nums}
+.gtx-row.off select,.gtx-row.off input[type=date],.gtx-row.off .gp{opacity:.4;pointer-events:none}
+.gtx-row .gd[hidden]{display:none}
+.gtx-row.m select{grid-column:2 / 4}
+@media (max-width:560px){.gtx-row{grid-template-columns:1fr}.gtx-row .gp,.gtx-row.m select{grid-column:auto}}
 /* modal */
 .mbg{position:fixed;inset:0;background:rgba(20,30,40,.55);z-index:40;display:flex;align-items:flex-start;justify-content:center;padding:36px 16px;overflow:auto}
 .mdl{background:var(--bg);border-radius:12px;width:min(940px,100%);box-shadow:0 20px 60px rgba(0,0,0,.3);position:relative}
@@ -613,6 +722,7 @@ input[type=color]{width:34px;height:30px;padding:0 2px;border:1px solid var(--li
 .pform .ttl{font-size:12px;font-weight:600;color:var(--accent);margin-bottom:10px;letter-spacing:.04em;text-transform:uppercase}
 .pempty{color:var(--ink2);font-size:12.5px;padding:10px 0 2px}
 </style>
+<link rel="stylesheet" href="/static/xatlar.css">
 </head>
 <body>
 <div class="app" id="app">
@@ -635,6 +745,7 @@ input[type=color]{width:34px;height:30px;padding:0 2px;border:1px solid var(--li
     <button class="nav" data-p="reg" data-t="Korxonalar"><svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg><span class="lbl">Korxonalar</span><span class="n" id="nav-reg">—</span></button>
     <button class="nav" data-p="mov" data-t="Корхона ҳаракати"><svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg><span class="lbl">Корхона ҳаракати</span></button>
     <button class="nav" data-p="iss" data-t="Muammo va vazifalar"><svg viewBox="0 0 24 24"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"/></svg><span class="lbl">Muammo va vazifalar</span><span class="n" id="nav-iss">—</span></button>
+    <button class="nav" data-p="xat" data-t="Хатлар"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg><span class="lbl">Хатлар</span><span class="n" id="nav-xat">—</span></button>
     <button class="nav" data-p="ctrl" data-t="Nazorat va tarix"><svg viewBox="0 0 24 24"><path d="M12 3l9 4v5c0 5-4 8-9 9-5-1-9-4-9-9V7z"/><path d="M9 12l2 2 4-4"/></svg><span class="lbl">Nazorat va tarix</span></button>
     <button class="nav" data-p="set" data-t="Sozlamalar"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg><span class="lbl">Sozlamalar</span></button>
   </aside>
@@ -650,7 +761,7 @@ input[type=color]{width:34px;height:30px;padding:0 2px;border:1px solid var(--li
       </div>
       <div id="dash-body">
       <div class="topbar"><h1>Dashboard</h1><span class="sub" id="dash-sub"></span>
-        <div class="right"><label class="sub" for="dash-date">Ҳолат</label><input type="date" id="dash-date"><button class="btn" id="btn-reset">Filtrlarni tozalash</button></div></div>
+        <div class="right"><div class="psel" id="dash-psel"></div><label class="sub" for="dash-date">Ҳолат</label><input type="date" id="dash-date"><button class="btn" id="btn-reset">Filtrlarni tozalash</button></div></div>
       <div class="fbar">
         <div class="fgrp wide"><label>Туманлар</label><div class="chips" id="f-dist"></div></div>
         <div class="fgrp"><label>Тур</label><div class="seg" id="f-type"><button data-v="all" class="on">Жами</button><button data-v="sanoat">Саноат</button><button data-v="meva">Мева-сабзавот</button></div></div>
@@ -730,7 +841,7 @@ input[type=color]{width:34px;height:30px;padding:0 2px;border:1px solid var(--li
 
     <!-- SVOD -->
     <section class="page" id="p-svod">
-      <div class="topbar"><h1>Свод — туманлар кесимида</h1><span class="sub" id="svod-sub"></span><div class="right"><button class="btn" id="svod-xl">Excel'ga chiqarish</button></div></div>
+      <div class="topbar"><h1>Свод — туманлар кесимида</h1><span class="sub" id="svod-sub"></span><div class="right"><div class="psel" id="svod-psel"></div><button class="btn" id="svod-xl">Excel'ga chiqarish</button></div></div>
       <div class="panel"><div class="tw" style="max-height:none"><table id="t-svod"><thead></thead><tbody></tbody></table></div>
       <p class="note">Мева-сабзавот — карантин сертификати берилган вилоят бўйича (СВОД (карантин) 292 355). Ўтган йил — <span id="svod-prev"></span>.</p></div>
     </section>
@@ -961,6 +1072,9 @@ input[type=color]{width:34px;height:30px;padding:0 2px;border:1px solid var(--li
       <div class="panel bd-table" id="bd-table" hidden></div>
     </section>
 
+    <!-- ХАТЛАР (xatlar.js) -->
+    <section class="page" id="p-xat"></section>
+
     <!-- NAZORAT -->
     <section class="page" id="p-ctrl">
       <div class="topbar"><h1>Nazorat va tarix</h1><span class="sub">har bir yuklash saqlanadi; bekor qilish tarixni o'chirmaydi</span><div class="right"><button class="btn" id="bk-create">Hozir zaxira olish</button></div></div>
@@ -973,32 +1087,94 @@ input[type=color]{width:34px;height:30px;padding:0 2px;border:1px solid var(--li
 
     <!-- SOZLAMALAR -->
     <section class="page" id="p-set">
-      <div class="topbar"><h1>Sozlamalar</h1></div>
-      <div class="panel" style="margin-bottom:14px" id="plan-panel"><h2>Режа (прогноз) <span class="hint">туман ва тур кесимида, ойлар бўйича · режа йил ичида ўзгарса — янги версия «... дан» санаси билан; ҳисобот кунида амалдаги версия олинади</span></h2>
-        <div class="fbar" style="margin-top:10px">
-          <div class="fgrp"><label>Версиялар</label><select class="sel" id="pl-ver" style="min-width:320px"></select></div>
-          <div class="fgrp"><label>Кучга кириш санаси</label><input type="date" id="pl-from"></div>
-          <div class="fgrp wide" style="flex:1 1 260px"><label>Номи</label><input type="text" id="pl-title" placeholder="масалан: Сентябрдан янги режа"></div>
-          <div class="fgrp"><label>&nbsp;</label><div class="form-row"><button class="btn primary" id="pl-save">Сақлаш</button><button class="btn" id="pl-del">Ўчириш</button></div></div>
+      <div class="setv" id="set-v-home">
+        <div class="topbar"><h1>Созламалар</h1><span class="sub">бўлимни танланг</span></div>
+        <div class="scards">
+          <button class="scard hero" data-sopen="plans">
+            <div class="ico"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></div>
+            <b>Режалар</b>
+            <span>Ҳар режа — ўз номи, йили ва кучга кириш санаси билан (вазирлик, ҳокимият, қайта тақсимланган…). Ўтган йиллар режаси ҳам. Жадвал тортишда ва Dashboard'да керакли режа танланади.</span>
+            <div class="sc-stats" id="sc-plans"></div>
+            <span class="go">Очиш →</span>
+          </button>
+          <button class="scard hero gold" data-sopen="facts">
+            <div class="ico"><svg viewBox="0 0 24 24"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"/></svg></div>
+            <b>Амалда — тугаган йиллар</b>
+            <span>Тугаган йиллар натижалари (N ойлик) номли тўпламларда: бир йил учун бир нечта вариант — ким сўрашига қараб. Асосийси ҳамма жойда стандарт, бошқаси танланади.</span>
+            <div class="sc-stats" id="sc-facts"></div>
+            <span class="go">Очиш →</span>
+          </button>
+          <button class="scard" data-sopen="prev">
+            <div class="ico"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></svg></div>
+            <b>Ўтган йил базаси</b>
+            <span>«Ўтган йил шу даврга» учун қўлда киритилган захира рақам — кунга мутаносиб.</span>
+            <div class="sc-line" id="sc-prev"></div>
+          </button>
+          <button class="scard" data-sopen="disp">
+            <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg></div>
+            <b>Баҳсли корхоналар</b>
+            <span>Шаблон ≠ божхона базаси — қарор корхона профилида.</span>
+            <div class="sc-line" id="sc-disp"></div>
+          </button>
+          <button class="scard" data-sopen="init">
+            <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 17v3h16v-3"/></svg></div>
+            <b>Бошланғич маълумот</b>
+            <span>Божхона базаси, ўз жадвалингиз (Excel шаблон), базани тозалаш.</span>
+            <div class="sc-line" id="sc-init"></div>
+          </button>
+          <button class="scard" data-sopen="paths">
+            <div class="ico"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg></div>
+            <b>База ва папкалар</b>
+            <span>Маълумотлар папкаси, база файли, ўтган йил кунлари.</span>
+            <div class="sc-line" id="sc-paths"></div>
+          </button>
+          <button class="scard" data-sopen="rules">
+            <div class="ico"><svg viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/></svg></div>
+            <b>Қоидалар</b>
+            <span>ГТД юклаш, мева-сабзавот, БНПЗ ва Excel қоидалари.</span>
+          </button>
         </div>
+      </div>
+      <div class="setv" id="set-v-plans" hidden>
+        <div class="topbar"><button class="back" data-sback="home">← Созламалар</button><h1 id="set-v-plans-h">Режалар</h1><span class="sub" id="set-v-plans-sub">ҳар режа — номи ва йили билан · жадвал тортишда танланади, танланмаса — ★ асосийси</span><div class="right"><button class="btn primary" id="pl-add">＋ Янги режа</button></div></div>
+        <div class="ybar" id="pl-years"></div>
+        <div id="pl-cards"></div>
+      </div>
+      <div class="setv" id="set-v-plan" hidden>
+        <div class="topbar"><button class="back" data-sback="plans">← Режалар</button><h1 id="set-v-plan-h">Режа</h1><span class="sub" id="set-v-plan-sub"></span><div class="right"><button class="btn" id="pe-tpl">📗 Шаблон</button><label class="btn" style="cursor:pointer">📥 Excel юклаш<input type="file" id="pe-imp" accept=".xlsx,.xls" hidden></label><button class="btn" id="pe-main">★ Асосий қилиш</button><button class="btn" id="pe-copy">⧉ Нусха</button><button class="btn danger" id="pe-del">Ўчириш</button><button class="btn primary" id="pe-save">Сақлаш</button></div></div>
         <div class="fbar">
-          <div class="fgrp"><label>Янги версия</label><div class="form-row"><input type="number" id="pl-ny" style="width:90px"><input type="date" id="pl-nfrom"><select class="sel" id="pl-nsrc"><option value="copy">танланган версиядан нусха</option><option value="workbook">жадвал (СВОД) прогнозидан</option><option value="empty">бўш</option></select><button class="btn" id="pl-new">Яратиш</button></div></div>
-          <div class="fgrp"><label>Excel</label><div class="form-row"><button class="btn" id="pl-tpl">📗 Шаблонни юклаб олиш</button><label class="btn" style="cursor:pointer">📥 Excel юклаш<input type="file" id="pl-imp" accept=".xlsx" hidden></label></div></div>
+          <div class="fgrp wide" style="flex:2 1 280px"><label>Номи</label><input type="text" id="pe-title" placeholder="масалан: Вазирлик режаси (қайта тақсимланган)"></div>
+          <div class="fgrp wide" style="flex:3 1 320px"><label>Изоҳ</label><input type="text" id="pe-note" placeholder="масалан: вазирлик хати №…, 28.09.2026"></div>
         </div>
+        <div class="grid kpis" id="pe-kpis" style="margin-bottom:14px"></div>
+        <div class="panel"><h2>Туманлар × ойлар <span class="hint">минг $ · «Йил жами»га ёзилса 12 ойга тенг бўлинади</span></h2>
         <div class="tw" style="max-height:60vh"><table id="t-plan"><thead></thead><tbody></tbody></table></div>
-        <p class="note" id="pl-note">Ҳар катак — ойлик режа (минг $). «Йил жами» катагига рақам ёзилса, у 12 ойга тенг тақсимланади. Виловят қатори — туманлар йиғиндиси.</p>
-      </div>
-      <div class="panel" style="margin-bottom:14px" id="per-panel"><h2>Тугаган йиллар натижалари <span class="hint">фақат тугаган йиллар: йил ва давр танланади → Excel шаблон юклаб олинади → тўлдирилиб қайта юкланади · «ўтган йил шу даврга» солиштириш ҳамма саҳифада аввало шундан олинади</span></h2>
-        <div class="fbar" style="margin-top:10px">
-          <div class="fgrp"><label>Йил</label><select class="sel" id="pr-ny" style="min-width:110px"></select></div>
-          <div class="fgrp"><label>Давр (йил бошидан)</label><select class="sel" id="pr-nm" style="min-width:260px"></select></div>
-          <div class="fgrp"><label>Excel</label><div class="form-row"><button class="btn" id="pr-tpl">📗 Шаблонни юклаб олиш</button><label class="btn" style="cursor:pointer">📥 Тўлдирилганини юклаш<input type="file" id="pr-imp" accept=".xlsx,.xls" hidden></label></div></div>
-          <div class="fgrp"><label>&nbsp;</label><div class="form-row"><button class="btn primary" id="pr-save">Сақлаш</button><button class="btn" id="pr-del">Ўчириш</button></div></div>
+        <p class="note" id="pl-note">Ҳар катак — ойлик режа (минг $). «Йил жами» катагига рақам ёзилса, у 12 ойга тенг тақсимланади. Вилоят қатори — туманлар йиғиндиси. Excel'да ўтган давр битта жами («январь–август») бўлса — у ойларга бўлинмайди, битта катак бўлиб туради; бу давр ичидаги саналарга ҳисобот бу режа билан юкланмайди. Бўш ойлар йиллик қолдиғидан тенг бўлинади. Жадвал тортишда исталган режа танланади; танланмаса — ★ асосийси. <span id="pl-adj"></span></p>
         </div>
-        <div class="tw" style="max-height:60vh"><table id="t-per"><thead></thead><tbody></tbody></table></div>
-        <p class="note" id="pr-note">Фақат <b>тугаган</b> йиллар киритилади: жорий йил режаси юқоридаги «Режа» панелида, жорий йил амалдаги кўрсаткичи эса кунлик божхона маълумотидан ўзи шаклланади. Ҳар катак — шу йилнинг январь–N ой якуни (амалда, минг $). Ой охирида сайт аниқ шу рақамни олади (масалан 31.08 — 8 ойлик), оралиқ кунда икки давр орасида кунлар бўйича ҳисоблайди; давр умуман йўқ бўлса пастдаги «Ўтган йил базаси» захира сифатида ишлайди. Вилоят қатори — туманлар йиғиндиси. Excel: шаблонни юклаб олиб тўлдиринг, ёки расмий жадвални тўғридан-тўғри юкланг — унда «{йил} йил N ойда амалда» устуни бўлса етарли, туманлар номи бўйича танилади. <span id="pr-src"></span></p>
       </div>
-      <div class="panel" style="margin-bottom:14px" id="prev-panel"><h2>Ўтган йил базаси <span class="hint">«ўтган йил шу даврга» солиштириш учун қўлда киритилган рақамлар (минг $) · божхона базасидаги ўтган йил маълумоти ишлатилмайди</span></h2>
+      <div class="setv" id="set-v-facts" hidden>
+        <div class="topbar"><button class="back" data-sback="home">← Созламалар</button><h1 id="set-v-facts-h">Амалда — тугаган йиллар</h1><span class="sub" id="set-v-facts-sub">бир йил учун бир нечта номли тўплам · ★ асосийси ҳамма жойда стандарт</span><div class="right"><button class="btn primary" id="fs-add">＋ Янги тўплам</button></div></div>
+        <div class="sinfo" id="fs-src"></div>
+        <div id="fs-cards"></div>
+      </div>
+      <div class="setv" id="set-v-fset" hidden>
+        <div class="topbar"><button class="back" data-sback="facts">← Амалда</button><h1 id="set-v-fset-h">Тўплам</h1><span class="sub" id="set-v-fset-sub"></span><div class="right"><button class="btn" id="fe-main">★ Асосий қилиш</button><button class="btn" id="fe-copy">⧉ Нусха</button><button class="btn danger" id="fe-del">Ўчириш</button><button class="btn primary" id="fe-save">Сақлаш</button></div></div>
+        <div class="fbar">
+          <div class="fgrp wide" style="flex:2 1 260px"><label>Номи</label><input type="text" id="fe-title" placeholder="масалан: Вазирлик"></div>
+          <div class="fgrp wide" style="flex:3 1 320px"><label>Изоҳ</label><input type="text" id="fe-note" placeholder="масалан: вазирлик 03_Бух жадвали асосида"></div>
+        </div>
+        <div class="panel" style="margin-bottom:14px"><h2>Давр <span class="hint">январь–N ой якуни · ✓ — киритилган</span></h2>
+          <div class="mpick" id="fe-months"></div>
+        </div>
+        <div class="panel"><h2 id="fe-gh">—</h2>
+          <div class="form-row" style="margin-top:0"><button class="btn sm" id="fe-tpl">📗 Шаблонни юклаб олиш</button><label class="btn sm" style="cursor:pointer">📥 Тўлдирилганини юклаш<input type="file" id="fe-imp" accept=".xlsx,.xls" hidden></label><button class="btn sm danger" id="fe-pdel">Даврни ўчириш</button></div>
+          <div class="tw" style="max-height:60vh"><table id="t-per"><thead></thead><tbody></tbody></table></div>
+          <p class="note">Ҳар катак — шу йилнинг январь–N ой якуни (амалда, минг $). Ой охирида сайт аниқ шу рақамни олади (масалан 31.08 — 8 ойлик), оралиқ кунда икки давр орасида кунлар бўйича ҳисоблайди. Вилоят қатори — туманлар йиғиндиси. Excel: шаблонни юклаб олиб тўлдиринг, ёки расмий жадвални тўғридан-тўғри юкланг — унда «{йил} йил N ойда амалда» устуни бўлса етарли, туманлар номи бўйича танилади.</p>
+        </div>
+      </div>
+      <div class="setv" id="set-v-prev" hidden>
+        <div class="topbar"><button class="back" data-sback="home">← Созламалар</button><h1 id="set-v-prev-h">Ўтган йил базаси</h1><span class="sub" id="set-v-prev-sub">«ўтган йил шу даврга» — қўлда киритилган захира рақам</span></div>
+        <div class="panel" id="prev-panel"><p class="note" style="margin-top:0">«ўтган йил шу даврга» солиштириш учун қўлда киритилган рақамлар (минг $) · божхона базасидаги ўтган йил маълумоти ишлатилмайди</p>
         <div class="fbar" style="margin-top:10px">
           <div class="fgrp"><label>Йил</label><input type="number" id="py-year" style="width:90px"></div>
           <div class="fgrp"><label>Ҳолат кунлари</label><input type="number" id="py-days" style="width:90px" min="1" max="366"></div>
@@ -1008,17 +1184,17 @@ input[type=color]{width:34px;height:30px;padding:0 2px;border:1px solid var(--li
         <div class="tw" style="max-height:60vh"><table id="t-prev"><thead><tr><th>Туман</th><th class="num">Саноат</th><th class="num">Мева-сабзавот</th><th class="num">Жами</th></tr></thead><tbody></tbody></table></div>
         <p class="note" id="py-note">Рақам — ўтган йилнинг «Ҳолат кунлари» кунидаги (одатда 273 кун = 1 октябрь ҳолатида) амалдаги экспорти. Ҳисобот кунида у йил бошидан ўтган кунлар сонига мутаносиб қайта ҳисобланади (рақам / кунлар × ҳисобот кунигача кунлар) ва Dashboard, Свод, Ҳисоботлар, Динамика, География саҳифаларида «ўтган йил шу даврга» устунида ишлатилади. «Жами» = саноат + мева-сабзавот (ўзи ҳисобланади); вилоят қатори бўш қолдирилса — туманлар йиғиндиси, ёзилса — ёзилгани олинади. Диққат: «2. Ўз жадвалингиз» қайта юкланса, СВОД варағидаги ўтган йил рақамлари шу жадвални қайта ёзади.</p>
       </div>
-      <div class="panel" style="margin-bottom:14px" id="disp-panel"><h2>Баҳсли корхоналар <span class="hint">шаблон (номманом, қўлда) ≠ божхона базаси · қарор — корхона профилида («Йил боши манбаси», «Бухоро корхонаси»)</span></h2>
+      </div>
+      <div class="setv" id="set-v-disp" hidden>
+        <div class="topbar"><button class="back" data-sback="home">← Созламалар</button><h1 id="set-v-disp-h">Баҳсли корхоналар</h1><span class="sub" id="set-v-disp-sub">шаблон (номманом, қўлда) ≠ божхона базаси</span></div>
+        <div class="panel" id="disp-panel"><p class="note" style="margin-top:0">шаблон (номманом, қўлда) ≠ божхона базаси · қарор — корхона профилида («Йил боши манбаси», «Бухоро корхонаси»)</p>
         <div class="tw" style="max-height:60vh"><table id="t-disp"><thead><tr><th>Корхона</th><th>Туман</th><th>Шаблонда</th><th>Базада</th><th class="num">Шаблон янв–база ойи</th><th class="num">Божхона базаси</th><th class="num">Фарқ</th><th>Ойлар (фарқ)</th><th>Қарор</th><th>Excel га таъсири</th></tr></thead><tbody></tbody></table></div>
         <p class="note" id="disp-note">Қоида (19.09.2026): (а) «Бухоро» + манба «Шаблон» — сайт шаблон рақамларини олади (Dashboard, Номма-ном, Корхоналар, Excel бир хил); (б) «Бухоро» + манба «Божхона базаси» — Excel чиқаришда шу корхонанинг янв–база ойи катаклари база рақамлари билан қайта ёзилади; (в) «Бухоро эмас» — ҳеч қаерда чиқмайди, Excel да ой катаклари тозаланиб «Бухоро эмас — сайт бўйича» изоҳи қўйилади; (г) базада бор, шаблонда йўқ — Excel да туман блокига сариқ янги қатор (база ойлари билан) қўшилади. Ўзгартириш учун корхона номини босинг.</p>
       </div>
-      <div class="g2">
-        <div class="panel"><h2>Baza va papkalar</h2><div id="set-paths"></div>
-          <h2 style="margin-top:14px">O'tgan yil bilan solishtirish</h2>
-          <div class="form-row"><label for="set-off">Kunlar soni = yil boshidan hisobot sanasigacha kunlar +</label><input type="number" id="set-off" style="width:80px"><button class="btn sm" id="set-save">Saqlash</button></div>
-          <p class="note">Kun soni = yil boshidan ma'lumot sanasigacha (0). Jadvalingizda «01.09.2026 йил» uchun 151+30+31+31 = 243 kun, ya'ni 31.08 gacha — bu 0 ga to'g'ri keladi. <span id="set-prev"></span></p>
-        </div>
-        <div class="panel"><h2>Boshlang'ich ma'lumot</h2>
+      </div>
+      <div class="setv" id="set-v-init" hidden>
+        <div class="topbar"><button class="back" data-sback="home">← Созламалар</button><h1 id="set-v-init-h">Бошланғич маълумот</h1><span class="sub" id="set-v-init-sub">божхона базаси · ўз жадвалингиз · базани тозалаш</span></div>
+        <div class="panel">
           <div class="initstep">
             <h3>1. Bojxona bazasi <span class="hint">majburiy · «SQL Hokimyat baza N oylik» yoki yillik «… 12 oy YYYY»</span></h3>
             <p class="note">INN → tuman reyestri va yil boshidan <b>sanoat</b> eksporti (bazadagi oxirgi rasmiylashtirilgan sanagacha). БНПЗ va meva-sabzavot olinmaydi.
@@ -1040,7 +1216,18 @@ input[type=color]{width:34px;height:30px;padding:0 2px;border:1px solid var(--li
           <label class="form-row" style="gap:8px"><input type="checkbox" id="rs-keep" checked> Korxona profillaridagi qo'lda kiritilganlar saqlansin: aloqa, muammo va vazifalar, hujjatlar, tarix, vazirlik rejasi</label>
           <div class="form-row"><label for="rs-word">Tasdiqlash uchun <b class="mono">TOZALASH</b> deb yozing</label><input type="text" id="rs-word" style="min-width:140px;width:140px" autocomplete="off"><button class="btn danger" id="rs-go">Bazani tozalash</button></div>
         </div>
-        <div class="panel"><h2>Qoidalar</h2>
+      </div>
+      <div class="setv" id="set-v-paths" hidden>
+        <div class="topbar"><button class="back" data-sback="home">← Созламалар</button><h1 id="set-v-paths-h">База ва папкалар</h1><span class="sub" id="set-v-paths-sub"></span></div>
+        <div class="panel"><div id="set-paths"></div>
+          <h2 style="margin-top:14px">O'tgan yil bilan solishtirish</h2>
+          <div class="form-row"><label for="set-off">Kunlar soni = yil boshidan hisobot sanasigacha kunlar +</label><input type="number" id="set-off" style="width:80px"><button class="btn sm" id="set-save">Saqlash</button></div>
+          <p class="note">Kun soni = yil boshidan ma'lumot sanasigacha (0). Jadvalingizda «01.09.2026 йил» uchun 151+30+31+31 = 243 kun, ya'ni 31.08 gacha — bu 0 ga to'g'ri keladi. <span id="set-prev"></span></p>
+        </div>
+      </div>
+      <div class="setv" id="set-v-rules" hidden>
+        <div class="topbar"><button class="back" data-sback="home">← Созламалар</button><h1 id="set-v-rules-h">Қоидалар</h1><span class="sub" id="set-v-rules-sub">ГТД юклаш ва ҳисоблаш қоидалари</span></div>
+        <div class="panel">
           <div class="check"><div class="ic ok">✓</div><div><b>Rejim</b><span>bojxona rejimiga qaralmaydi — fayldagi hamma qatorlar eksport</span></div></div>
           <div class="check"><div class="ic ok">✓</div><div><b>Sana</b><span>«Дата выгрузки» (C ustun); ko'p kunlik fayl kunlarga bo'lib saqlanadi</span></div></div>
           <div class="check"><div class="ic ok">✓</div><div><b>Buxoro qatorlari</b><span>INN reyestri bo'yicha; reyestrda yo'q, lekin manzili Buxoro — «yangi korxona» sifatida tasdiqlashga chiqadi</span></div></div>
@@ -1058,11 +1245,15 @@ input[type=color]{width:34px;height:30px;padding:0 2px;border:1px solid var(--li
 <!-- KARTA MODALI -->
 <div class="mbg" id="card-modal" hidden><div class="mdl" role="dialog" aria-modal="true" aria-labelledby="cm-title"><div id="cm-body"></div></div></div>
 <div class="mbg" id="col-modal" hidden><div class="mdl sm" role="dialog" aria-modal="true"><div id="colm-body"></div></div></div>
+<div class="mbg" id="gtx-modal" hidden><div class="mdl" style="width:min(640px,100%)" role="dialog" aria-modal="true" aria-labelledby="gtx-title"><div id="gtx-body"></div></div></div>
 <div class="mbg" id="svn-modal" hidden><div class="mdl" style="width:min(760px,100%)" role="dialog" aria-modal="true" aria-labelledby="svn-title"><div id="svn-body"></div></div></div>
+<div class="mbg" id="sx-modal" hidden><div class="mdl" style="width:min(620px,100%)" role="dialog" aria-modal="true" aria-labelledby="sx-title"><div id="sx-body"></div></div></div>
+<div class="mbg" id="xat-modal" hidden><div class="mdl xt-mdl" role="dialog" aria-modal="true"><div id="xat-body"></div></div></div>
 <div class="mbg" id="lbl-modal" hidden><div class="mdl sm" role="dialog" aria-modal="true"><div id="lblm-body"></div></div></div>
 <div class="toast" id="toast" role="status"></div>
 <script src="/static/app.js"></script>
 <script src="/static/catalog.js"></script>
+<script src="/static/xatlar.js"></script>
 <script>
 (function(){
   var g=document.querySelector('#p-daily .g3'), b=document.getElementById('d-rtoggle');

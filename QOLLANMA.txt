@@ -40,7 +40,57 @@ Nima bor
   Ko'ruvchi o'zgartira olmaydi — rad etiladi va jurnalga tushadi. Zaxiradan qaytarish / bazani tozalash / qayta init — faqat superadmin.
   5 marta noto'g'ri parol → 30 soniya kutish. Vaqtinchalik parol bilan kirgan xodim avval parolini o'zgartiradi.
   Superadmin panel: oynadagi «Dastur» menyusi → «Superadmin panel» (yoki brauzerda /admin).
-  «Dastur» menyusi: Sayt · Superadmin panel · Tashqi diskka zaxira · Brauzerda ochish · Yangilash · Chiqish.
+  «Dastur» menyusi: Sayt · Chat · Superadmin panel · Tashqi diskka zaxira · Brauzerda ochish · Yangilash · Chiqish.
+
+Chat (ichki, faqat ofis tarmog'i) — Telegram ko'rinishida
+---------------------------------
+  Har ekranning o'ng pastki burchagida doim chat tugmasi turadi (sayt, Superadmin panel) — ustidagi qizil raqam:
+  o'qilmagan xabarlar soni. Bosilsa o'ng tomonda chat oynasi (720px): CHAPDA suhbatlar ro'yxati (avatar, oxirgi xabar,
+  vaqt, o'qilmaganlar), O'NGDA suhbat. Ro'yxat ustida qidiruv (Enter — xabarlardan) va jildlar: Hammasi · Xodimlar ·
+  Guruhlar · Korxona. Oynadan tashqarini bosish, Esc yoki tugmani qayta bosish — yopiladi; yopiq paytda xabarlar
+  «o'qildi» bo'lmaydi. «⤢» — to'liq ekranda ochish (/chat). «Dastur» menyusi → «Chat» ham shu oynani ochadi.
+  Suhbat turlari: kanallar (# umumiy, # kunlik-hisobot, # rahbar-topshiriqlari — hamma ko'radi; superadmin/operator ochadi),
+  guruhlar (✎ → «Yangi guruh»: nom + tanlangan xodimlar — faqat a'zolar ko'radi; a'zo qo'shish/chiqarish, guruhdan chiqish),
+  xodimlar bilan shaxsiy suhbat (Xodimlar jildida barcha xodimlar: onlayn / oxirgi marta), korxona suhbatlari (INN bo'yicha).
+  Xabarlar pufakchada: o'zingizniki o'ngda (yashil), ✓ — yuborildi, ✓✓ — o'qildi. Sichqonchaning o'ng tugmasi (yoki «⋯»):
+  Javob · Ishga bog'lash · Nusxalash · Belgilash (pin) · Tahrirlash · O'chirish; ikki marta bosish — javob; ↑ — oxirgi
+  xabaringizni tahrirlash. Belgilangan xabar suhbat tepasida turadi.
+  ISHGA BOG'LASH (🔗, ko'p tanlov): bitta xabar/fayl bir vaqtda bir nechta korxonaga, sohaga (tarmoq), tumanga, vazifaga
+  (doska) va xat/topshiriqqa (Kiruvchi xat / Chiquvchi xat / Topshiriq / Hujjat + № va nomi) bog'lanadi. Xabardagi yorliq
+  bosilsa: korxona kartasi, korxona suhbati, «shu bo'yicha barcha xabarlar», «shu bo'yicha fayllar».
+  Fayl: skrepka, oynaga tashlash yoki Ctrl+V. Bog'lanmagan fayl sariq «qaysi ishga tegishli?» bilan turadi.
+  «Fayllar» paneli (ⓘ): Korxona / Soha / Tuman / Vazifa / Xat / Bog'lanmagan filtri; qidiruv — fayl nomi yoki kesim nomi.
+  Ctrl+K — barcha xabar, fayl va kesimlardan qidirish (masalan «Тўқимачилик», «Ғиждувон», INN, «xat №1247»).
+  Saytdan chatga: /chat#inn=<INN>.
+  Saqlanadi: data\chat.db (xabarlar) + data\chat_files\ (fayllar) — tashqi zaxiraga kiradi, internetga chiqmaydi.
+
+Хатлар — bo'lim xatlari reyestri va «xotirasi» (2.5.0)
+-----------------------------------------------------
+  Menyu → «Хатлар»: barcha chiquvchi/kiruvchi xatlar, ilovalar, bayonnoma va hisobotlar — har biri karta: sarlavha,
+  qisqa mazmun, raqam, sana, kimga, qaysi xatga javob (bo'lim kiruvchi raqami 16-5338 va yuboruvchi raqami), asosiy
+  raqamlar, bog'lanishlar: korxona (INN) · soha · tuman · davlat. Birinchi yuklama: Telegram «Экспорт чиқувчи хатлар»
+  kanalining 2025–2026 fayllari (467 karta, Claude o'qib yozgan).
+  QIDIRUV (yuqoridagi katta maydon, «/» tugmasi): kirill va lotin farqsiz, so'z shakllari («туркман» = «Turkmaniston»,
+  «Туркманистонга»), korxona nomi yoki INN, xat raqami («16-5338»), xat matni ichidan ham. Natijada topilgan so'z sariq.
+  Filtrlar: Тури · Кесим · Йил · Туман · Соҳа · Давлат; «⚠ Текширилмаган» — avtomatik o'qishda shubhali chiqqan kartalar;
+  «Илова ва нусхалар» — ilovalarni alohida ko'rsatish; «Архив» — shovqin va takror nusxalar (standart yashirin).
+  Karta ustidagi yorliqlar bosiladi: 🏭 korxona → korxona kartasi («Хатлар» tabi), soha/tuman/davlat → shu bo'yicha
+  xatlar, ↩ raqam → shu raqamli barcha yozishmalar.
+  Xat oynasi: Мазмуни · Файл (PDF shu yerda ochiladi) · Матн (fayl matni, ichidan qidirish) · Илова ва нусхалар ·
+  Ёзишмалар (shu raqam tilga olingan boshqa xatlar). Tugmalar: ⬇ Юклаб олиш (Yuklamalar papkasiga), ✓ Тасдиқлаш,
+  Архивга, ✎ Таҳрирлаш (sarlavha, mazmun, tur, raqam, sana, kimga, javob raqamlari, bog'lanishlar qo'shish/olib tashlash).
+  + ХАТ ҚЎШИШ (Operator/Superadmin): faylni tashlang → dastur matnni o'qiydi (PDF matn qatlami, Word, Excel) va
+  raqam, sana, javob raqami, korxona (INN yoki nom), tuman, davlat, sohani o'zi taklif qiladi (nuqtali chegarali
+  yorliqlar — taxmin, keraksizini × bilan olib tashlang) → sarlavha yozing → Сақлаш. Skan PDF'da matn bo'lmaydi
+  (serverda OCR yo'q) — maydonlarni qo'lda to'ldiring. Korxona kartasidan qo'shilsa korxona o'zi bog'lanadi.
+  KORXONA KARTASI → «Хатлар (N)» tabi: shu korxonaga bog'langan xatlar (xatning o'zi yoki ilovasi) + yig'iq
+  «Соҳаси ва тумани бўйича хатлар».
+  Havola: /#xat/<id> — xat oynasini ochadi.
+  Ko'ruvchi faqat o'qiydi. Har tahrir, tasdiq, qo'shish va yuklab olish auditga yoziladi.
+  Saqlanadi: data\xatlar\xatlar.db (kartalar, matnlar, qidiruv indeksi) + data\xatlar\telegramdan\ (Telegram eksporti)
+  + data\xatlar\qolda\YYYY\MM\ (qo'lda qo'shilganlar). Tashqi zaxira: xatlar.db har snapshotda; fayllar esa bitta
+  umumiy <backup_dir>\_xatlar_fayllar\ papkasiga — faqat yangi/o'zgarganlari (birinchi marta ~2 GB, keyin tez).
+  Import vositalari (Claude uchun): data\xatlar\_import\.
 
 Yangilash (o'rnatishsiz)
 ------------------------
@@ -83,6 +133,8 @@ Fayllar
   appwin\server.py    — server (EksportMonitor ustida): login, rollar, audit, LAN, shell, zaxira API
   appwin\auth.py      — users / user_sessions / user_audit — alohida data\appwin.db (zaxiradan qaytarish/tozalash ularga tegmaydi)
   appwin\backup.py    — tashqi disk zaxirasi
+  appwin\xatlar.py    — Хатлар: reyestr, qidiruv (FTS5), karta tahriri, qo'lda qo'shish (matn o'qish + avtomatik nomzodlar)
+  app\static\xatlar.js/.css — «Хатлар» sahifasi, xat oynasi, korxona kartasidagi «Хатлар» tabi
   appwin\update.py    — yangilanish: manifest/fayl (xodimlarga), git pull + restart (server)
   appwin\static\      — login.html, admin.html (Superadmin panel), brand.css/js + logo.svg (saytga logo va foydalanuvchi chipi — sayt fayllari o'zgarmaydi)
-  vendor\             — pywebview, pythonnet, openpyxl, xlrd va boshqalar (Windows, Python 3.12)
+  vendor\             — pywebview, pythonnet, openpyxl, xlrd, pypdf (PDF matni) va boshqalar (Windows, Python 3.12)

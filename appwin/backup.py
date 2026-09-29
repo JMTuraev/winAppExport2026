@@ -10,7 +10,8 @@ _LOCK = threading.Lock()
 
 KEEP_DAILY = 30
 KEEP_MONTHLY = 12
-SKIP_DIRS = {"backups", "incoming", "exports", "tmp", "gtd_archive"}     # regenerable / already versioned elsewhere
+SKIP_DIRS = {"backups", "incoming", "exports", "tmp", "gtd_archive", "xatlar"}     # regenerable / already versioned elsewhere; xatlar — alohida
+XAT_MIRROR = "_xatlar_fayllar"      # xat fayllari (GB lab) har snapshotga emas — bitta umumiy nusxaga, faqat yangi/o'zgarganlari
 
 def backup_root(cfg: dict) -> Path | None:
     d = cfg.get("backup_dir")
@@ -69,6 +70,10 @@ def _run(cfg: dict, by: str = "", reason: str = "exit") -> dict:
     _sqlite_copy(db.DB_PATH, dest / "export.db")
     adb = db.BASE / "appwin.db"
     if adb.exists(): _sqlite_copy(adb, dest / "appwin.db")
+    cdb = db.BASE / "chat.db"                                   # ichki chat (xabarlar); fayllari chat_files\ papkasi bilan ko'chadi
+    if cdb.exists(): _sqlite_copy(cdb, dest / "chat.db")
+    xdb = db.BASE / "xatlar" / "xatlar.db"                      # xatlar reyestri va xotirasi (kartalar, matnlar, qidiruv)
+    if xdb.exists(): _sqlite_copy(xdb, dest / "xatlar.db")
     # 2) integrity check of the copy
     chk = sqlite3.connect(str(dest / "export.db"))
     try: ok = chk.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
@@ -83,7 +88,8 @@ def _run(cfg: dict, by: str = "", reason: str = "exit") -> dict:
                 if f.is_file(): files += 1; total += f.stat().st_size
         elif sub.is_file() and sub.suffix.lower() in (".json", ".xlsx", ".xls"):
             shutil.copy2(sub, dest / sub.name); files += 1; total += sub.stat().st_size
-    meta = {"at": dt.datetime.now().isoformat(timespec="seconds"), "by": by, "reason": reason, "ok": ok, "files": files,
+    xm = _mirror_xatlar(root)
+    meta = {"at": dt.datetime.now().isoformat(timespec="seconds"), "by": by, "reason": reason, "ok": ok, "files": files, "xatlar": xm,
             "mb": round(total / 1048576, 1), "source": str(db.DB_PATH), "sha256": _sha(dest / "export.db")}
     (dest / "zaxira.json").write_text(json.dumps(meta, ensure_ascii=False, indent=1), encoding="utf-8")
     os.replace(dest, final); dest = final
@@ -94,6 +100,24 @@ def _run(cfg: dict, by: str = "", reason: str = "exit") -> dict:
         con = db.connect(); db.log(con, "external_backup", dest=str(dest), **meta); con.commit(); con.close()
     except Exception: pass
     return {"name": dest.name, "path": str(dest), **meta, "removed": removed}
+
+def _mirror_xatlar(root: Path) -> dict:
+    """data/xatlar/ fayllari -> <zaxira>/_xatlar_fayllar/ (bitta nusxa, faqat yangi yoki o'zgargan fayllar; o'chirilgani o'chirilmaydi)."""
+    src = db.BASE / "xatlar"
+    if not src.exists(): return {"copied": 0, "total": 0}
+    dst = root / XAT_MIRROR; copied = total = 0
+    for f in src.rglob("*"):
+        if not f.is_file() or f.name.startswith("xatlar.db"): continue
+        total += 1
+        t = dst / f.relative_to(src)
+        try:
+            st = f.stat()
+            if t.exists():
+                ts = t.stat()
+                if ts.st_size == st.st_size and int(ts.st_mtime) >= int(st.st_mtime): continue
+            t.parent.mkdir(parents=True, exist_ok=True); shutil.copy2(f, t); copied += 1
+        except Exception: pass
+    return {"copied": copied, "total": total}
 
 def prune(root: Path) -> list[str]:
     snaps = list_snapshots(root)

@@ -319,9 +319,11 @@ ACTION_NAMES = [
     ("/api/auth/login", "kirdi"), ("/api/auth/logout", "chiqdi"), ("/api/auth/password", "parol o'zgartirdi"),
     ("/api/admin/user/save", "foydalanuvchi saqlandi"), ("/api/admin/user/active", "foydalanuvchi holati"),
     ("/api/upload/preview", "GTD tekshirdi"), ("/api/upload/save", "GTD saqladi"), ("/api/upload/replace", "GTD almashtirdi"), ("/api/upload/void", "GTD bekor qildi"),
+    ("/api/uploads/void", "GTD bekor qildi"), ("/api/issues", "vazifa/muammo"), ("/api/issue/", "vazifa/muammo"), ("/api/company/", "korxona"),
+    ("/api/prev_year", "o'tgan yil ko'rsatkichi"), ("/api/analysis", "tahlil to'plami"),
     ("/api/template", "shablon yukladi"), ("/api/customs", "bojxona bazasi"), ("/api/companies/update", "korxona tahrir"),
     ("/api/companies", "korxona"), ("/api/board", "vazifa/muammo"), ("/api/backups/create", "zaxira oldi"), ("/api/backups/restore", "zaxiradan qaytardi"),
-    ("/api/plans", "reja"), ("/api/periods", "davriy natijalar"), ("/api/catalog", "katalog"), ("/api/export", "Excel yukladi"),
+    ("/api/plans", "reja"), ("/api/periods", "amalda natijalar"), ("/api/fact_sets", "amalda to'plami"), ("/api/catalog", "katalog"), ("/api/export", "Excel yukladi"),
     ("/api/settings", "sozlamalar"), ("/api/reset", "bazani tozaladi"), ("/api/contacts", "aloqa import"),
 ]
 def action_name(path: str, method: str) -> str:

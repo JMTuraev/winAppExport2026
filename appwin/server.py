@@ -4,7 +4,7 @@ from __future__ import annotations
 import json, os, sys, socket, threading, time, datetime as dt, urllib.parse, shutil, webbrowser, http.cookies
 from pathlib import Path
 from app import server as legacy, db          # AppWin\app (site)
-from . import auth, backup, update, __version__
+from . import auth, backup, update, chat, xatlar, __version__
 
 ROOT = Path(__file__).resolve().parent
 STATIC = ROOT / "static"
@@ -175,6 +175,9 @@ class Handler(legacy.Handler):
                 if p.startswith("/api/"): return self.send_json({"error": "Avval parolni o'zgartiring", "must_change": True}, 403)
                 return self.redirect("/login")
             if p in ("/", "/index.html", "/legacy", "/legacy/"): return self.send_site()
+            if p == "/chat": return self.send_file(STATIC / "chat.html")
+            if p.startswith("/api/chat/"): return self.chat_get(p, q)
+            if p.startswith("/api/xatlar/"): return self.xat_get(p, q)
             if p == "/admin":
                 self.require_role("superadmin")
                 return self.send_file(STATIC / "admin.html")
@@ -274,6 +277,8 @@ class Handler(legacy.Handler):
                 self.send_header("Set-Cookie", f"{COOKIE}=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax"); self.end_headers(); self.wfile.write(payload); return
             if p == "/api/auth/page":
                 body = self.body_json(); self.load_user(page=(body.get("page") or "")[:80]); return self.send_json({"ok": True})
+            if p.startswith("/api/chat/"): return self.chat_post(p, urllib.parse.parse_qs(u.query))
+            if p.startswith("/api/xatlar/"): return self.xat_post(p)
             if p == "/api/auth/password":
                 body = self.body_json(); con = auth.connect()
                 try:
@@ -337,6 +342,107 @@ class Handler(legacy.Handler):
             return self.send_json({"error": str(e)}, 403)
         except Exception as e:
             return legacy.err_json(self, e, self.path)
+
+    # ---- chat (ichki, faqat LAN) — hamma faol xodimga ochiq, rol talab qilmaydi
+    def chat_get(self, p: str, q: dict):
+        con = chat.connect(); ac = auth.connect()
+        try:
+            me = self.user
+            if p == "/api/chat/rooms": return self.send_json(chat.rooms(con, ac, me))
+            if p == "/api/chat/messages":
+                return self.send_json(chat.messages(con, ac, me, int(q.get("room") or 0), int(q["before"]) if q.get("before") else None,
+                                                    int(q["around"]) if q.get("around") else None, int(q.get("limit") or 60)))
+            if p == "/api/chat/updates":
+                return self.send_json(chat.updates(con, ac, me, int(q["room"]) if q.get("room") else None, int(q.get("since") or 0)))
+            if p == "/api/chat/unread": return self.send_json({"unread": chat.unread_total(con, me)})
+            if p == "/api/chat/search": return self.send_json(chat.search(con, ac, me, q.get("q", ""), int(q["room"]) if q.get("room") else None))
+            if p == "/api/chat/files": return self.send_json(chat.files(con, ac, me, int(q["room"]) if q.get("room") else None, q.get("link"), q.get("q"), ref=q.get("ref")))
+            if p == "/api/chat/lookup": return self.send_json(chat.lookup(q.get("q", ""), kinds=q.get("kinds"), con=con))
+            if p == "/api/chat/file":
+                path, name = chat.file_path(con, me, int(q.get("id") or 0))
+                self._code = 200
+                if q.get("inline"): return legacy.Handler.send_file(self, path, inline_name=name)
+                return legacy.Handler.send_file(self, path, download_name=name)
+            if p == "/api/chat/stats": return self.send_json(chat.stats(con))
+            return self.send_json({"error": "topilmadi"}, 404)
+        finally: con.close(); ac.close()
+
+    def chat_post(self, p: str, qs: dict):
+        q = {k: v[0] for k, v in qs.items()}
+        con = chat.connect(); ac = auth.connect()
+        try:
+            me = self.user
+            if p == "/api/chat/upload":
+                n = int(self.headers.get("Content-Length") or 0)
+                if n <= 0 or n > chat.MAX_FILE: self.drain_body(); raise ValueError("Fayl bo'sh yoki juda katta (80 MB gacha)")
+                raw = self.rfile.read(n)
+                fname = urllib.parse.unquote(self.headers.get("X-Filename") or "fayl")
+                link = q.get("links") or ({"kind": q.get("link_kind", ""), "id": q.get("link_id"), "label": q.get("link_label", "")} if q.get("link_kind") else None)
+                r = chat.upload(con, ac, me, int(q.get("room") or 0), fname, raw, self.headers.get("Content-Type"), link, urllib.parse.unquote(q.get("text", "")))
+                self._audit("chat fayl", p, fname); return self.send_json(r)
+            body = self.body_json()
+            if p == "/api/chat/send": return self.send_json(chat.send(con, ac, me, body))
+            if p == "/api/chat/room":
+                r = chat.create_room(con, ac, me, body)
+                if not r.get("existing"): self._audit("chat xona", p, f"{body.get('kind')} · {body.get('name') or body.get('inn') or body.get('user_id')}")
+                return self.send_json(r)
+            if p == "/api/chat/room/archive": return self.send_json(chat.archive_room(con, me, int(body["id"]), bool(body.get("on", True))))
+            if p == "/api/chat/room/topic": return self.send_json(chat.set_topic(con, me, int(body["id"]), body.get("topic", "")))
+            if p == "/api/chat/read": return self.send_json(chat.mark_read(con, me, int(body["room"]), int(body.get("last_id") or 0)))
+            if p == "/api/chat/edit": return self.send_json(chat.edit(con, ac, me, body))
+            if p == "/api/chat/delete": return self.send_json(chat.delete(con, me, int(body["id"])))
+            if p == "/api/chat/pin": return self.send_json(chat.pin(con, me, int(body["id"]), bool(body.get("on", True))))
+            if p == "/api/chat/file/link": return self.send_json(chat.link_file(con, ac, me, body))
+            if p == "/api/chat/links": return self.send_json(chat.set_links(con, ac, me, body))
+            if p == "/api/chat/room/members": return self.send_json(chat.room_members(con, ac, me, body))
+            return self.send_json({"error": "topilmadi"}, 404)
+        finally: con.close(); ac.close()
+
+    # ---- Хатлар (xatlar reyestri va xotirasi) — o'qish hammaga, yozish: superadmin / operator
+    def xat_get(self, p: str, q: dict):
+        con = xatlar.connect()
+        try:
+            if p == "/api/xatlar/list": return self.send_json(xatlar.list_letters(con, q))
+            if p == "/api/xatlar/facets": return self.send_json(xatlar.facets(con))
+            if p == "/api/xatlar/get": return self.send_json(xatlar.get_letter(con, int(q.get("id") or 0)))
+            if p == "/api/xatlar/company": return self.send_json(xatlar.company_letters(con, (q.get("inn") or "").strip()))
+            if p == "/api/xatlar/count": return self.send_json({"n": xatlar.company_count(con, (q.get("inn") or "").strip())})
+            if p == "/api/xatlar/lookup": return self.send_json(xatlar.lookup(q.get("q", "")))
+            if p == "/api/xatlar/stats": return self.send_json(xatlar.stats(con))
+            if p == "/api/xatlar/file":
+                path, name = xatlar.file_path(con, int(q.get("id") or 0))
+                self._code = 200
+                if q.get("dl"):
+                    self._audit("xat faylini yukladi", p, name)
+                    return legacy.Handler.send_file(self, path, download_name=name)
+                return legacy.Handler.send_file(self, path, inline_name=name)
+            return self.send_json({"error": "topilmadi"}, 404)
+        finally: con.close()
+
+    def xat_post(self, p: str):
+        if self.user["role"] not in auth.WRITE_ROLES:
+            self.drain_body()
+            self._audit("rad etildi", p, f"xatlar — {self.user['role_name']} roliga ruxsat yo'q", ok=False)
+            return self.send_json({"error": f"«{self.user['role_name']}» roli xatlarni o'zgartira olmaydi — faqat ko'rish"}, 403)
+        con = xatlar.connect()
+        try:
+            if p == "/api/xatlar/upload":
+                n = int(self.headers.get("Content-Length") or 0)
+                if n <= 0 or n > xatlar.MAX_FILE: self.drain_body(); raise ValueError("Fayl bo'sh yoki juda katta (80 MB gacha)")
+                raw = self.rfile.read(n)
+                fname = urllib.parse.unquote(self.headers.get("X-Filename") or "fayl")
+                r = xatlar.upload(raw, fname, self.user)
+                self._audit("xat fayli yuklandi", p, fname); return self.send_json(r)
+            body = self.body_json()
+            if p == "/api/xatlar/update":
+                r = xatlar.update_letter(con, int(body.get("id") or 0), body, self.user)
+                what = "tasdiqladi" if body.get("review") else ("arxiv" if "hidden" in body and len(body) <= 3 else "tahrirladi")
+                self._audit(f"xat {what}", p, f"#{r['id']} {(r.get('title') or '')[:80]}"); return self.send_json(r)
+            if p == "/api/xatlar/create":
+                r = xatlar.create(con, body, self.user)
+                self._audit("xat qo'shdi", p, f"#{r['id']} {(r.get('title') or '')[:80]}"); return self.send_json(r)
+            return self.send_json({"error": "topilmadi"}, 404)
+        finally: con.close()
 
 # ------------------------------------------------------------ «Bugun» panel data
 def today_panel(con, user: dict) -> dict:
@@ -416,6 +522,10 @@ def start(cfg: dict | None = None, quiet: bool = False) -> "legacy.ThreadingHTTP
         note = db.BASE / "ADMIN_PAROL.txt"
         note.write_text(f"AppWin superadmin\nlogin: {_first_admin['login']}\nparol: {_first_admin['password']}\n(birinchi kirishda o'zgartiriladi; keyin bu faylni o'chiring)\n", encoding="utf-8")
         say("=" * 70); say(f"BIRINCHI KIRISH — superadmin: login «{_first_admin['login']}», parol «{_first_admin['password']}»"); say(f"(saqlandi: {note})"); say("=" * 70)
+    try: chat.init()
+    except Exception as e: say("chat init xato:", e)
+    try: xatlar.init()
+    except Exception as e: say("xatlar init xato:", e)
     legacy.acquire_lock()
     threading.Thread(target=legacy.heartbeat, daemon=True).start()
     today = dt.date.today().isoformat()

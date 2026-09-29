@@ -145,22 +145,27 @@ def options(con, D: str | None = None) -> dict:
     stext = info.get("text") or (f"Ўтган йил базаси «{(db.get_setting(con, 'prev_year_base_label') or '').strip()}», {report.prev_year_days(con, D)} кунга мутаносиб" if has_base else "")
     # 25.09.2026 (Жафар): Sozlamalar → Тугаган йиллар натижалари — киритилган N ойлик даврлар рўйхати, аниқ рақам билан
     # (интерполяциясиз). Стандарт танлов — жорий ойга тенг ёки ундан кичик энг катта давр (сентябрда 9 ойлик).
+    # 29.09.2026: даврлар «Амалда» тўпламлари бўйича (бир йилда бир нечта ном: Вазирлик, Ҳокимият …) — асосийси биринчи
     py = int(D[:4]) - 1; plist = []
     for p in periods.list_periods(con):
         if p["year"] != py or not p["filled"]: continue
-        plist.append({"months": p["months"], "label": p["label"], "sanoat": round(p["by_kind"].get("sanoat") or 0.0, 1), "meva": round(p["by_kind"].get("meva") or 0.0, 1)})
-    plist.sort(key=lambda x: x["months"])
-    default = max([p["months"] for p in plist if p["months"] <= month] or [p["months"] for p in plist] or [0])
+        plist.append({"set_id": p["set_id"], "set_title": p.get("set_title") or "", "main": bool(p.get("set_main")),
+                      "months": p["months"], "label": p["label"], "sanoat": round(p["by_kind"].get("sanoat") or 0.0, 1), "meva": round(p["by_kind"].get("meva") or 0.0, 1)})
+    plist.sort(key=lambda x: (not x["main"], x["set_id"] or 0, x["months"]))
+    mains = [p for p in plist if p["main"]] or plist
+    default = max([p["months"] for p in mains if p["months"] <= month] or [p["months"] for p in mains] or [0])
+    default_set = (mains[0]["set_id"] if mains else None)
     return {"date": D, "as_of": (dt.date.fromisoformat(D) + dt.timedelta(days=1)).isoformat(), "month": month,
             "current": {"sanoat": round(cur_san, 1), "meva": {"karantin": round(cur_kar, 1), "exporter": round(cur_exp, 1)}},
             "periods": per,
             "settings": {"available": bool(info.get("mode") != "none" or has_base), "text": stext,
                          "sanoat": round(st["sanoat"], 1), "meva": round(st["meva"], 1),
-                         "periods": plist, "default_months": default}}
+                         "periods": plist, "default_months": default, "default_set": default_set,
+                         "sets": [{"id": x["id"], "title": x["title"], "main": bool(x["main"])} for x in periods.year_sets(con, py)]}}
 
 
 # ------------------------------------------------------------------ дашбордга танловларни қўллаш
-def apply(con, d: dict, prev_mode: str, meva_mode: str, sp=None) -> dict:
+def apply(con, d: dict, prev_mode: str, meva_mode: str, sp=None, fs=None) -> dict:
     """dashboard() натижасини танловлар бўйича ўзгартиради: мева-сабзавот (жорий йил), ўтган йил (ҳар туман/тур), сарлавҳалар.
     sp — settings режимида Sozlamalardaги N ойлик давр (ой сони): ўтган йил ҳар туман/тур учун ўша даврнинг АНИҚ рақами;
     "auto" ёки йўқ бўлса — эски тартиб (кунга интерполяция, dashboard() берган prev)."""
@@ -197,7 +202,8 @@ def apply(con, d: dict, prev_mode: str, meva_mode: str, sp=None) -> dict:
     else:
         py = int(D[:4]) - 1
         sp = int(sp) if sp is not None and str(sp).isdigit() and 1 <= int(sp) <= 12 else None
-        pid = periods.find(con, py, sp) if sp else None
+        pid = periods.find(con, py, sp, fs) if sp else None
+        st = periods.get_set(con, fs) if fs else periods.get_set(con, periods.main_set(con, py))
         if pid:
             for x in d["districts"]:
                 s = periods._value(con, pid, x["code"], "sanoat") or 0.0; m = periods._value(con, pid, x["code"], "meva") or 0.0
@@ -207,7 +213,7 @@ def apply(con, d: dict, prev_mode: str, meva_mode: str, sp=None) -> dict:
             for k, v in (("sanoat", rs), ("meva", rm), ("all", rs + rm)): d.setdefault("region_plan", {}).setdefault(k, {})["prev"] = v
             lbl = periods.label(py, sp)
             d["prev_col_label"] = f"{py} йил \n{sp} ойлик амалдаги экспорт"; d["prev_cmp_label"] = f"{py} йил {sp} ойлигига нисбатан"
-            d["prev_year_source"] = {"mode": "settings", "text": f"Ўтган йил — Sozlamalar → Тугаган йиллар натижалари: «{lbl}» (аниқ рақам)"}
+            d["prev_year_source"] = {"mode": "settings", "text": f"Ўтган йил — Sozlamalar → Амалда" + (f" «{st['title']}»" if st else "") + f": «{lbl}» (аниқ рақам)"}
             d["settings_months"] = sp
         else:
             d["prev_col_label"] = f"{py} йилнинг \nшу кунигача амалдаги экспорт"; d["prev_cmp_label"] = f"{py} йилнинг \nшу кунига нисбатан"

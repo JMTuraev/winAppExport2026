@@ -12,6 +12,27 @@
       if (tg) brand.appendChild(tg);
     }
     document.title = 'Eksport Monitor';
+    // Chat — menyuda emas: o'ng pastki burchakdagi doimiy tugma (o'qilmaganlar soni bilan), bosilsa chat oynasi — chatwidget.js
+    if (!window.EMChat && !document.getElementById('em-chat-js')) {
+      var cw = document.createElement('script'); cw.id = 'em-chat-js'; cw.src = '/appwin/chatwidget.js'; document.body.appendChild(cw);
+    }
+    // Chatdan kelgan havolalar: /#reg/<INN> — korxona kartasi, /#iss/<id> — doska kartasi
+    function route() {
+      var m = (location.hash || '').match(/^#(reg|iss)\/?(.*)$/); if (!m || typeof go !== 'function') return;
+      if (m[1] === 'reg') { go('reg', m[2] || undefined); return; }
+      go('iss');
+      if (m[2] && /^\d+$/.test(m[2])) {
+        var id = +m[2], tries = 0;
+        var t = setInterval(function () {
+          tries++;
+          var it = ((typeof B !== 'undefined' && B.issues) || []).find(function (i) { return i.id === id; });
+          if (it && typeof openCard === 'function') { clearInterval(t); openCard(it); }
+          else if (tries > 40) clearInterval(t);
+        }, 250);
+      }
+    }
+    window.addEventListener('hashchange', route);
+    setTimeout(route, 600);
     var link = document.querySelector('link[rel~="icon"]') || document.createElement('link');
     link.rel = 'icon'; link.href = '/appwin/logo.svg'; document.head.appendChild(link);
     fetch('/api/auth/me').then(function (r) { return r.json(); }).then(function (d) {

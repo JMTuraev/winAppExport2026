@@ -110,5 +110,6 @@ function pwdModal(force){modal(`<div class="hd"><h2>${force?'Yangi parol o\'rnat
  $$('#tabs button').forEach(b=>b.onclick=()=>{A.tab=b.dataset.t;tab()});$('#add').onclick=()=>userModal(null);$('#pwd').onclick=()=>pwdModal(false);
  const h=location.hash.slice(1);if(['users','online','audit','server'].includes(h))A.tab=h;tab();if(ME.must_change)pwdModal(true)})();
 </script>
+<script src="/appwin/chatwidget.js" id="em-chat-js"></script>
 </body>
 </html>

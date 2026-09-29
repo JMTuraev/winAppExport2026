@@ -24,20 +24,21 @@ def prev_year_days(con, D: str) -> int:
     off = int(db.get_setting(con, "prev_year_day_offset", "0"))
     return d2(D).timetuple().tm_yday + off
 
-def prev_year_amount(con, code: str, kind: str, D: str, year: int | None = None) -> float:
+def prev_year_amount(con, code: str, kind: str, D: str, year: int | None = None, fset=None) -> float:
     """«Ўтган йил шу даврга» — ФАҚАТ Sozlamalardaги қўлда киритилган ўтган йил базасидан (prognoz.prev_year_base,
     prev_year_base_days), D санасигача кунларга мутаносиб. Божхона базасидаги 2025 items ҳеч қаерда ишлатилмайди
     (Жафар қарори 19.09.2026: вазирлик/ҳокимият йилни бошқа кўрсаткич билан якунлаган бўлиши мумкин).
-    code — '1706' (вилоят) ёки тuman коди; kind — 'all' | 'sanoat' | 'meva'."""
+    code — '1706' (вилоят) ёки тuman коди; kind — 'all' | 'sanoat' | 'meva'.
+    fset — танланган «Амалда» тўплами (29.09.2026, Dashboard/Свод танлови): фақат шу тўплам даврлари; бўлмаса — асосий + база."""
     y = year or int(D[:4])
     r = con.execute("SELECT prev_year_base, prev_year_base_days FROM prognoz WHERE year=? AND district_code=? AND kind=?", (y, code, kind)).fetchone()
     base = (r["prev_year_base"], r["prev_year_base_days"]) if r and r["prev_year_base"] else None
     # 21.09.2026: аввало Sozlamalar → «Даврий натижалар» (N ойлик расмий якунлар) — ой охирида аниқ рақам,
     # оралиқ кунда даврлар (ва эски база якори) орасида интерполяция; давр йўқ бўлса — эски база, кунга мутаносиб
     from . import periods
-    pc = periods.prev_cum(con, code, kind, D, base)
+    pc = periods.prev_cum(con, code, kind, D, base, fset)
     if pc is not None: return pc[0]
-    if not base: return 0.0
+    if fset or not base: return 0.0
     return base[0] / (base[1] or 273) * prev_year_days(con, D)
 
 def last_data_date(con) -> str | None:
@@ -199,14 +200,16 @@ def karantin_monthly(con, year: int, D: str | None = None):
 def companies_map(con):
     return {r["inn"]: dict(r) for r in con.execute("SELECT * FROM companies")}
 
-def prognoz(con, year: int, D: str | None = None):
+def prognoz(con, year: int, D: str | None = None, plan=None):
     """Reja: Sozlamalardagi versiyali reja (D sanasida amaldagi) bo'lsa — undan; bo'lmasa o'z jadvalingizning СВОД prognozi.
+    plan: None — sana bo'yicha (avto); "table" — faqat jadval (shablon СВОДи) prognozi; int — tanlangan versiya (kunlik hisobot modali).
     «O'tgan yil bazasi» (prev_year_base) har doim jadvaldan."""
     p = defaultdict(dict)
     for r in con.execute("SELECT * FROM prognoz WHERE year=?", (year,)):
         p[r["district_code"]][r["kind"]] = dict(r)
+    if plan == "table": return p
     from . import plans
-    pv = plans.plan_for(con, D or f"{year}-12-31")
+    pv = plans.plan_for(con, D or f"{year}-12-31", plan)
     if pv:
         for code, kinds in pv.items():
             for kind, v in kinds.items():
@@ -214,10 +217,29 @@ def prognoz(con, year: int, D: str | None = None):
                 p[code][kind] = {**old, **v, "district_code": code, "year": year, "kind": kind, "plan_source": "versions"}
     return p
 
-def dashboard(con, D: str | None = None):
+def fset_param(v):
+    """URL qiymati → «Амалда» тўплами id (ёки None = асосий)."""
+    v = str(v or "").strip()
+    return int(v) if v.isdigit() and int(v) > 0 else None
+
+def plan_param(v):
+    """URL/so'rov qiymati → prognoz(plan=...): '', 'auto' → None; 'table' → 'table'; raqam → versiya id."""
+    v = str(v or "").strip()
+    if v in ("", "auto", "None", "null"): return None
+    if v == "table": return "table"
+    return int(v) if v.isdigit() else None
+
+def dashboard(con, D: str | None = None, plan=None, fset=None):
     D = D or last_data_date(con)
     if not D:
         return {"empty": True}
+    if fset:   # «Амалда» тўплами (29.09.2026): йўқ (ўчирилган) бўлса — асосий
+        from . import periods
+        if not periods.get_set(con, fset): fset = None
+    if isinstance(plan, int):   # танланган режа бу санага мос эмас (ўтган давр блоки) — экранда стандартга қайтади; Excel'да require_cover тўхтатади
+        from . import plans as _pl
+        _v = _pl.get_version(con, plan)
+        if not _pl.covers(_v, D): plan = None
     year = int(D[:4]); month = int(D[5:7])
     amounts = company_amounts(con, D); cmap = companies_map(con); kar = karantin(con, D)
     days = prev_year_days(con, D)
@@ -229,26 +251,36 @@ def dashboard(con, D: str | None = None):
             pass
         comps.append({"inn": inn, "name": c.get("name") or inn, "d": c.get("district_code"), "t": kind, "tarmoq": (c.get("tarmoq") or "").strip(),
                       "m": [round(x, 3) for x in a["m"][:month]], "day": round(a["day"], 3), "total": round(sum(a["m"]), 3)})
-    pr = prognoz(con, year, D)
+    pr = prognoz(con, year, D, plan)
     dist = []
     for d in districts(con):
         code = d["code"]; p = pr.get(code, {})
         dist.append({"code": code, "name": d["name_uz"],
                      "plan": {k: {"year": v.get("year_plan"), "m9": v.get("m9_plan"), "period": v.get("period_plan"), "month": v.get("cur_month_plan"),
-                                  "prev": prev_year_amount(con, code, k, D), "plan_source": v.get("plan_source"),
+                                  "prev": prev_year_amount(con, code, k, D, fset=fset), "plan_source": v.get("plan_source"),
                                   "months": json.loads(v["months"]) if v.get("months") else None} for k, v in p.items()},
                      "meva": {k: round(v, 3) for k, v in kar.get(code, {"ytd": 0, "month": 0, "day": 0}).items()}})
     region = {k: {"year": v.get("year_plan"), "m9": v.get("m9_plan"), "period": v.get("period_plan"), "month": v.get("cur_month_plan"),
-                  "prev": prev_year_amount(con, REGION, k, D), "plan_source": v.get("plan_source")} for k, v in pr.get(REGION, {}).items()}
+                  "prev": prev_year_amount(con, REGION, k, D, fset=fset), "plan_source": v.get("plan_source")} for k, v in pr.get(REGION, {}).items()}
     from . import periods
-    prev_info = periods.prev_info(con, D)
+    prev_info = periods.prev_info(con, D, fset)
     memo = []
     for (inn, kind), a in amounts.items():
         if kind == "memo": memo.append({"inn": inn, "name": cmap.get(inn, {}).get("name"), "ytd": round(a["ytd_memo"], 3), "day": round(a["day"], 3)})
     return {"date": D, "year": year, "month": month, "opening_date": opening_date(con), "prev_year_days": days,
             "prev_year_label": db.get_setting(con, "prev_year_base_label"), "prev_year_source": prev_info,
             "companies": comps, "districts": dist, "region_plan": region, "meva_monthly": karantin_monthly(con, year, D), "memo": memo,
-            "karantin_detail": karantin_detail(con, D)}
+            "karantin_detail": karantin_detail(con, D), "plan_info": _plan_info(con, pr),
+            "selection": {"plan": plan if plan is not None else "auto", "fset": fset}}
+
+def _plan_info(con, pr) -> dict:
+    """Qaysi reja ishlatildi (versiya yoki jadval prognozi) — sarlavha/izoh uchun."""
+    r = ((pr or {}).get(REGION) or {}).get("all") or {}
+    vid = r.get("version_id")
+    if r.get("plan_source") == "versions" and vid:
+        v = con.execute("SELECT id, title, effective_from FROM plan_versions WHERE id=?", (vid,)).fetchone()
+        if v: return {"source": "version", "id": v["id"], "title": v["title"], "effective_from": v["effective_from"]}
+    return {"source": "table", "title": "Жадвал (шаблон СВОДи) прогнози", "label": db.get_setting(con, "template_label")}
 
 def calendar(con, year: int, month: int):
     through = opening_date(con)
@@ -597,9 +629,12 @@ def export_svod_nomma(con, q: dict, out):
     """Битта китоб: 1-варақ «СВОД (карантин)» + ҳар туман учун алоҳида «номма-ном» варағи (саноат + мева, туман номи билан)."""
     import re, openpyxl
     from . import svodx
-    d = dashboard(con, q.get("date"))
+    fs = fset_param(q.get("fs")) if (q.get("prev") or "settings") == "settings" else None
+    from . import plans as _pl
+    _pl.require_cover(con, q.get("date") or last_data_date(con), plan_param(q.get("plan")))   # мос режа йўқ — юклаб бўлмайди
+    d = dashboard(con, q.get("date"), plan_param(q.get("plan")), fs)
     if d.get("empty"): raise ValueError("База бўш")
-    svodx.apply(con, d, q.get("prev") or "settings", q.get("meva") or "karantin", q.get("sp"))
+    svodx.apply(con, d, q.get("prev") or "settings", q.get("meva") or "karantin", q.get("sp"), fs)
     wb = openpyxl.Workbook(); ws = wb.active; ws.title = "СВОД (карантин)" if d["meva_mode"] == "karantin" else "СВОД"
     _svod_sheet(ws, con, d)
     used = {ws.title}
