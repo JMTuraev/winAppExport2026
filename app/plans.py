@@ -485,32 +485,78 @@ def import_any(con, path, year: int, effective_from: str, title: str = "", note:
             "year_hint": p["year_hint"], "total": {k: pf[k]["year_plan"] for k in ("sanoat", "meva", "all")},
             "months": [round(x, 3) for x in json.loads(pf["all"]["months"]).values()]}
 
-SEED = {"file": "reja_2026_vazirlik.xlsx", "key": "plan_seed_2026_vazirlik", "year": 2026, "from": "2026-01-01",
-        "title": "Вазирлик режаси 2026 (қайта тақсимланган)",
-        "note": "Вазирлик шаблони (СВОД v2), 29.09.2026 · «Reja ichi o'zgardi 9 oylik» билан солиштирилди: йиллик ва 9 ойлик ҳар туманда мос; "
-                "сентябрь фарқи — Қоровулбозор саноат 327→1 196, Ромитан саноат 1 048→178 · январь–август — битта жами (ойларга бўлинмаган)"}
+def parse_fact_column(con, path, col_rx: str) -> dict:
+    """Excel'даги битта «амалда» устуни (сарлавҳаси col_rx га мос) → {(tuman, tur): қиймат}. Қаторлар — туман + саноат/мева."""
+    from .xl import read_sheet, sheet_names
+    dmap = {_re.sub(r"\s+", " ", r["name_uz"]).strip().lower(): r["code"] for r in con.execute("SELECT code,name_uz FROM districts WHERE length(code)=7")}
+    rx = _re.compile(col_rx, _re.I)
+    for sh in sheet_names(path):
+        rows = read_sheet(path, sh, max_rows=400)
+        col = next((c for r in rows[:10] for c, v in enumerate(r) if isinstance(v, str) and rx.search(_re.sub(r"\s+", " ", v))), None)
+        if col is None: continue
+        out, cur = {}, None
+        for r in rows:
+            cells = [_re.sub(r"\s+", " ", str(v)).strip().lower() for v in r if isinstance(v, str)]
+            d = next((dmap[t] for t in cells if t in dmap), None)
+            k = "sanoat" if any(t.startswith("саноат") for t in cells) else ("meva" if any(t.startswith("мева") for t in cells) else None)
+            if d and not k: cur = d; continue
+            if not k or any("жами" in t for t in cells if t.startswith(("саноат", "мева"))): continue
+            code = d or cur
+            v = _num(r[col]) if col < len(r) else None
+            if code and v is not None: out[(code, k)] = v
+        if out: return {"sheet": sh, "values": out}
+    raise ValueError("Excel'да «амалда» устуни ёки туман қаторлари топилмади")
+
+def seed_fact_set(con, path, it: dict) -> int:
+    from . import periods
+    p = parse_fact_column(con, path, it.get("column") or r"амалдаги")
+    year, months = int(it["year"]), int(it["months"])
+    r = periods.create_set(con, year, it["title"], it.get("note") or "")
+    periods.save(con, year, months, [{"district_code": c, "kind": k, "fact": v} for (c, k), v in p["values"].items()], r["id"])
+    if it.get("main"): periods.update_set(con, r["id"], main=True)
+    return r["id"]
 
 def seed_once(con):
-    """Бир марталик: data/init/reja_2026_vazirlik.xlsx → «Вазирлик режаси 2026». v2 (29.09.2026): январь–август — битта блок;
-    аввал (v1) тенг бўлиб қўйилган бўлса — ўша режа шу файлдан қайта ўқилади (id ва номи сақланади)."""
-    key2 = SEED["key"] + "_v2"
-    try:
-        if db.get_setting(con, key2): return
-        f = db.BASE / "init" / SEED["file"]
-        if not f.exists(): return
-        db.set_setting(con, key2, "pending"); con.commit()   # параллел уланишлар иккинчи марта қўшмасин
-        old = db.get_setting(con, SEED["key"]) or ""
-        vid = int(old[3:]) if old.startswith("ok:") and old[3:].isdigit() else None
-        if vid and get_version(con, vid):
-            r = import_any(con, f, SEED["year"], "", version_id=vid)
-            with con: con.execute("UPDATE plan_versions SET note=? WHERE id=? AND source='xlsx'", (SEED["note"], vid))
-        else:
-            r = import_any(con, f, SEED["year"], "", SEED["title"], SEED["note"])
-            db.set_setting(con, SEED["key"], f"ok:{r['id']}")
-        db.set_setting(con, key2, f"ok:{r['id']}")
-    except Exception as e:   # қайта-қайта уринмаслик учун
-        try: db.set_setting(con, key2, f"err:{e}"[:300])
-        except Exception: pass
+    """Бир марталик режа қўшиш: data/init/plans_seed.json — [{key, file, year, title, note, main}]. Ҳар key фақат бир марта
+    (settings «plan_seed:<key>»); файл data/init ичида. Сервер қайта ишга тушганда ўзи қўшади (29.09.2026)."""
+    f = db.BASE / "init" / "plans_seed.json"
+    if not f.exists(): return
+    try: items = json.loads(f.read_text(encoding="utf-8"))
+    except Exception: return
+    if isinstance(items, dict):   # {"remove": [seed kalitlari], "add": [...]}
+        for key in items.get("remove") or []:   # avval avtomatik qo'shilgan (foydalanuvchi o'chirgan) rejani olib tashlash — bir marta
+            try:
+                val = db.get_setting(con, key) or ""
+                if val.startswith("ok:") and val[3:].isdigit():
+                    if get_version(con, int(val[3:])): delete_version(con, int(val[3:]))
+                    db.set_setting(con, key, "removed"); con.commit()
+            except Exception: pass
+        for it in items.get("fact_sets") or []:   # «Амалда» тўплами (ўтган йил натижаси) — бир марта
+            key = "fact_seed:" + str(it.get("key"))
+            try:
+                if db.get_setting(con, key): continue
+                x = db.BASE / "init" / it["file"]
+                if not x.exists(): continue
+                db.set_setting(con, key, "pending"); con.commit()
+                sid = seed_fact_set(con, x, it)
+                db.set_setting(con, key, f"ok:{sid}"); con.commit()
+            except Exception as e:
+                try: db.set_setting(con, key, f"err:{e}"[:300]); con.commit()
+                except Exception: pass
+        items = items.get("add") or []
+    for it in items:
+        key = "plan_seed:" + str(it.get("key") or it.get("file"))
+        try:
+            if db.get_setting(con, key): continue
+            x = db.BASE / "init" / it["file"]
+            if not x.exists(): continue
+            db.set_setting(con, key, "pending"); con.commit()   # параллел уланишлар иккинчи марта қўшмасин
+            r = import_any(con, x, int(it["year"]), "", it.get("title") or "", it.get("note") or "")
+            if it.get("main"): set_main(con, r["id"])
+            db.set_setting(con, key, f"ok:{r['id']}"); con.commit()
+        except Exception as e:
+            try: db.set_setting(con, key, f"err:{e}"[:300]); con.commit()
+            except Exception: pass
 
 def import_svod(con, path, year: int, effective_from: str, title: str = "", note: str = "") -> dict:
     """Эски ном (мослик учун) — универсал ўқувчига йўналтирилади."""
